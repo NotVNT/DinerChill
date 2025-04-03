@@ -1,14 +1,19 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/modules/filterBox.css';
+import '../styles/modules/booth_categories.css';
 
 function FilterBox() {
   const [selectedFilters, setSelectedFilters] = useState({});
   const [visibleFilterStart, setVisibleFilterStart] = useState(0); // Bắt đầu từ filter đầu tiên
+  const [visibleCategoryStart, setVisibleCategoryStart] = useState(0); // Bắt đầu từ category đầu tiên
   const [isTransitioning, setIsTransitioning] = useState(false); // State mới để kiểm soát trạng thái chuyển đổi
+  const [isCategoryTransitioning, setIsCategoryTransitioning] = useState(false); // State cho categories
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isAtEnd, setIsAtEnd] = useState(false);
   const navigate = useNavigate();
-  const categoriesSliderRef = useRef(null);
   const filtersSliderRef = useRef(null);
+  const categoriesSliderRef = useRef(null);
   
   // Danh sách các bộ lọc
   const filterOptions = [
@@ -31,24 +36,34 @@ function FilterBox() {
     { id: 'cuisine_style', name: 'Phong cách ẩm thực' },
   ];
   
-  // Danh sách các loại món ăn
+  // Danh sách các loại món ăn (booth categories)
   const cuisineTypes = [
+    { id: 'buffet', name: 'Buffet', icon: '🍱' },
+    { id: 'hotpot', name: 'Lẩu', icon: '🍲' },
     { id: 'grilled', name: 'Nướng', icon: '🔥' },
     { id: 'seafood', name: 'Hải sản', icon: '🦐' },
-    { id: 'asian', name: 'Quán nhậu', icon: '🍻' },
-    { id: 'japanese', name: 'Món Nhật', icon: '🍱' },
+    { id: 'beer', name: 'Quán nhậu', icon: '🍻' },
+    { id: 'japanese', name: 'Món Nhật', icon: '🍣' },
     { id: 'vietnamese', name: 'Món Việt', icon: '🍜' },
     { id: 'korean', name: 'Món Hàn', icon: '🍲' },
     { id: 'vegetarian', name: 'Món chay', icon: '🥗' },
-    { id: 'american', name: 'Món Châu Á', icon: '🥢' },
-    { id: 'european', name: 'Món Châu Âu', icon: '🍕' }
+    { id: 'asian', name: 'Món Châu Á', icon: '🥢' },
+    { id: 'european', name: 'Món Châu Âu', icon: '🍕' },
+    { id: 'thai', name: 'Món Thái', icon: '🍸' },
+    { id: 'chinese', name: 'Món Trung Hoa', icon: '🥟' }
   ];
-
+  
   // Số lượng filter hiển thị cùng lúc
   const visibleFiltersCount = 5;
   
+  // Số lượng categories hiển thị cùng lúc
+  const visibleCategoriesCount = 8;
+  
   // Tính toán các filter hiện đang hiển thị
   const visibleFilters = filterOptions.slice(visibleFilterStart, visibleFilterStart + visibleFiltersCount);
+  
+  // Tính toán các categories hiện đang hiển thị
+  const visibleCategories = cuisineTypes.slice(visibleCategoryStart, visibleCategoryStart + visibleCategoriesCount);
   
   // Hàm cuộn đến filter tiếp theo với khoảng trễ
   const showNextFilter = () => {
@@ -72,7 +87,7 @@ function FilterBox() {
     setTimeout(() => {
       setVisibleFilterStart(visibleFilterStart + 1);
       setIsTransitioning(false);
-    }, 300); // Khoảng trễ 300ms - có thể điều chỉnh
+    }, 300); // Khoảng trễ 300ms
   };
   
   // Hàm cuộn về filter trước đó với khoảng trễ
@@ -113,10 +128,6 @@ function FilterBox() {
     });
   };
 
-  const handleCuisineSelect = (cuisineId) => {
-    navigate(`/search?cuisine=${cuisineId}`);
-  };
-
   const handleFilterClick = () => {
     const params = new URLSearchParams();
     Object.entries(selectedFilters).forEach(([key, value]) => {
@@ -126,16 +137,91 @@ function FilterBox() {
     navigate(`/search?${params.toString()}`);
   };
 
-  // Hàm xử lý scroll cho categories slider
+  // Hàm xử lý khi người dùng chọn loại món ăn
+  const handleCuisineSelect = (cuisineId) => {
+    navigate({
+      pathname: '/restaurants',
+      search: `?cuisine=${cuisineId}`
+    });
+  };
+  
+  // Hàm scroll categories left/right
   const scrollCategories = (direction) => {
-    if (categoriesSliderRef.current) {
-      const scrollAmount = direction === 'left' ? -300 : 300;
-      categoriesSliderRef.current.scrollBy({
-        left: scrollAmount,
-        behavior: 'smooth'
-      });
+    if (isCategoryTransitioning) return;
+    
+    setIsCategoryTransitioning(true);
+    
+    if (direction === 'left' && visibleCategoryStart > 0) {
+      if (categoriesSliderRef.current) {
+        categoriesSliderRef.current.scrollBy({
+          left: -200,
+          behavior: 'smooth'
+        });
+      }
+      
+      setTimeout(() => {
+        setVisibleCategoryStart(visibleCategoryStart - 1);
+        setIsCategoryTransitioning(false);
+        // Check if we've scrolled all the way to the start
+        if (visibleCategoryStart <= 1) {
+          setIsScrolled(false);
+        }
+        // Always set isAtEnd to false when scrolling left
+        setIsAtEnd(false);
+      }, 300);
+    } else if (direction === 'right' && visibleCategoryStart + visibleCategoriesCount < cuisineTypes.length) {
+      if (categoriesSliderRef.current) {
+        categoriesSliderRef.current.scrollBy({
+          left: 200,
+          behavior: 'smooth'
+        });
+      }
+      
+      setTimeout(() => {
+        const newPosition = visibleCategoryStart + 1;
+        setVisibleCategoryStart(newPosition);
+        setIsCategoryTransitioning(false);
+        // Explicitly set isScrolled to true when scrolling right
+        setIsScrolled(true);
+        
+        // Check if we've reached the end of the categories
+        if (newPosition + visibleCategoriesCount >= cuisineTypes.length) {
+          setIsAtEnd(true);
+        }
+      }, 300);
+    } else {
+      setIsCategoryTransitioning(false);
     }
   };
+
+  // Function to handle scroll events on the categories slider
+  const handleCategoriesScroll = () => {
+    if (categoriesSliderRef.current) {
+      // Check if scrolled at all (scrollLeft > 0)
+      setIsScrolled(categoriesSliderRef.current.scrollLeft > 0);
+    }
+  };
+
+  // Add event listener when component mounts
+  useEffect(() => {
+    const slider = categoriesSliderRef.current;
+    if (slider) {
+      slider.addEventListener('scroll', handleCategoriesScroll);
+      return () => {
+        slider.removeEventListener('scroll', handleCategoriesScroll);
+      };
+    }
+  }, []);
+
+  // Also check for the end when component mounts or categories update
+  useEffect(() => {
+    // Check if we're at the end of the list on initial load
+    if (visibleCategoryStart + visibleCategoriesCount >= cuisineTypes.length) {
+      setIsAtEnd(true);
+    } else {
+      setIsAtEnd(false);
+    }
+  }, [visibleCategoryStart, visibleCategoriesCount, cuisineTypes.length]);
 
   return (
     <div className="filter-box">
@@ -183,30 +269,33 @@ function FilterBox() {
           </div>
         </div>
       </div>
-
-      <div className="cuisine-categories">
+      
+      {/* Phần booth categories product */}
+      <div className="booth-categories">
         <button 
-          className="category-nav prev" 
+          className={`category-nav prev ${!isScrolled ? 'hidden' : ''}`}
           onClick={() => scrollCategories('left')}
         >
           <span>←</span>
         </button>
         
         <div className="categories-slider" ref={categoriesSliderRef}>
-          {cuisineTypes.map((cuisine) => (
+          {visibleCategories.map((cuisine) => (
             <div 
               key={cuisine.id} 
               className="category-item" 
               onClick={() => handleCuisineSelect(cuisine.id)}
             >
-              <div className="category-icon">{cuisine.icon}</div>
+              <div className="category-icon-wrapper">
+                <span className="category-icon">{cuisine.icon}</span>
+              </div>
               <span className="category-name">{cuisine.name}</span>
             </div>
           ))}
         </div>
         
         <button 
-          className="category-nav next" 
+          className={`category-nav next ${isAtEnd ? 'hidden' : ''}`}
           onClick={() => scrollCategories('right')}
         >
           <span>→</span>
