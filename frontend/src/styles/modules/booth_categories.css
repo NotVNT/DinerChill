@@ -1,0 +1,142 @@
+/* Booth Categories Styles */
+.booth-categories {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  position: relative;
+  margin: 10px 0 5px;
+  padding: 0 10px;
+}
+
+.categories-slider {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  padding: 10px 20px;
+  scrollbar-width: none; /* Firefox */
+  scroll-behavior: smooth;
+  max-width: 100%;
+  margin: 0 auto;
+  position: relative;
+}
+
+.categories-slider::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+.category-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  min-width: 60px;
+  transition: transform 0.2s;
+}
+
+.category-item:hover {
+  transform: translateY(-3px);
+}
+
+.category-icon-wrapper {
+  background-color: #fff;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid #f0f0f0;
+}
+
+.category-icon {
+  font-size: 24px;
+}
+
+.category-name {
+  font-size: 12px;
+  text-align: center;
+  color: #333;
+  font-weight: 500;
+}
+
+.category-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: white;
+  border: 1px solid #ddd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.category-nav:hover {
+  background-color: #f9f9f9;
+}
+
+.category-nav.prev {
+  left: 200px;
+}
+
+.category-nav.next {
+  right: 200px;
+}
+
+.category-nav.next svg,
+.category-nav.prev svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Hidden class that can be toggled by JavaScript */
+.category-nav.hidden {
+  display: none;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .booth-categories {
+    padding: 0 25px;
+  }
+  
+  .categories-slider {
+    gap: 15px;
+  }
+  
+  .category-icon-wrapper {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .category-icon {
+    font-size: 20px;
+  }
+  
+  .category-name {
+    font-size: 11px;
+  }
+}
+
+/* Add these styles to support the row structure */
+.row.booth-category {
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.section-heading {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 15px;
+  padding-left: 10px;
+  border-left: 3px solid #ff6b6b;
+}
