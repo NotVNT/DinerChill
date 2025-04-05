@@ -69,23 +69,17 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false
     },
-    imageUrl: {
-      type: DataTypes.STRING,
-      allowNull: true
-    },
     description: {
       type: DataTypes.TEXT,
       allowNull: true
     },
     openingTime: {
       type: DataTypes.STRING,
-      allowNull: true,
-      defaultValue: '10:00'
+      allowNull: true
     },
     closingTime: {
       type: DataTypes.STRING,
-      allowNull: true,
-      defaultValue: '22:00'
+      allowNull: true
     },
     phone: {
       type: DataTypes.STRING,
@@ -101,8 +95,18 @@ module.exports = (sequelize, DataTypes) => {
     },
     capacity: {
       type: DataTypes.INTEGER,
+      allowNull: true
+    },
+    cloudImages: {
+      type: DataTypes.TEXT,
       allowNull: true,
-      defaultValue: 100
+      get() {
+        const rawValue = this.getDataValue('cloudImages');
+        return rawValue ? JSON.parse(rawValue) : [];
+      },
+      set(value) {
+        this.setDataValue('cloudImages', JSON.stringify(value));
+      }
     }
   }, {
     sequelize,

@@ -9,9 +9,20 @@ const { User } = require('./models');
 const { Op } = require('sequelize');
 const dotenv = require('dotenv');
 const adminRoutes = require('./routes/admin');
+const fs = require('fs');
 
 // Đọc biến môi trường từ file .env
 dotenv.config();
+
+// Tạo thư mục uploads nếu chưa tồn tại
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Serve static files from uploads directory
+app.use('/uploads', express.static(uploadsDir));
+
 const JWT_SECRET = process.env.JWT_SECRET || 'dinerchillsecretkey';
 
 // Middleware

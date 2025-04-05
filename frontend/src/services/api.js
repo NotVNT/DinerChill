@@ -107,13 +107,52 @@ export const reservationAPI = {
 export async function fetchWithAuth(endpoint, options = {}) {
   try {
     console.log(`Gọi API: ${endpoint}`, options);
-    const result = await fetchAPI(endpoint, {
+    
+    // Get token from localStorage
+    const token = localStorage.getItem('dinerchillToken');
+    if (!token) {
+      throw new Error('Không có token xác thực. Vui lòng đăng nhập lại.');
+    }
+    
+    // Create headers with authorization
+    const headers = {
+      'Authorization': `Bearer ${token}`,
+      ...options.headers
+    };
+    
+    // Don't add content-type for FormData
+    if (options.body instanceof FormData) {
+      // For FormData, let the browser set the Content-Type
+      delete headers['Content-Type'];
+    } else if (!headers['Content-Type'] && !(options.body instanceof FormData)) {
+      headers['Content-Type'] = 'application/json';
+    }
+    
+    // Create fetch config
+    const config = {
       ...options,
-      headers: {
-        ...options.headers,
-        'Authorization': `Bearer ${localStorage.getItem('dinerchillToken')}`
+      headers
+    };
+    
+    // Make API call
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+    
+    // Handle response
+    if (!response.ok) {
+      let errorData;
+      try {
+        errorData = await response.json();
+      } catch (e) {
+        // If can't parse JSON, use status text
+        throw new Error(`Lỗi ${response.status}: ${response.statusText}`);
       }
-    });
+      
+      // Throw error with message from server
+      throw new Error(errorData.message || `Lỗi ${response.status}`);
+    }
+    
+    // Parse successful response
+    const result = await response.json();
     console.log(`Kết quả từ API ${endpoint}:`, result);
     return result;
   } catch (error) {
@@ -138,21 +177,66 @@ export const adminAPI = {
   }),
   
   // Restaurants
-  getRestaurants: () => fetchWithAuth('/admin/restaurants'),
-  createRestaurant: (restaurantData) => {
-    console.log('Dữ liệu nhà hàng gửi đi:', restaurantData);
-    return fetchWithAuth('/admin/restaurants', {
-      method: 'POST',
-      body: JSON.stringify(restaurantData)
-    });
+  getRestaurants: async () => {
+    try {
+      const response = await fetchWithAuth('/admin/restaurants');
+      return response;
+    } catch (error) {
+      console.error('Lỗi khi lấy danh sách nhà hàng:', error);
+      throw error;
+    }
   },
-  updateRestaurant: (id, restaurantData) => fetchWithAuth(`/admin/restaurants/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(restaurantData)
-  }),
-  deleteRestaurant: (id) => fetchWithAuth(`/admin/restaurants/${id}`, {
-    method: 'DELETE'
-  }),
+  
+  createRestaurant: async (formData) => {
+    try {
+      console.log('Đang gửi request tạo nhà hàng mới', 
+        formData.get('name'), 
+        formData.get('cuisineType'),
+        formData.has('restaurantImages')
+      );
+      
+      const response = await fetchWithAuth('/admin/restaurants', {
+        method: 'POST',
+        body: formData
+      });
+      
+      return response;
+    } catch (error) {
+      console.error('Lỗi khi tạo nhà hàng:', error);
+      throw error;
+    }
+  },
+  
+  updateRestaurant: async (id, formData) => {
+    try {
+      console.log('Đang gửi request cập nhật nhà hàng', id);
+      
+      const response = await fetchWithAuth(`/admin/restaurants/${id}`, {
+        method: 'PUT',
+        body: formData
+      });
+      
+      return response;
+    } catch (error) {
+      console.error('Lỗi khi cập nhật nhà hàng:', error);
+      throw error;
+    }
+  },
+  
+  deleteRestaurant: async (id) => {
+    try {
+      console.log('Đang gửi request xóa nhà hàng', id);
+      
+      const response = await fetchWithAuth(`/admin/restaurants/${id}`, {
+        method: 'DELETE'
+      });
+      
+      return response;
+    } catch (error) {
+      console.error('Lỗi khi xóa nhà hàng:', error);
+      throw error;
+    }
+  },
   
   // Reservations
   getReservations: () => fetchWithAuth('/admin/reservations'),
