@@ -9,12 +9,12 @@ function AdminRestaurants() {
   const [formData, setFormData] = useState({
     name: '',
     cuisine: '',
-    rating: '',
     address: '',
     image: '',
     description: '',
     openingHours: '',
-    phone: ''
+    phone: '',
+    capacity: ''
   });
 
   useEffect(() => {
@@ -39,13 +39,13 @@ function AdminRestaurants() {
     setEditingRestaurant(restaurant);
     setFormData({
       name: restaurant.name,
-      cuisine: restaurant.cuisine,
-      rating: restaurant.rating.toString(),
-      address: restaurant.address,
-      image: restaurant.image,
-      description: restaurant.description,
-      openingHours: restaurant.openingHours,
-      phone: restaurant.phone
+      cuisine: restaurant.cuisine || restaurant.cuisineType || '',
+      address: restaurant.address || '',
+      image: restaurant.image || restaurant.imageUrl || '',
+      description: restaurant.description || '',
+      openingHours: restaurant.openingHours || `${restaurant.openingTime || '10:00'} - ${restaurant.closingTime || '22:00'}`,
+      phone: restaurant.phone || '',
+      capacity: restaurant.capacity ? restaurant.capacity.toString() : ''
     });
   };
 
@@ -60,15 +60,29 @@ function AdminRestaurants() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Convert rating từ string sang number
+      // Phân tích giờ mở cửa thành openingTime và closingTime
+      const [openingTime, closingTime] = formData.openingHours ? formData.openingHours.split(' - ') : ['10:00', '22:00'];
+      
+      // Chuẩn bị dữ liệu nhà hàng với định dạng backend mong đợi
       const restaurantData = {
-        ...formData,
-        rating: parseFloat(formData.rating)
+        name: formData.name,
+        cuisine: formData.cuisine,
+        address: formData.address,
+        image: formData.image,
+        description: formData.description,
+        openingTime,
+        closingTime,
+        phone: formData.phone,
+        email: `contact@${formData.name.toLowerCase().replace(/\s+/g, '')}.com`,
+        priceRange: '200.000đ - 500.000đ', 
+        capacity: formData.capacity ? parseInt(formData.capacity) : null
       };
+
+      console.log('Dữ liệu gửi đi:', restaurantData);
 
       let updatedRestaurant;
       if (editingRestaurant) {
-        // Cập nhật nhà hàng
+        // Cập nhật nhà hàng hiện có
         updatedRestaurant = await adminAPI.updateRestaurant(editingRestaurant.id, restaurantData);
         setRestaurants(prev => prev.map(restaurant => 
           restaurant.id === editingRestaurant.id ? updatedRestaurant : restaurant
@@ -82,7 +96,7 @@ function AdminRestaurants() {
       // Reset form
       resetForm();
     } catch (err) {
-      console.error('Error saving restaurant:', err);
+      console.error('Chi tiết lỗi khi lưu nhà hàng:', err);
       setError('Không thể lưu thông tin nhà hàng. Vui lòng thử lại.');
     }
   };
@@ -92,12 +106,12 @@ function AdminRestaurants() {
     setFormData({
       name: '',
       cuisine: '',
-      rating: '',
       address: '',
       image: '',
       description: '',
       openingHours: '',
-      phone: ''
+      phone: '',
+      capacity: ''
     });
   };
 
@@ -118,10 +132,6 @@ function AdminRestaurants() {
     setEditingRestaurant(false); // false indicates add mode versus edit mode
   };
 
-  if (loading && restaurants.length === 0) {
-    return <div className="loading">Đang tải dữ liệu...</div>;
-  }
-
   return (
     <div className="admin-restaurants">
       <div className="page-header">
@@ -131,7 +141,7 @@ function AdminRestaurants() {
       
       {error && <div className="error-message">{error}</div>}
       
-      {(editingRestaurant !== null) ? (
+      {editingRestaurant !== null ? (
         <div className="edit-form">
           <h2>{editingRestaurant ? 'Chỉnh sửa nhà hàng' : 'Thêm nhà hàng mới'}</h2>
           <form onSubmit={handleSubmit}>
@@ -153,33 +163,6 @@ function AdminRestaurants() {
                   type="text"
                   name="cuisine"
                   value={formData.cuisine}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-            </div>
-            
-            <div className="form-row">
-              <div className="form-group">
-                <label>Đánh giá (1-5)</label>
-                <input
-                  type="number"
-                  name="rating"
-                  value={formData.rating}
-                  onChange={handleChange}
-                  min="1"
-                  max="5"
-                  step="0.1"
-                  required
-                />
-              </div>
-              
-              <div className="form-group">
-                <label>Số điện thoại</label>
-                <input
-                  type="tel"
-                  name="phone"
-                  value={formData.phone}
                   onChange={handleChange}
                   required
                 />
@@ -231,6 +214,30 @@ function AdminRestaurants() {
               ></textarea>
             </div>
             
+            <div className="form-group">
+              <label>Số điện thoại</label>
+              <input
+                type="tel"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            
+            <div className="form-group">
+              <label>Sức chứa (người)</label>
+              <input
+                type="number"
+                name="capacity"
+                value={formData.capacity}
+                onChange={handleChange}
+                min="1"
+                placeholder="Nhập sức chứa nhà hàng"
+                required={false}
+              />
+            </div>
+            
             <div className="form-buttons">
               <button type="submit" className="btn btn-primary">
                 {editingRestaurant ? 'Cập nhật' : 'Thêm mới'}
@@ -245,6 +252,8 @@ function AdminRestaurants() {
             </div>
           </form>
         </div>
+      ) : loading ? (
+        <div className="loading">Đang tải dữ liệu...</div>
       ) : (
         <table className="admin-table">
           <thead>
@@ -252,35 +261,39 @@ function AdminRestaurants() {
               <th>ID</th>
               <th>Tên nhà hàng</th>
               <th>Loại ẩm thực</th>
-              <th>Đánh giá</th>
               <th>Địa chỉ</th>
               <th>Thao tác</th>
             </tr>
           </thead>
           <tbody>
-            {restaurants.map(restaurant => (
-              <tr key={restaurant.id}>
-                <td>{restaurant.id}</td>
-                <td>{restaurant.name}</td>
-                <td>{restaurant.cuisine}</td>
-                <td>{restaurant.rating}</td>
-                <td>{restaurant.address}</td>
-                <td>
-                  <button 
-                    className="btn btn-sm btn-edit"
-                    onClick={() => handleEditClick(restaurant)}
-                  >
-                    Sửa
-                  </button>
-                  <button 
-                    className="btn btn-sm btn-delete"
-                    onClick={() => handleDeleteClick(restaurant.id)}
-                  >
-                    Xóa
-                  </button>
-                </td>
+            {restaurants && restaurants.length > 0 ? (
+              restaurants.map(restaurant => (
+                <tr key={restaurant.id}>
+                  <td>{restaurant.id}</td>
+                  <td>{restaurant.name}</td>
+                  <td>{restaurant.cuisine || restaurant.cuisineType}</td>
+                  <td>{restaurant.address}</td>
+                  <td>
+                    <button 
+                      className="btn btn-sm btn-edit"
+                      onClick={() => handleEditClick(restaurant)}
+                    >
+                      Sửa
+                    </button>
+                    <button 
+                      className="btn btn-sm btn-delete"
+                      onClick={() => handleDeleteClick(restaurant.id)}
+                    >
+                      Xóa
+                    </button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="6" className="no-data">Không có dữ liệu nhà hàng</td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       )}
@@ -288,4 +301,4 @@ function AdminRestaurants() {
   );
 }
 
-export default AdminRestaurants; 
+export default AdminRestaurants;

@@ -105,13 +105,21 @@ export const reservationAPI = {
 
 // Helper để gọi API với authentication
 export async function fetchWithAuth(endpoint, options = {}) {
-  return fetchAPI(endpoint, {
-    ...options,
-    headers: {
-      ...options.headers,
-      'Authorization': `Bearer ${localStorage.getItem('dinerchillToken')}`
-    }
-  });
+  try {
+    console.log(`Gọi API: ${endpoint}`, options);
+    const result = await fetchAPI(endpoint, {
+      ...options,
+      headers: {
+        ...options.headers,
+        'Authorization': `Bearer ${localStorage.getItem('dinerchillToken')}`
+      }
+    });
+    console.log(`Kết quả từ API ${endpoint}:`, result);
+    return result;
+  } catch (error) {
+    console.error(`Lỗi khi gọi API ${endpoint}:`, error);
+    throw error;
+  }
 }
 
 // Nhóm API cho Admin
@@ -131,10 +139,13 @@ export const adminAPI = {
   
   // Restaurants
   getRestaurants: () => fetchWithAuth('/admin/restaurants'),
-  createRestaurant: (restaurantData) => fetchWithAuth('/admin/restaurants', {
-    method: 'POST',
-    body: JSON.stringify(restaurantData)
-  }),
+  createRestaurant: (restaurantData) => {
+    console.log('Dữ liệu nhà hàng gửi đi:', restaurantData);
+    return fetchWithAuth('/admin/restaurants', {
+      method: 'POST',
+      body: JSON.stringify(restaurantData)
+    });
+  },
   updateRestaurant: (id, restaurantData) => fetchWithAuth(`/admin/restaurants/${id}`, {
     method: 'PUT',
     body: JSON.stringify(restaurantData)

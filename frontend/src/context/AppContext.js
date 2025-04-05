@@ -158,13 +158,14 @@ export function AppProvider({ children }) {
   // Đăng nhập người dùng
   const login = async (credentials) => {
     try {
-      const { user, token } = await authAPI.login(credentials);
-      localStorage.setItem('dinerchillToken', token);
-      setUser(user);
-      return user;
-    } catch (err) {
-      console.error('Login error:', err);
-      throw err;
+      const response = await authAPI.login(credentials);
+      setUser(response.user);
+      // Lưu token vào localStorage
+      localStorage.setItem('dinerchillToken', response.token);
+      return true;
+    } catch (error) {
+      console.error('Lỗi đăng nhập:', error);
+      throw error;
     }
   };
   
