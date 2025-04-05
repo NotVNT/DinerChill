@@ -8,6 +8,7 @@ const jwt = require('jsonwebtoken');
 const { User } = require('./models');
 const { Op } = require('sequelize');
 const dotenv = require('dotenv');
+const adminRoutes = require('./routes/admin');
 
 // Đọc biến môi trường từ file .env
 dotenv.config();
@@ -15,8 +16,10 @@ const JWT_SECRET = process.env.JWT_SECRET || 'dinerchillsecretkey';
 
 // Middleware
 app.use(cors({
-  origin: 'http://localhost:3000', // URL của frontend
-  credentials: true
+  origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -357,6 +360,9 @@ app.post('/api/auth/reset-password', async (req, res) => {
     res.status(500).json({ message: 'Đã xảy ra lỗi server' });
   }
 });
+
+// Thêm vào cuối file server.js trước app.listen
+app.use('/api/admin', adminRoutes);
 
 // Khởi động server
 app.listen(PORT, async () => {

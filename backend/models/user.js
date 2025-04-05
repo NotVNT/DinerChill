@@ -4,7 +4,29 @@ const bcrypt = require('bcryptjs');
 module.exports = (sequelize, DataTypes) => {
   class User extends Model {
     static associate(models) {
-      // Định nghĩa các mối quan hệ ở đây
+      // Định nghĩa quan hệ với bảng Reservation
+      User.hasMany(models.Reservation, {
+        foreignKey: 'userId',
+        as: 'reservations'
+      });
+      
+      // Định nghĩa quan hệ với bảng Review
+      User.hasMany(models.Review, {
+        foreignKey: 'userId',
+        as: 'reviews'
+      });
+      
+      // Định nghĩa quan hệ với bảng Favorite
+      User.hasMany(models.Favorite, {
+        foreignKey: 'userId',
+        as: 'favorites'
+      });
+      
+      // Định nghĩa quan hệ với bảng PaymentInformation
+      User.hasMany(models.PaymentInformation, {
+        foreignKey: 'userId',
+        as: 'paymentInformation'
+      });
     }
 
     // Method để kiểm tra mật khẩu
