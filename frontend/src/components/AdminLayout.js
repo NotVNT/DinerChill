@@ -18,10 +18,14 @@ function AdminLayout() {
   const getPageTitle = () => {
     const path = location.pathname;
     if (path === '/admin') return 'Tổng quan';
-    if (path.includes('/admin/users')) return 'Quản lý người dùng';
     if (path.includes('/admin/restaurants')) return 'Quản lý nhà hàng';
     if (path.includes('/admin/reservations')) return 'Quản lý đặt bàn';
     if (path.includes('/admin/reviews')) return 'Quản lý đánh giá';
+    if (path.includes('/admin/menus')) return 'Quản lý thực đơn';
+    if (path.includes('/admin/tables')) return 'Quản lý bàn';
+    if (path.includes('/admin/categories')) return 'Quản lý danh mục';
+    if (path.includes('/admin/promotions')) return 'Quản lý khuyến mãi';
+    if (path.includes('/admin/payments')) return 'Quản lý thanh toán';
     return 'Quản trị viên';
   };
 
@@ -51,21 +55,45 @@ function AdminLayout() {
               </NavLink>
             </li>
             <li>
-              <NavLink to="/admin/users">
-                <i>👥</i>
-                <span>Quản lý người dùng</span>
-              </NavLink>
-            </li>
-            <li>
               <NavLink to="/admin/restaurants">
                 <i>🍽️</i>
                 <span>Quản lý nhà hàng</span>
               </NavLink>
             </li>
             <li>
+              <NavLink to="/admin/menus">
+                <i>📋</i>
+                <span>Quản lý thực đơn</span>
+              </NavLink>
+            </li>
+            <li>
+              <NavLink to="/admin/tables">
+                <i>🪑</i>
+                <span>Quản lý bàn</span>
+              </NavLink>
+            </li>
+            <li>
+              <NavLink to="/admin/categories">
+                <i>📁</i>
+                <span>Quản lý danh mục</span>
+              </NavLink>
+            </li>
+            <li>
+              <NavLink to="/admin/promotions">
+                <i>🏷️</i>
+                <span>Quản lý khuyến mãi</span>
+              </NavLink>
+            </li>
+            <li>
               <NavLink to="/admin/reservations">
                 <i>📅</i>
                 <span>Quản lý đặt bàn</span>
+              </NavLink>
+            </li>
+            <li>
+              <NavLink to="/admin/payments">
+                <i>💰</i>
+                <span>Quản lý thanh toán</span>
               </NavLink>
             </li>
             <li>
