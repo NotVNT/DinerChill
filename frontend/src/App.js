@@ -18,10 +18,14 @@ import ForgotPasswordPage from './pages/identity/ForgotPasswordPage';
 import ResetPasswordPage from './pages/identity/ResetPasswordPage';
 import AdminLayout from './components/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
-import AdminUsers from './pages/admin/AdminUsers';
 import AdminRestaurants from './pages/admin/AdminRestaurants';
 import AdminReservations from './pages/admin/AdminReservations';
 import AdminReviews from './pages/admin/AdminReviews';
+import AdminMenus from './pages/admin/AdminMenus';
+import AdminTables from './pages/admin/AdminTables';
+import AdminCategories from './pages/admin/AdminCategories';
+import AdminPromotions from './pages/admin/AdminPromotions';
+import AdminPayments from './pages/admin/AdminPayments';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
 import FavoritesPage from './pages/profile_imformation/FavoritesPage';
@@ -41,9 +45,13 @@ function App() {
           }>
             {/* Thêm routes con cho admin */}
             <Route index element={<AdminDashboard />} />
-            <Route path="users" element={<AdminUsers />} />
             <Route path="restaurants" element={<AdminRestaurants />} />
+            <Route path="menus" element={<AdminMenus />} />
+            <Route path="tables" element={<AdminTables />} />
+            <Route path="categories" element={<AdminCategories />} />
+            <Route path="promotions" element={<AdminPromotions />} />
             <Route path="reservations" element={<AdminReservations />} />
+            <Route path="payments" element={<AdminPayments />} />
             <Route path="reviews" element={<AdminReviews />} />
           </Route>
           

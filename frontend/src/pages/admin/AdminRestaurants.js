@@ -14,8 +14,10 @@ function AdminRestaurants() {
     address: '',
     images: [],
     description: '',
-    openingHours: '',
+    openingTime: '',
+    closingTime: '',
     phone: '',
+    email: '',
     capacity: ''
   });
 
@@ -70,8 +72,10 @@ function AdminRestaurants() {
       address: restaurant.address || '',
       images: initialImages,
       description: restaurant.description || '',
-      openingHours: restaurant.openingHours || `${restaurant.openingTime || '10:00'} - ${restaurant.closingTime || '22:00'}`,
+      openingTime: restaurant.openingTime || '10:00',
+      closingTime: restaurant.closingTime || '22:00',
       phone: restaurant.phone || '',
+      email: restaurant.email || '',
       capacity: restaurant.capacity ? restaurant.capacity.toString() : ''
     });
   };
@@ -129,9 +133,6 @@ function AdminRestaurants() {
         return;
       }
       
-      // Phân tích giờ mở cửa thành openingTime và closingTime
-      const [openingTime, closingTime] = formData.openingHours ? formData.openingHours.split(' - ') : ['10:00', '22:00'];
-      
       // Tạo FormData để xử lý tải lên nhiều hình ảnh
       const formDataToSend = new FormData();
       
@@ -140,10 +141,13 @@ function AdminRestaurants() {
       formDataToSend.append('cuisineType', formData.cuisine || 'Chưa phân loại');
       formDataToSend.append('address', formData.address);
       formDataToSend.append('description', formData.description || '');
-      formDataToSend.append('openingTime', openingTime);
-      formDataToSend.append('closingTime', closingTime);
+      formDataToSend.append('openingTime', formData.openingTime || '10:00');
+      formDataToSend.append('closingTime', formData.closingTime || '22:00');
       formDataToSend.append('phone', formData.phone || '');
-      formDataToSend.append('email', `contact@${formData.name.toLowerCase().replace(/\s+/g, '')}.com`);
+      
+      // Use provided email or generate a default one if empty
+      formDataToSend.append('email', formData.email || `contact@${formData.name.toLowerCase().replace(/\s+/g, '')}.com`);
+      
       formDataToSend.append('priceRange', '200.000đ - 500.000đ');
       
       if (formData.capacity) {
@@ -233,8 +237,10 @@ function AdminRestaurants() {
       address: '',
       images: [],
       description: '',
-      openingHours: '',
+      openingTime: '',
+      closingTime: '',
       phone: '',
+      email: '',
       capacity: ''
     });
   };
@@ -391,37 +397,37 @@ function AdminRestaurants() {
                 </div>
                 {formData.images && formData.images.length > 0 && (
                   <div className="text-muted mt-2 image-info">
-                    <i className="fa fa-info-circle"></i> Đã tải lên {formData.images.length} hình ảnh tạm thời
+                    <i className="fa fa-info-circle"></i> Đã tải lên {formData.images.length} hình ảnh
                   </div>
                 )}
               </div>
               
-              <div className="form-group">
-                <label htmlFor="openingHours">Giờ mở cửa</label>
-                <input
-                  id="openingHours"
-                  type="text"
-                  name="openingHours"
-                  className="form-control"
-                  value={formData.openingHours}
-                  onChange={handleChange}
-                  placeholder="Ví dụ: 8:00 - 22:00"
-                  required
-                />
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="description">Mô tả</label>
-                <textarea
-                  id="description"
-                  name="description"
-                  className="form-control"
-                  value={formData.description}
-                  onChange={handleChange}
-                  rows="4"
-                  placeholder="Mô tả chi tiết về nhà hàng"
-                  required
-                ></textarea>
+              <div className="form-row">
+                <div className="form-group col-md-6">
+                  <label htmlFor="openingTime">Giờ mở cửa</label>
+                  <input
+                    id="openingTime"
+                    type="time"
+                    name="openingTime"
+                    className="form-control"
+                    value={formData.openingTime}
+                    onChange={handleChange}
+                    placeholder="Ví dụ: 08:00"
+                  />
+                </div>
+                
+                <div className="form-group col-md-6">
+                  <label htmlFor="closingTime">Giờ đóng cửa</label>
+                  <input
+                    id="closingTime"
+                    type="time"
+                    name="closingTime"
+                    className="form-control"
+                    value={formData.closingTime}
+                    onChange={handleChange}
+                    placeholder="Ví dụ: 22:00"
+                  />
+                </div>
               </div>
               
               <div className="form-row">
@@ -435,23 +441,48 @@ function AdminRestaurants() {
                     value={formData.phone}
                     onChange={handleChange}
                     placeholder="Nhập số điện thoại"
-                    required
                   />
                 </div>
                 
                 <div className="form-group col-md-6">
-                  <label htmlFor="capacity">Sức chứa (người)</label>
+                  <label htmlFor="email">Email</label>
                   <input
-                    id="capacity"
-                    type="number"
-                    name="capacity"
+                    id="email"
+                    type="email"
+                    name="email"
                     className="form-control"
-                    value={formData.capacity}
+                    value={formData.email}
                     onChange={handleChange}
-                    min="1"
-                    placeholder="Nhập sức chứa nhà hàng"
+                    placeholder="Nhập email liên hệ"
                   />
                 </div>
+              </div>
+              
+              <div className="form-group">
+                <label htmlFor="capacity">Sức chứa (người)</label>
+                <input
+                  id="capacity"
+                  type="number"
+                  name="capacity"
+                  className="form-control"
+                  value={formData.capacity}
+                  onChange={handleChange}
+                  min="1"
+                  placeholder="Nhập sức chứa nhà hàng"
+                />
+              </div>
+              
+              <div className="form-group">
+                <label htmlFor="description">Mô tả</label>
+                <textarea
+                  id="description"
+                  name="description"
+                  className="form-control"
+                  value={formData.description}
+                  onChange={handleChange}
+                  rows="4"
+                  placeholder="Mô tả chi tiết về nhà hàng"
+                ></textarea>
               </div>
               
               <div className="form-buttons">
