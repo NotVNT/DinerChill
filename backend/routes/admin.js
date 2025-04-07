@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Restaurant } = require('../models');
+const { Restaurant, RestaurantImage } = require('../models');
 const authenticateAdmin = require('../middleware/authenticate').authenticateAdmin;
 const multer = require('multer');
 const fs = require('fs');
@@ -50,23 +50,19 @@ const uploadToCloudinary = async (file) => {
 
 // Function to upload multiple files to Cloudinary
 const uploadMultipleToCloudinary = async (files) => {
-  try {
-    const uploadPromises = files.map(file => uploadToCloudinary(file));
-    const results = await Promise.all(uploadPromises);
-    return results;
-  } catch (error) {
-    console.error('Error uploading multiple images to Cloudinary:', error);
-    throw new Error('Error uploading multiple images to cloud');
-  }
+  const uploadPromises = files.map(file => uploadToCloudinary(file));
+  return Promise.all(uploadPromises);
 };
 
-// Lấy danh sách nhà hàng
+// Get all restaurants with include images
 router.get('/restaurants', authenticateAdmin, async (req, res) => {
   try {
-    const restaurants = await Restaurant.findAll();
+    const restaurants = await Restaurant.findAll({
+      include: [{ model: RestaurantImage, as: 'images' }]
+    });
     res.json(restaurants);
-  } catch (err) {
-    console.error('Error fetching restaurants:', err);
+  } catch (error) {
+    console.error('Error getting restaurants:', error);
     res.status(500).json({ message: 'Đã xảy ra lỗi khi lấy danh sách nhà hàng' });
   }
 });
@@ -90,26 +86,6 @@ router.post('/restaurants', authenticateAdmin, upload.array('restaurantImages', 
       return res.status(400).json({ message: 'Tên nhà hàng là bắt buộc' });
     }
 
-    let cloudImages = [];
-
-    // Upload hình ảnh lên Cloudinary nếu có
-    if (req.files && req.files.length > 0) {
-      try {
-        const uploadResults = await uploadMultipleToCloudinary(req.files);
-        cloudImages = uploadResults.map(result => result.url);
-        console.log('Uploaded images:', cloudImages);
-      } catch (uploadError) {
-        console.error('Error uploading images:', uploadError);
-        // Xóa các file tạm nếu có lỗi
-        req.files.forEach(file => {
-          if (fs.existsSync(file.path)) {
-            fs.unlinkSync(file.path);
-          }
-        });
-        return res.status(500).json({ message: 'Error uploading images' });
-      }
-    }
-
     // Tạo nhà hàng mới trong database
     const newRestaurant = await Restaurant.create({
       name,
@@ -121,12 +97,42 @@ router.post('/restaurants', authenticateAdmin, upload.array('restaurantImages', 
       phone: phone || '',
       email: email || `contact@${name.toLowerCase().replace(/\s+/g, '')}.com`,
       priceRange: priceRange || '200.000đ - 500.000đ',
-      capacity: capacity ? parseInt(capacity) : null,
-      cloudImages
+      capacity: capacity ? parseInt(capacity) : null
+    });
+
+    // Upload hình ảnh lên Cloudinary nếu có
+    if (req.files && req.files.length > 0) {
+      try {
+        const uploadResults = await uploadMultipleToCloudinary(req.files);
+        
+        // Lưu thông tin hình ảnh vào database
+        const imagePromises = uploadResults.map(result => {
+          return RestaurantImage.create({
+            restaurant_id: newRestaurant.id,
+            image_url: result.url
+          });
+        });
+        
+        await Promise.all(imagePromises);
+      } catch (uploadError) {
+        console.error('Error uploading images:', uploadError);
+        // Xóa các file tạm nếu có lỗi
+        req.files.forEach(file => {
+          if (fs.existsSync(file.path)) {
+            fs.unlinkSync(file.path);
+          }
+        });
+        // Note: We continue with restaurant creation even if image upload fails
+      }
+    }
+
+    // Fetch restaurant with images
+    const restaurantWithImages = await Restaurant.findByPk(newRestaurant.id, {
+      include: [{ model: RestaurantImage, as: 'images' }]
     });
 
     console.log('Restaurant created:', newRestaurant.id);
-    res.status(201).json(newRestaurant);
+    res.status(201).json(restaurantWithImages);
   } catch (error) {
     console.error('Lỗi khi tạo nhà hàng:', error);
     // Xóa các file tạm nếu có lỗi
@@ -148,7 +154,7 @@ router.put('/restaurants/:id', authenticateAdmin, upload.array('restaurantImages
     const { 
       name, cuisineType, address, description, 
       openingTime, closingTime, phone, email, 
-      priceRange, capacity, existingCloudImages 
+      priceRange, capacity, deleteImageIds 
     } = req.body;
 
     // Tìm nhà hàng theo id
@@ -166,25 +172,44 @@ router.put('/restaurants/:id', authenticateAdmin, upload.array('restaurantImages
       return res.status(404).json({ message: 'Không tìm thấy nhà hàng' });
     }
 
-    // Xử lý hình ảnh đã tồn tại
-    let cloudImages = [];
-    if (existingCloudImages) {
+    // Xóa hình ảnh đã chọn nếu có
+    if (deleteImageIds && deleteImageIds.length > 0) {
       try {
-        cloudImages = JSON.parse(existingCloudImages);
-      } catch (e) {
-        console.error('Error parsing existingCloudImages:', e);
-        cloudImages = [];
+        let idsToDelete = [];
+        
+        if (typeof deleteImageIds === 'string') {
+          idsToDelete = deleteImageIds.split(',').map(id => parseInt(id.trim()));
+        } else if (Array.isArray(deleteImageIds)) {
+          idsToDelete = deleteImageIds.map(id => parseInt(id));
+        }
+        
+        if (idsToDelete.length > 0) {
+          await RestaurantImage.destroy({
+            where: {
+              id: idsToDelete,
+              restaurant_id: id
+            }
+          });
+        }
+      } catch (deleteError) {
+        console.error('Error deleting images:', deleteError);
       }
-    } else if (restaurant.cloudImages) {
-      cloudImages = restaurant.cloudImages;
     }
 
     // Upload hình ảnh mới lên Cloudinary nếu có
     if (req.files && req.files.length > 0) {
       try {
         const uploadResults = await uploadMultipleToCloudinary(req.files);
-        const newImageUrls = uploadResults.map(result => result.url);
-        cloudImages = [...cloudImages, ...newImageUrls];
+        
+        // Lưu thông tin hình ảnh vào database
+        const imagePromises = uploadResults.map(result => {
+          return RestaurantImage.create({
+            restaurant_id: id,
+            image_url: result.url
+          });
+        });
+        
+        await Promise.all(imagePromises);
       } catch (uploadError) {
         console.error('Error uploading images:', uploadError);
         // Xóa các file tạm nếu có lỗi
@@ -193,7 +218,6 @@ router.put('/restaurants/:id', authenticateAdmin, upload.array('restaurantImages
             fs.unlinkSync(file.path);
           }
         });
-        return res.status(500).json({ message: 'Error uploading images' });
       }
     }
 
@@ -208,12 +232,13 @@ router.put('/restaurants/:id', authenticateAdmin, upload.array('restaurantImages
       phone: phone || restaurant.phone,
       email: email || restaurant.email,
       priceRange: priceRange || restaurant.priceRange,
-      capacity: capacity ? parseInt(capacity) : restaurant.capacity,
-      cloudImages
+      capacity: capacity ? parseInt(capacity) : restaurant.capacity
     });
 
-    // Lấy dữ liệu nhà hàng đã cập nhật
-    const updatedRestaurant = await Restaurant.findByPk(id);
+    // Lấy dữ liệu nhà hàng đã cập nhật, kèm theo images
+    const updatedRestaurant = await Restaurant.findByPk(id, {
+      include: [{ model: RestaurantImage, as: 'images' }]
+    });
     
     res.json(updatedRestaurant);
   } catch (error) {
@@ -234,22 +259,15 @@ router.put('/restaurants/:id', authenticateAdmin, upload.array('restaurantImages
 router.delete('/restaurants/:id', authenticateAdmin, async (req, res) => {
   try {
     const restaurantId = parseInt(req.params.id);
-    const restaurant = await Restaurant.findByPk(restaurantId);
+    const restaurant = await Restaurant.findByPk(restaurantId, {
+      include: [{ model: RestaurantImage, as: 'images' }]
+    });
     
     if (!restaurant) {
       return res.status(404).json({ message: 'Không tìm thấy nhà hàng' });
     }
     
-    // Xóa hình ảnh từ Cloudinary nếu có
-    if (restaurant.cloudImages && restaurant.cloudImages.length > 0) {
-      try {
-        // Chỉ log ra, không làm gián đoạn quá trình xóa nhà hàng
-        console.log('Would delete Cloudinary images for restaurant:', restaurantId);
-      } catch (cloudError) {
-        console.error('Error deleting images from Cloudinary:', cloudError);
-      }
-    }
-
+    // Restaurant will be deleted along with its images due to CASCADE constraint
     await restaurant.destroy();
     res.json({ message: 'Đã xóa nhà hàng thành công' });
   } catch (err) {
