@@ -48,6 +48,12 @@ module.exports = (sequelize, DataTypes) => {
         otherKey: 'promotionId',
         as: 'promotions'
       });
+      
+      // Định nghĩa quan hệ với bảng RestaurantImage
+      Restaurant.hasMany(models.RestaurantImage, {
+        foreignKey: 'restaurant_id',
+        as: 'images'
+      });
     }
   }
   
@@ -96,17 +102,6 @@ module.exports = (sequelize, DataTypes) => {
     capacity: {
       type: DataTypes.INTEGER,
       allowNull: true
-    },
-    cloudImages: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-      get() {
-        const rawValue = this.getDataValue('cloudImages');
-        return rawValue ? JSON.parse(rawValue) : [];
-      },
-      set(value) {
-        this.setDataValue('cloudImages', JSON.stringify(value));
-      }
     }
   }, {
     sequelize,
