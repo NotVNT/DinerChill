@@ -141,14 +141,14 @@ function AdminRestaurants() {
       formDataToSend.append('cuisineType', formData.cuisine || 'Chưa phân loại');
       formDataToSend.append('address', formData.address);
       formDataToSend.append('description', formData.description || '');
-      formDataToSend.append('openingTime', formData.openingTime || '10:00');
-      formDataToSend.append('closingTime', formData.closingTime || '22:00');
+      formDataToSend.append('openingTime', formData.openingTime || '');
+      formDataToSend.append('closingTime', formData.closingTime || '');
       formDataToSend.append('phone', formData.phone || '');
       
       // Use provided email or generate a default one if empty
-      formDataToSend.append('email', formData.email || `contact@${formData.name.toLowerCase().replace(/\s+/g, '')}.com`);
+      formDataToSend.append('email', formData.email || ``);
       
-      formDataToSend.append('priceRange', formData.priceRange || '200.000đ - 500.000đ');
+      formDataToSend.append('priceRange', formData.priceRange || '');
       
       if (formData.capacity) {
         formDataToSend.append('capacity', formData.capacity);
