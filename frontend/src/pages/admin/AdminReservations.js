@@ -16,6 +16,7 @@ function AdminReservations() {
     status: 'pending',
     specialRequests: ''
   });
+  const [retrying, setRetrying] = useState(false);
 
   useEffect(() => {
     fetchReservations();
@@ -24,6 +25,7 @@ function AdminReservations() {
   const fetchReservations = async () => {
     try {
       setLoading(true);
+      setRetrying(false);
       const data = await adminAPI.getReservations();
       setReservations(data);
       setError(null);
@@ -116,11 +118,24 @@ function AdminReservations() {
     return <div className="loading">Đang tải dữ liệu...</div>;
   }
 
+  // Add a retry button when there's an error
+  const handleRetry = () => {
+    setRetrying(true);
+    fetchReservations();
+  };
+
   return (
     <div className="admin-reservations">
       <h1>Quản lý Đặt bàn</h1>
       
-      {error && <div className="error-message">{error}</div>}
+      {error && (
+        <div className="error-message">
+          {error}
+          <button onClick={handleRetry} className="retry-button">
+            {retrying ? 'Đang thử lại...' : 'Thử lại'}
+          </button>
+        </div>
+      )}
       
       {editingReservation ? (
         <div className="edit-form">

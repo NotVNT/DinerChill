@@ -8,6 +8,7 @@ function AdminRestaurants() {
   const [success, setSuccess] = useState(null);
   const [editingRestaurant, setEditingRestaurant] = useState(null);
   const [viewingRestaurant, setViewingRestaurant] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     cuisine: '',
@@ -18,7 +19,8 @@ function AdminRestaurants() {
     closingTime: '',
     phone: '',
     email: '',
-    capacity: ''
+    capacity: '',
+    priceRange: ''
   });
 
   useEffect(() => {
@@ -42,21 +44,16 @@ function AdminRestaurants() {
   const handleEditClick = (restaurant) => {
     setEditingRestaurant(restaurant);
     
-    // Chuẩn bị mảng hình ảnh từ cloud
+    // Chuẩn bị mảng hình ảnh từ images
     let initialImages = [];
     
-    if (restaurant.cloudImages && Array.isArray(restaurant.cloudImages) && restaurant.cloudImages.length > 0) {
-      // Sử dụng trường cloudImages nếu có (đây là trường chứa mảng URLs đến cloud storage)
-      initialImages = restaurant.cloudImages.map((imageUrl, index) => ({
-        id: `cloud-${index}`,
-        url: imageUrl,
-        preview: imageUrl
-      }));
-    } else if (restaurant.images && Array.isArray(restaurant.images) && restaurant.images.length > 0) {
-      initialImages = restaurant.images.map((imageUrl, index) => ({
-        id: `existing-${index}`,
-        url: imageUrl,
-        preview: imageUrl
+    if (restaurant.images && Array.isArray(restaurant.images) && restaurant.images.length > 0) {
+      // Sử dụng trường images từ quan hệ với bảng restaurant_images
+      initialImages = restaurant.images.map((image) => ({
+        id: `db-${image.id}`,
+        url: image.image_url,
+        preview: image.image_url,
+        dbId: image.id // Lưu ID từ database để có thể xóa sau này
       }));
     } else if (restaurant.image) {
       initialImages = [{
@@ -76,7 +73,8 @@ function AdminRestaurants() {
       closingTime: restaurant.closingTime || '22:00',
       phone: restaurant.phone || '',
       email: restaurant.email || '',
-      capacity: restaurant.capacity ? restaurant.capacity.toString() : ''
+      capacity: restaurant.capacity ? restaurant.capacity.toString() : '',
+      priceRange: restaurant.priceRange || '200.000đ - 500.000đ'
     });
   };
 
@@ -125,11 +123,13 @@ function AdminRestaurants() {
     e.preventDefault();
     setError(null); // Reset any previous error
     setSuccess(null); // Reset any previous success message
+    setIsSubmitting(true); // Set submitting state to true when form is submitted
     
     try {
       // Validate required fields
       if (!formData.name || !formData.address) {
         setError('Vui lòng điền đầy đủ thông tin bắt buộc (tên và địa chỉ nhà hàng).');
+        setIsSubmitting(false); // Reset submitting state
         return;
       }
       
@@ -148,7 +148,7 @@ function AdminRestaurants() {
       // Use provided email or generate a default one if empty
       formDataToSend.append('email', formData.email || `contact@${formData.name.toLowerCase().replace(/\s+/g, '')}.com`);
       
-      formDataToSend.append('priceRange', '200.000đ - 500.000đ');
+      formDataToSend.append('priceRange', formData.priceRange || '200.000đ - 500.000đ');
       
       if (formData.capacity) {
         formDataToSend.append('capacity', formData.capacity);
@@ -168,12 +168,12 @@ function AdminRestaurants() {
       });
       
       // Nếu không có file mới, hiển thị thông báo
-      if (!hasFiles && !editingRestaurant) {
+      if (!hasFiles && !editingRestaurant.id) {
         console.log('No image files selected for new restaurant');
       }
       
       // Nếu đang chỉnh sửa, thêm các URLs của hình ảnh đã tồn tại
-      if (editingRestaurant) {
+      if (editingRestaurant && editingRestaurant.id) {
         // Lọc ra các ảnh đã lưu trên cloud (có URL bắt đầu bằng http)
         const existingCloudImages = formData.images
           .filter(img => img.url && (img.url.startsWith('http') || img.url.startsWith('https')))
@@ -190,11 +190,12 @@ function AdminRestaurants() {
         cuisineType: formData.cuisine,
         address: formData.address,
         imageCount: formData.images.length,
-        hasFiles
+        hasFiles,
+        isNewRestaurant: !editingRestaurant.id
       });
 
       let updatedRestaurant;
-      if (editingRestaurant) {
+      if (editingRestaurant && editingRestaurant.id) {
         // Cập nhật nhà hàng hiện có
         console.log('Updating restaurant with ID:', editingRestaurant.id);
         updatedRestaurant = await adminAPI.updateRestaurant(editingRestaurant.id, formDataToSend);
@@ -221,11 +222,15 @@ function AdminRestaurants() {
       }, 5000);
     } catch (err) {
       console.error('Chi tiết lỗi khi lưu nhà hàng:', err);
-      if (err.message) {
+      if (err.response && err.response.data && err.response.data.message) {
+        setError(`Không thể lưu thông tin nhà hàng: ${err.response.data.message}`);
+      } else if (err.message) {
         setError(`Không thể lưu thông tin nhà hàng: ${err.message}`);
       } else {
         setError('Không thể lưu thông tin nhà hàng. Vui lòng thử lại.');
       }
+    } finally {
+      setIsSubmitting(false); // Reset submitting state regardless of success or failure
     }
   };
 
@@ -241,7 +246,8 @@ function AdminRestaurants() {
       closingTime: '',
       phone: '',
       email: '',
-      capacity: ''
+      capacity: '',
+      priceRange: ''
     });
   };
 
@@ -270,12 +276,7 @@ function AdminRestaurants() {
     }
   };
 
-  const handleAddNew = () => {
-    resetForm();
-    setEditingRestaurant(false); // false indicates add mode versus edit mode
-  };
-
-  const handleViewDetails = (restaurant) => {
+  const handleViewClick = (restaurant) => {
     setViewingRestaurant(restaurant);
   };
 
@@ -287,7 +288,7 @@ function AdminRestaurants() {
     <div className="admin-restaurants">
       <div className="page-header">
         <h1>Quản lý Nhà hàng</h1>
-        <button className="btn-action btn-add" onClick={handleAddNew}>
+        <button className="btn-action btn-add" onClick={() => setEditingRestaurant({})}>
           <i className="fa fa-plus-circle"></i> Thêm nhà hàng mới
         </button>
       </div>
@@ -308,7 +309,7 @@ function AdminRestaurants() {
       {editingRestaurant !== null ? (
         <div className="card edit-form-card">
           <div className="card-header">
-            <h2>{editingRestaurant ? 'Chỉnh sửa nhà hàng' : 'Thêm nhà hàng mới'}</h2>
+            <h2>{editingRestaurant.id ? "Chỉnh sửa nhà hàng" : "Thêm nhà hàng mới"}</h2>
           </div>
           <div className="card-body">
             <form onSubmit={handleSubmit} className="restaurant-form">
@@ -473,6 +474,19 @@ function AdminRestaurants() {
               </div>
               
               <div className="form-group">
+                <label htmlFor="priceRange">Mức giá:</label>
+                <input
+                  type="text"
+                  id="priceRange"
+                  name="priceRange"
+                  className="form-control"
+                  value={formData.priceRange}
+                  onChange={handleChange}
+                  placeholder="Ví dụ: 200.000đ - 500.000đ"
+                />
+              </div>
+              
+              <div className="form-group">
                 <label htmlFor="description">Mô tả</label>
                 <textarea
                   id="description"
@@ -486,13 +500,23 @@ function AdminRestaurants() {
               </div>
               
               <div className="form-buttons">
-                <button type="submit" className="btn btn-success">
-                  <i className="fa fa-save"></i> {editingRestaurant ? 'Cập nhật' : 'Thêm mới'}
+                <button type="submit" className="btn btn-success" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                      <span className="ms-2">Đang xử lý...</span>
+                    </>
+                  ) : (
+                    <>
+                      <i className="fa fa-save"></i> {editingRestaurant.id ? 'Cập nhật' : 'Thêm mới'}
+                    </>
+                  )}
                 </button>
                 <button 
                   type="button" 
                   className="btn btn-secondary"
                   onClick={resetForm}
+                  disabled={isSubmitting}
                 >
                   <i className="fa fa-times"></i> Hủy
                 </button>
@@ -528,9 +552,9 @@ function AdminRestaurants() {
                       <tr key={restaurant.id}>
                         <td>{restaurant.id}</td>
                         <td>
-                          {restaurant.cloudImages && restaurant.cloudImages.length > 0 ? (
+                          {restaurant.images && restaurant.images.length > 0 ? (
                             <img 
-                              src={restaurant.cloudImages[0]} 
+                              src={restaurant.images[0].image_url} 
                               alt={restaurant.name} 
                               className="restaurant-thumbnail" 
                               width="50"
@@ -548,7 +572,7 @@ function AdminRestaurants() {
                         <td className="action-buttons">
                           <button 
                             className="btn-action btn-view"
-                            onClick={() => handleViewDetails(restaurant)}
+                            onClick={() => handleViewClick(restaurant)}
                             title="Xem chi tiết"
                           >
                             <i className="fa fa-eye"></i>
@@ -579,7 +603,7 @@ function AdminRestaurants() {
                         <div className="empty-state">
                           <i className="fa fa-utensils fa-3x"></i>
                           <p>Không có dữ liệu nhà hàng</p>
-                          <button className="btn btn-primary" onClick={handleAddNew}>
+                          <button className="btn btn-primary" onClick={() => setEditingRestaurant({})}>
                             Thêm nhà hàng đầu tiên
                           </button>
                         </div>
@@ -613,11 +637,11 @@ function AdminRestaurants() {
                 
                 {/* Restaurant Images Gallery */}
                 <div className="restaurant-images-gallery">
-                  {viewingRestaurant.cloudImages && viewingRestaurant.cloudImages.length > 0 ? (
-                    viewingRestaurant.cloudImages.map((image, index) => (
+                  {viewingRestaurant.images && viewingRestaurant.images.length > 0 ? (
+                    viewingRestaurant.images.map((image, index) => (
                       <div key={index} className="gallery-image-item">
                         <img 
-                          src={image} 
+                          src={image.image_url} 
                           alt={`${viewingRestaurant.name} - Ảnh ${index + 1}`} 
                           className="gallery-image" 
                         />

@@ -1,11 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const { Restaurant, RestaurantImage } = require('../models');
+const { Restaurant, RestaurantImage, Category, Reservation, User, Table } = require('../models');
 const authenticateAdmin = require('../middleware/authenticate').authenticateAdmin;
 const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
 const cloudinary = require('../config/cloudinary');
+const { Sequelize } = require('sequelize');
+const { Op } = require('sequelize');
 
 // Setup temporary storage for file uploads
 const tempStorage = multer.diskStorage({
@@ -275,5 +277,312 @@ router.delete('/restaurants/:id', authenticateAdmin, async (req, res) => {
     res.status(500).json({ message: 'Đã xảy ra lỗi khi xóa nhà hàng' });
   }
 });
+
+// Categories Management Routes
+// Get all categories
+router.get('/categories', authenticateAdmin, async (req, res) => {
+  try {
+    const categories = await Category.findAll();
+    res.json(categories);
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+    res.status(500).json({ message: 'Không thể lấy danh sách danh mục' });
+  }
+});
+
+// Create a new category
+router.post('/categories', authenticateAdmin, upload.single('image'), async (req, res) => {
+  try {
+    const { name, description } = req.body;
+    
+    // Validate required fields
+    if (!name) {
+      return res.status(400).json({ message: 'Tên danh mục là bắt buộc' });
+    }
+
+    let imageUrl = null;
+    
+    // If image file is uploaded, process it
+    if (req.file) {
+      try {
+        const uploadResult = await uploadToCloudinary(req.file);
+        imageUrl = uploadResult.url;
+      } catch (uploadError) {
+        console.error('Error uploading image:', uploadError);
+        // Clean up any temp file
+        if (req.file && fs.existsSync(req.file.path)) {
+          fs.unlinkSync(req.file.path);
+        }
+        return res.status(500).json({ message: 'Không thể tải lên hình ảnh' });
+      }
+    } else if (req.body.imageUrl) {
+      // If imageUrl is provided in the body
+      imageUrl = req.body.imageUrl;
+    }
+
+    // Create new category
+    const newCategory = await Category.create({
+      name,
+      description: description || '',
+      imageUrl
+    });
+
+    res.status(201).json(newCategory);
+  } catch (error) {
+    console.error('Error creating category:', error);
+    // Clean up any temp file if there's an error
+    if (req.file && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+    res.status(500).json({ message: 'Không thể tạo danh mục mới' });
+  }
+});
+
+// Update a category
+router.put('/categories/:id', authenticateAdmin, upload.single('image'), async (req, res) => {
+  try {
+    const categoryId = req.params.id;
+    const { name, description } = req.body;
+    
+    // Find the category
+    const category = await Category.findByPk(categoryId);
+    if (!category) {
+      // Clean up any temp file
+      if (req.file && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+      return res.status(404).json({ message: 'Không tìm thấy danh mục' });
+    }
+
+    let imageUrl = category.imageUrl;
+    
+    // If image file is uploaded, process it
+    if (req.file) {
+      try {
+        const uploadResult = await uploadToCloudinary(req.file);
+        imageUrl = uploadResult.url;
+      } catch (uploadError) {
+        console.error('Error uploading image:', uploadError);
+        // Clean up any temp file
+        if (req.file && fs.existsSync(req.file.path)) {
+          fs.unlinkSync(req.file.path);
+        }
+        return res.status(500).json({ message: 'Không thể tải lên hình ảnh' });
+      }
+    } else if (req.body.imageUrl) {
+      // If imageUrl is provided in the body
+      imageUrl = req.body.imageUrl;
+    }
+
+    // Update the category
+    await category.update({
+      name: name || category.name,
+      description: description !== undefined ? description : category.description,
+      imageUrl
+    });
+
+    res.json(category);
+  } catch (error) {
+    console.error('Error updating category:', error);
+    // Clean up any temp file if there's an error
+    if (req.file && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+    res.status(500).json({ message: 'Không thể cập nhật danh mục' });
+  }
+});
+
+// Delete a category
+router.delete('/categories/:id', authenticateAdmin, async (req, res) => {
+  try {
+    const categoryId = req.params.id;
+    
+    // Find the category
+    const category = await Category.findByPk(categoryId);
+    if (!category) {
+      return res.status(404).json({ message: 'Không tìm thấy danh mục' });
+    }
+
+    // Delete the category
+    await category.destroy();
+    
+    res.json({ message: 'Đã xóa danh mục thành công' });
+  } catch (error) {
+    console.error('Error deleting category:', error);
+    res.status(500).json({ message: 'Không thể xóa danh mục' });
+  }
+});
+
+// Get all reservations with included User data
+router.get('/reservations', authenticateAdmin, async (req, res) => {
+  try {
+    console.log('Admin API: Getting reservations with associations');
+    const reservations = await Reservation.findAll({
+      include: [
+        { model: User, attributes: ['id', 'firstName', 'lastName', 'email'] },
+        { model: Restaurant, attributes: ['id', 'name'] }
+      ],
+      order: [['date', 'DESC'], ['time', 'ASC']]
+    });
+    console.log(`Admin API: Found ${reservations.length} reservations`);
+    res.json(reservations);
+  } catch (error) {
+    console.error('Admin API: Error getting reservations:', error);
+    console.error('Admin API: Error details:', error.message);
+    console.error('Admin API: Error stack:', error.stack);
+    res.status(500).json({ 
+      message: 'Đã xảy ra lỗi khi lấy danh sách đặt bàn',
+      error: error.message 
+    });
+  }
+});
+
+// Tables Management Routes
+router.get('/tables', authenticateAdmin, async (req, res) => {
+  try {
+    const { restaurantId } = req.query;
+    
+    // Thêm điều kiện where để lọc theo restaurantId
+    const whereCondition = restaurantId ? { restaurantId } : {};
+    
+    const tables = await Table.findAll({
+      where: whereCondition,
+      include: [
+        {
+          model: Restaurant,
+          as: 'restaurant',
+          attributes: ['id', 'name']
+        }
+      ]
+    });
+    
+    res.json(tables);
+  } catch (error) {
+    console.error('Error getting tables:', error);
+    res.status(500).json({ message: 'Đã xảy ra lỗi khi lấy danh sách bàn' });
+  }
+});
+
+// Tạo bàn mới
+router.post('/tables', authenticateAdmin, async (req, res) => {
+  try {
+    // Kiểm tra xem số bàn đã tồn tại trong nhà hàng chưa
+    const existingTable = await Table.findOne({
+      where: {
+        restaurantId: req.body.restaurantId,
+        tableNumber: req.body.tableNumber
+      }
+    });
+
+    if (existingTable) {
+      return res.status(400).json({
+        message: 'Số bàn này đã tồn tại trong nhà hàng'
+      });
+    }
+
+    // Nếu không trùng, tạo bàn mới
+    const tableData = {
+      ...req.body,
+      tableCode: generateTableCode()
+    };
+
+    const table = await Table.create(tableData);
+    const tableWithRestaurant = await Table.findByPk(table.id, {
+      include: [
+        {
+          model: Restaurant,
+          as: 'restaurant',
+          attributes: ['id', 'name']
+        }
+      ]
+    });
+    res.status(201).json(tableWithRestaurant);
+  } catch (error) {
+    console.error('Error creating table:', error);
+    if (error.name === 'SequelizeUniqueConstraintError') {
+      return res.status(400).json({
+        message: 'Số bàn này đã tồn tại trong nhà hàng'
+      });
+    }
+    res.status(500).json({ message: 'Đã xảy ra lỗi khi tạo bàn mới' });
+  }
+});
+
+// Cập nhật bàn
+router.put('/tables/:id', authenticateAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const table = await Table.findByPk(id);
+    
+    if (!table) {
+      return res.status(404).json({ message: 'Không tìm thấy bàn' });
+    }
+
+    // Kiểm tra xem số bàn mới có trùng với bàn khác trong cùng nhà hàng không
+    if (req.body.tableNumber !== table.tableNumber) {
+      const existingTable = await Table.findOne({
+        where: {
+          restaurantId: req.body.restaurantId || table.restaurantId,
+          tableNumber: req.body.tableNumber,
+          id: { [Op.ne]: id } // Loại trừ bàn hiện tại
+        }
+      });
+
+      if (existingTable) {
+        return res.status(400).json({
+          message: 'Số bàn này đã tồn tại trong nhà hàng'
+        });
+      }
+    }
+    
+    await table.update(req.body);
+    
+    const updatedTable = await Table.findByPk(id, {
+      include: [
+        {
+          model: Restaurant,
+          as: 'restaurant',
+          attributes: ['id', 'name']
+        }
+      ]
+    });
+    
+    res.json(updatedTable);
+  } catch (error) {
+    console.error('Error updating table:', error);
+    if (error.name === 'SequelizeUniqueConstraintError') {
+      return res.status(400).json({
+        message: 'Số bàn này đã tồn tại trong nhà hàng'
+      });
+    }
+    res.status(500).json({ message: 'Đã xảy ra lỗi khi cập nhật bàn' });
+  }
+});
+
+router.delete('/tables/:id', authenticateAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const table = await Table.findByPk(id);
+    
+    if (!table) {
+      return res.status(404).json({ message: 'Không tìm thấy bàn' });
+    }
+    
+    await table.destroy();
+    res.json({ message: 'Đã xóa bàn thành công' });
+  } catch (error) {
+    console.error('Error deleting table:', error);
+    res.status(500).json({ message: 'Đã xảy ra lỗi khi xóa bàn' });
+  }
+});
+
+const generateTableCode = () => {
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let result = '';
+  for (let i = 0; i < 6; i++) {
+    result += characters.charAt(Math.floor(Math.random() * characters.length));
+  }
+  return result;
+};
 
 module.exports = router; 

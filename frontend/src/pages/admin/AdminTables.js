@@ -1,328 +1,308 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { fetchWithAuth } from '../../services/api';
+import React, { useState, useEffect } from 'react';
+import { adminAPI } from '../../services/api';
+import '../../styles/admin_layout/admin_tables.css';
+
+// Di chuyển hàm generateTableCode lên trước component
+const generateTableCode = () => {
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let result = '';
+  for (let i = 0; i < 6; i++) {
+    result += characters.charAt(Math.floor(Math.random() * characters.length));
+  }
+  return result;
+};
 
 function AdminTables() {
-  const [tables, setTables] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [selectedRestaurant, setSelectedRestaurant] = useState('');
   const [restaurants, setRestaurants] = useState([]);
-  const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({
+  const [selectedRestaurant, setSelectedRestaurant] = useState(null);
+  const [tables, setTables] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [currentTable, setCurrentTable] = useState({
+    restaurantId: '',
     tableNumber: '',
-    capacity: '',
-    status: 'available', // available, reserved, occupied
-    location: '',
-    notes: ''
+    capacity: 2,
+    status: 'available',
+    description: '',
+    tableCode: generateTableCode()
   });
 
-  const fetchRestaurants = useCallback(async () => {
-    try {
-      const data = await fetchWithAuth('/admin/restaurants');
-      setRestaurants(data);
-      if (data.length > 0 && !selectedRestaurant) {
-        setSelectedRestaurant(data[0].id);
-      }
-    } catch (error) {
-      console.error('Error fetching restaurants:', error);
-      setError('Không thể tải danh sách nhà hàng');
-    }
-  }, [selectedRestaurant]);
-
-  const fetchTables = useCallback(async () => {
-    if (!selectedRestaurant) return;
-    
-    try {
-      setLoading(true);
-      const data = await fetchWithAuth(`/admin/restaurants/${selectedRestaurant}/tables`);
-      setTables(data);
-      setError(null);
-    } catch (error) {
-      console.error('Error fetching tables:', error);
-      setError('Không thể tải danh sách bàn');
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedRestaurant]);
-
+  // Fetch restaurants data
   useEffect(() => {
+    const fetchRestaurants = async () => {
+      try {
+        const restaurantsRes = await adminAPI.getRestaurants();
+        setRestaurants(restaurantsRes);
+      } catch (error) {
+        console.error('Error fetching restaurants:', error);
+      }
+    };
     fetchRestaurants();
-    if (selectedRestaurant) {
-      fetchTables();
-    }
-  }, [fetchRestaurants, fetchTables, selectedRestaurant]);
+  }, []);
 
-  const handleRestaurantChange = (e) => {
-    setSelectedRestaurant(e.target.value);
+  // Fetch tables when a restaurant is selected
+  useEffect(() => {
+    const fetchTables = async () => {
+      if (selectedRestaurant) {
+        try {
+          const tablesRes = await adminAPI.getTables({ 
+            restaurantId: selectedRestaurant.id 
+          });
+          // Thêm sort để sắp xếp bàn theo thứ tự tăng dần của số bàn
+          const sortedTables = tablesRes
+            .filter(table => table.restaurantId === selectedRestaurant.id)
+            .sort((a, b) => {
+              // Chuyển số bàn thành số để so sánh
+              const tableNumA = parseInt(a.tableNumber.replace(/\D/g, ''));
+              const tableNumB = parseInt(b.tableNumber.replace(/\D/g, ''));
+              return tableNumA - tableNumB;
+            });
+          setTables(sortedTables);
+        } catch (error) {
+          console.error('Error fetching tables:', error);
+        }
+      }
+    };
+    fetchTables();
+  }, [selectedRestaurant]);
+
+  // Handle selecting a restaurant
+  const handleSelectRestaurant = (restaurant) => {
+    setSelectedRestaurant(restaurant);
   };
 
+  // Handle going back to restaurant list
+  const handleBackToRestaurants = () => {
+    setSelectedRestaurant(null);
+  };
+
+  // Handle input changes in the form
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
+    setCurrentTable({
+      ...currentTable,
       [name]: value
     });
   };
 
+  // Open modal for adding a new table
+  const handleAddTable = () => {
+    setCurrentTable({
+      restaurantId: selectedRestaurant.id,
+      tableNumber: '',
+      capacity: 2,
+      status: 'available',
+      description: '',
+      tableCode: generateTableCode()
+    });
+    setIsEditing(false);
+    setShowModal(true);
+  };
+
+  // Open modal for editing an existing table
+  const handleEditTable = (table) => {
+    setCurrentTable({ ...table });
+    setIsEditing(true);
+    setShowModal(true);
+  };
+
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
     try {
-      await fetchWithAuth(`/admin/restaurants/${selectedRestaurant}/tables`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          ...formData,
-          capacity: parseInt(formData.capacity),
-          restaurantId: selectedRestaurant
-        })
-      });
-
-      // Reset form and refresh list
-      setFormData({
-        tableNumber: '',
-        capacity: '',
-        status: 'available',
-        location: '',
-        notes: ''
-      });
-      setShowForm(false);
-      fetchTables();
+      if (isEditing) {
+        const updatedTable = await adminAPI.updateTable(currentTable.id, currentTable);
+        setTables(tables.map(table => 
+          table.id === currentTable.id ? updatedTable : table
+        ));
+      } else {
+        const newTable = await adminAPI.createTable(currentTable);
+        setTables([...tables, newTable]);
+      }
+      
+      setShowModal(false);
     } catch (error) {
-      console.error('Error adding table:', error);
-      setError('Không thể thêm bàn mới');
+      console.error('Error saving table:', error);
+      alert(error.response?.data?.message || 'Có lỗi xảy ra khi lưu thông tin bàn.');
     }
   };
 
-  const handleDeleteTable = async (tableId) => {
+  // Handle table deletion
+  const handleDeleteTable = async (id) => {
     if (window.confirm('Bạn có chắc chắn muốn xóa bàn này?')) {
       try {
-        await fetchWithAuth(`/admin/restaurants/${selectedRestaurant}/tables/${tableId}`, {
-          method: 'DELETE'
-        });
-        fetchTables();
+        await adminAPI.deleteTable(id);
+        setTables(tables.filter(table => table.id !== id));
       } catch (error) {
         console.error('Error deleting table:', error);
-        setError('Không thể xóa bàn');
+        alert('Có lỗi xảy ra khi xóa bàn.');
       }
     }
   };
 
-  const handleUpdateTableStatus = async (tableId, newStatus) => {
-    try {
-      await fetchWithAuth(`/admin/restaurants/${selectedRestaurant}/tables/${tableId}/status`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ status: newStatus })
-      });
-      fetchTables();
-    } catch (error) {
-      console.error('Error updating table status:', error);
-      setError('Không thể cập nhật trạng thái bàn');
-    }
-  };
-
-  if (loading && !showForm) {
-    return <div className="loading">Đang tải dữ liệu...</div>;
-  }
-
-  const getStatusClass = (status) => {
-    switch (status) {
-      case 'available': return 'status-available';
-      case 'reserved': return 'status-reserved';
-      case 'occupied': return 'status-occupied';
-      default: return '';
-    }
-  };
-
-  const getStatusText = (status) => {
-    switch (status) {
-      case 'available': return 'Trống';
-      case 'reserved': return 'Đã đặt';
-      case 'occupied': return 'Đang sử dụng';
-      default: return status;
-    }
+  const getStatusLabel = (status) => {
+    const statusLabels = {
+      available: 'Trống',
+      reserved: 'Đã đặt',
+      occupied: 'Đang sử dụng',
+      unavailable: 'Không khả dụng'
+    };
+    return statusLabels[status] || status;
   };
 
   return (
-    <div className="admin-tables">
-      <div className="admin-section-header">
-        <h2>Quản lý bàn</h2>
-        <button 
-          className="btn btn-primary"
-          onClick={() => setShowForm(!showForm)}
-        >
-          {showForm ? 'Hủy' : 'Thêm bàn mới'}
-        </button>
-      </div>
-
-      {error && <div className="error-message">{error}</div>}
-
-      <div className="restaurant-selector">
-        <label htmlFor="restaurant-select">Chọn nhà hàng:</label>
-        <select 
-          id="restaurant-select" 
-          value={selectedRestaurant} 
-          onChange={handleRestaurantChange}
-        >
+    <div className="admin-tables-container">
+      {!selectedRestaurant ? (
+        // Restaurant List View
+        <div className="restaurant-list">
           {restaurants.map(restaurant => (
-            <option key={restaurant.id} value={restaurant.id}>
-              {restaurant.name}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {showForm && (
-        <div className="table-form">
-          <h3>Thêm bàn mới</h3>
-          <form onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label htmlFor="tableNumber">Số bàn:</label>
-              <input
-                type="text"
-                id="tableNumber"
-                name="tableNumber"
-                value={formData.tableNumber}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="capacity">Sức chứa:</label>
-              <input
-                type="number"
-                id="capacity"
-                name="capacity"
-                value={formData.capacity}
-                onChange={handleInputChange}
-                min="1"
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="status">Trạng thái:</label>
-              <select
-                id="status"
-                name="status"
-                value={formData.status}
-                onChange={handleInputChange}
+            <div key={restaurant.id} className="restaurant-item">
+              <div className="restaurant-info">
+                <span className="restaurant-name">Nhà hàng: {restaurant.name}</span>
+                <span className="table-count">
+                  Tổng số bàn: {restaurant.tableCount || '...'}
+                </span>
+              </div>
+              <button 
+                className="view-tables-btn"
+                onClick={() => handleSelectRestaurant(restaurant)}
               >
-                <option value="available">Trống</option>
-                <option value="reserved">Đã đặt</option>
-                <option value="occupied">Đang sử dụng</option>
-              </select>
+                <i className="fas fa-arrow-right"></i>
+              </button>
             </div>
-            <div className="form-group">
-              <label htmlFor="location">Vị trí:</label>
-              <input
-                type="text"
-                id="location"
-                name="location"
-                value={formData.location}
-                onChange={handleInputChange}
-                placeholder="VD: Tầng 1, Gần cửa sổ, ..."
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="notes">Ghi chú:</label>
-              <textarea
-                id="notes"
-                name="notes"
-                value={formData.notes}
-                onChange={handleInputChange}
-              ></textarea>
-            </div>
-            <button type="submit" className="btn btn-success">Thêm bàn</button>
-          </form>
+          ))}
+        </div>
+      ) : (
+        // Tables View for Selected Restaurant
+        <div className="restaurant-tables">
+          <div className="restaurant-header">
+            <button 
+              className="back-btn"
+              onClick={handleBackToRestaurants}
+            >
+              <i className="fas fa-arrow-left"></i> Quay lại
+            </button>
+            <h2>{selectedRestaurant.name}</h2>
+            <button 
+              className="add-table-btn"
+              onClick={handleAddTable}
+            >
+              Thêm bàn
+            </button>
+          </div>
+
+          <div className="tables-grid">
+            {tables.map(table => (
+              <div key={table.id} className="table-card">
+                <div className="table-header">
+                  <span>Bàn {table.tableNumber}</span>
+                  <div className="table-actions">
+                    <button 
+                      className="edit-btn"
+                      onClick={() => handleEditTable(table)}
+                    >
+                      Sửa
+                    </button>
+                    <button 
+                      className="delete-btn"
+                      onClick={() => handleDeleteTable(table.id)}
+                    >
+                      Xóa
+                    </button>
+                  </div>
+                </div>
+                <div className="table-info">
+                  <div>Mã bàn: {table.tableCode}</div>
+                  <div>Sức chứa: {table.capacity} người</div>
+                  <div className={`table-status status-${table.status}`}>
+                    {getStatusLabel(table.status)}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
-      <div className="tables-list">
-        <h3>Danh sách bàn</h3>
-        {tables.length === 0 ? (
-          <p>Không có bàn nào.</p>
-        ) : (
-          <div className="tables-container">
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>Số bàn</th>
-                  <th>Sức chứa</th>
-                  <th>Trạng thái</th>
-                  <th>Vị trí</th>
-                  <th>Ghi chú</th>
-                  <th>Thao tác</th>
-                </tr>
-              </thead>
-              <tbody>
-                {tables.map(table => (
-                  <tr key={table.id}>
-                    <td>{table.tableNumber}</td>
-                    <td>{table.capacity} người</td>
-                    <td>
-                      <span className={`status-badge ${getStatusClass(table.status)}`}>
-                        {getStatusText(table.status)}
-                      </span>
-                    </td>
-                    <td>{table.location || 'Chưa cập nhật'}</td>
-                    <td>{table.notes || 'Không có ghi chú'}</td>
-                    <td>
-                      <div className="table-actions">
-                        <div className="status-actions">
-                          <button 
-                            className={`btn btn-sm ${table.status === 'available' ? 'btn-success active' : 'btn-outline-success'}`}
-                            onClick={() => handleUpdateTableStatus(table.id, 'available')}
-                            title="Đánh dấu là trống"
-                          >
-                            Trống
-                          </button>
-                          <button 
-                            className={`btn btn-sm ${table.status === 'reserved' ? 'btn-warning active' : 'btn-outline-warning'}`}
-                            onClick={() => handleUpdateTableStatus(table.id, 'reserved')}
-                            title="Đánh dấu là đã đặt"
-                          >
-                            Đã đặt
-                          </button>
-                          <button 
-                            className={`btn btn-sm ${table.status === 'occupied' ? 'btn-info active' : 'btn-outline-info'}`}
-                            onClick={() => handleUpdateTableStatus(table.id, 'occupied')}
-                            title="Đánh dấu là đang sử dụng"
-                          >
-                            Đang sử dụng
-                          </button>
-                        </div>
-                        <div className="edit-actions">
-                          <button 
-                            className="btn btn-sm btn-warning"
-                            onClick={() => {
-                              // Handle edit (not implemented in this version)
-                              alert('Chức năng chỉnh sửa đang được phát triển');
-                            }}
-                          >
-                            Sửa
-                          </button>
-                          <button 
-                            className="btn btn-sm btn-danger"
-                            onClick={() => handleDeleteTable(table.id)}
-                          >
-                            Xóa
-                          </button>
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      {showModal && (
+        <div className="modal-overlay">
+          <div className="table-modal">
+            <h2>{isEditing ? 'Chỉnh sửa bàn' : 'Thêm bàn mới'}</h2>
+            
+            <form onSubmit={handleSubmit}>
+              <div className="form-group">
+                <label>Số bàn</label>
+                <input
+                  type="text"
+                  name="tableNumber"
+                  value={currentTable.tableNumber}
+                  onChange={handleInputChange}
+                  placeholder="Nhập số bàn"
+                  required
+                />
+              </div>
+              
+              <div className="form-group">
+                <label>Sức chứa</label>
+                <div className="capacity-input-group">
+                  <input
+                    type="number"
+                    name="capacity"
+                    value={currentTable.capacity}
+                    onChange={handleInputChange}
+                    min="1"
+                    max="20"
+                    required
+                  />
+                  <span className="capacity-addon">người</span>
+                </div>
+              </div>
+              
+              <div className="form-group">
+                <label>Trạng thái</label>
+                <select
+                  name="status"
+                  value={currentTable.status}
+                  onChange={handleInputChange}
+                  required
+                >
+                  <option value="available">Trống</option>
+                  <option value="reserved">Đã đặt</option>
+                  <option value="occupied">Đang sử dụng</option>
+                  <option value="unavailable">Không khả dụng</option>
+                </select>
+              </div>
+              
+              <div className="form-group">
+                <label>Mô tả</label>
+                <textarea
+                  name="description"
+                  value={currentTable.description || ''}
+                  onChange={handleInputChange}
+                  placeholder="Mô tả bàn (tùy chọn)"
+                  rows="3"
+                />
+              </div>
+              
+              <div className="modal-actions">
+                <button type="submit" className="save-btn">
+                  {isEditing ? 'Cập nhật' : 'Lưu'}
+                </button>
+                <button 
+                  type="button" 
+                  className="cancel-btn"
+                  onClick={() => setShowModal(false)}
+                >
+                  Hủy
+                </button>
+              </div>
+            </form>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
 
-export default AdminTables; 
+export default AdminTables;
