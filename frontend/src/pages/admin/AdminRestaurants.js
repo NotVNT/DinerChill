@@ -9,6 +9,12 @@ function AdminRestaurants() {
   const [editingRestaurant, setEditingRestaurant] = useState(null);
   const [viewingRestaurant, setViewingRestaurant] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [statusChangeModal, setStatusChangeModal] = useState({
+    isOpen: false,
+    restaurant: null,
+    newStatus: '',
+    closureReason: ''
+  });
   const [formData, setFormData] = useState({
     name: '',
     cuisine: '',
@@ -20,7 +26,8 @@ function AdminRestaurants() {
     phone: '',
     email: '',
     capacity: '',
-    priceRange: ''
+    priceRange: '',
+    status: 'active'
   });
 
   useEffect(() => {
@@ -74,7 +81,8 @@ function AdminRestaurants() {
       phone: restaurant.phone || '',
       email: restaurant.email || '',
       capacity: restaurant.capacity ? restaurant.capacity.toString() : '',
-      priceRange: restaurant.priceRange || '200.000đ - 500.000đ'
+      priceRange: restaurant.priceRange || '200.000đ - 500.000đ',
+      status: restaurant.status || 'active'
     });
   };
 
@@ -149,6 +157,7 @@ function AdminRestaurants() {
       formDataToSend.append('email', formData.email || ``);
       
       formDataToSend.append('priceRange', formData.priceRange || '');
+      formDataToSend.append('status', 'active'); // Always set status to 'active'
       
       if (formData.capacity) {
         formDataToSend.append('capacity', formData.capacity);
@@ -247,7 +256,8 @@ function AdminRestaurants() {
       phone: '',
       email: '',
       capacity: '',
-      priceRange: ''
+      priceRange: '',
+      status: 'active'
     });
   };
 
@@ -282,6 +292,79 @@ function AdminRestaurants() {
 
   const closeDetailView = () => {
     setViewingRestaurant(null);
+  };
+
+  const handleStatusToggleClick = (restaurant) => {
+    setStatusChangeModal({
+      isOpen: true,
+      restaurant: restaurant,
+      newStatus: restaurant.status === 'active' ? 'maintenance' : 'active',
+      closureReason: restaurant.closureReason || ''
+    });
+  };
+
+  const closeStatusModal = () => {
+    setStatusChangeModal({
+      isOpen: false,
+      restaurant: null,
+      newStatus: '',
+      closureReason: ''
+    });
+  };
+
+  const handleStatusChange = (e) => {
+    const { name, value } = e.target;
+    setStatusChangeModal(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleStatusUpdate = async () => {
+    try {
+      setIsSubmitting(true);
+      setError(null);
+      
+      const { restaurant, newStatus, closureReason } = statusChangeModal;
+      
+      if (newStatus === 'maintenance' && !closureReason.trim()) {
+        setError('Vui lòng nhập lý do tạm ngừng');
+        setIsSubmitting(false);
+        return;
+      }
+      
+      const formData = new FormData();
+      formData.append('status', newStatus);
+      
+      if (newStatus === 'maintenance') {
+        formData.append('closureReason', closureReason);
+      } else {
+        formData.append('closureReason', '');
+      }
+      
+      // Update restaurant status
+      const updatedRestaurant = await adminAPI.updateRestaurant(restaurant.id, formData);
+      
+      // Update local state
+      setRestaurants(prev => prev.map(r => 
+        r.id === restaurant.id ? updatedRestaurant : r
+      ));
+      
+      setSuccess(`Đã cập nhật trạng thái nhà hàng "${restaurant.name}" thành ${newStatus === 'active' ? 'Đang hoạt động' : 'Tạm ngừng'}`);
+      
+      // Close modal
+      closeStatusModal();
+      
+      // Auto-hide success message after 5 seconds
+      setTimeout(() => {
+        setSuccess(null);
+      }, 5000);
+    } catch (error) {
+      console.error('Error updating restaurant status:', error);
+      setError('Không thể cập nhật trạng thái nhà hàng');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -542,6 +625,7 @@ function AdminRestaurants() {
                     <th>Hình ảnh</th>
                     <th>Tên nhà hàng</th>
                     <th>Loại ẩm thực</th>
+                    <th>Trạng thái</th>
                     <th>Địa chỉ</th>
                     <th>Thao tác</th>
                   </tr>
@@ -568,6 +652,21 @@ function AdminRestaurants() {
                         </td>
                         <td>{restaurant.name}</td>
                         <td>{restaurant.cuisine || restaurant.cuisineType}</td>
+                        <td>
+                          <span 
+                            className={`status-badge ${restaurant.status === 'active' ? 'active' : 'maintenance'}`}
+                            onClick={() => handleStatusToggleClick(restaurant)}
+                            title="Nhấn để thay đổi trạng thái"
+                            style={{ cursor: 'pointer' }}
+                          >
+                            {restaurant.status === 'active' ? 'Đang hoạt động' : 'Tạm ngừng'}
+                          </span>
+                          {restaurant.status === 'maintenance' && restaurant.closureReason && (
+                            <div className="closure-reason">
+                              <small><i className="fa fa-info-circle"></i> {restaurant.closureReason}</small>
+                            </div>
+                          )}
+                        </td>
                         <td>{restaurant.address}</td>
                         <td className="action-buttons">
                           <button 
@@ -744,6 +843,98 @@ function AdminRestaurants() {
                   </button>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Status Change Modal */}
+      {statusChangeModal.isOpen && statusChangeModal.restaurant && (
+        <div className="status-change-modal">
+          <div className="modal-backdrop" onClick={closeStatusModal}></div>
+          <div className="modal-content">
+            <div className="modal-header">
+              <h3>Thay đổi trạng thái nhà hàng</h3>
+              <button type="button" className="close-btn" onClick={closeStatusModal}>
+                <i className="fa fa-times"></i>
+              </button>
+            </div>
+            <div className="modal-body">
+              <div className="restaurant-name-container">
+                <i className="fa fa-store"></i>
+                <strong>{statusChangeModal.restaurant.name}</strong>
+              </div>
+              
+              <div className="status-options">
+                <div className="form-group">
+                  <label className="option-label">Trạng thái:</label>
+                  <div className="status-radio-group">
+                    <label className="radio-label">
+                      <input
+                        type="radio"
+                        name="newStatus"
+                        value="active"
+                        checked={statusChangeModal.newStatus === 'active'}
+                        onChange={handleStatusChange}
+                      />
+                      <span className="radio-custom"></span>
+                      <span className="status-badge active">
+                        <i className="fa fa-check-circle"></i> Đang hoạt động
+                      </span>
+                    </label>
+                    <label className="radio-label">
+                      <input
+                        type="radio"
+                        name="newStatus"
+                        value="maintenance"
+                        checked={statusChangeModal.newStatus === 'maintenance'}
+                        onChange={handleStatusChange}
+                      />
+                      <span className="radio-custom"></span>
+                      <span className="status-badge maintenance">
+                        <i className="fa fa-pause-circle"></i> Tạm ngừng
+                      </span>
+                    </label>
+                  </div>
+                </div>
+                
+                {statusChangeModal.newStatus === 'maintenance' && (
+                  <div className="form-group closure-reason-container">
+                    <label htmlFor="closureReason" className="option-label">Lý do tạm ngừng:</label>
+                    <textarea
+                      id="closureReason"
+                      name="closureReason"
+                      className="form-control"
+                      value={statusChangeModal.closureReason}
+                      onChange={handleStatusChange}
+                      rows="3"
+                      placeholder="Vui lòng nhập lý do tạm ngừng hoạt động"
+                      required
+                    ></textarea>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button 
+                className="btn btn-primary update-btn" 
+                onClick={handleStatusUpdate}
+                disabled={isSubmitting || (statusChangeModal.newStatus === 'maintenance' && !statusChangeModal.closureReason.trim())}
+              >
+                {isSubmitting ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    <span className="ms-2">Đang cập nhật...</span>
+                  </>
+                ) : (
+                  <>
+                    <i className="fa fa-save"></i> Cập nhật
+                  </>
+                )}
+              </button>
+              <button className="btn btn-secondary cancel-btn" onClick={closeStatusModal}>
+                <i className="fa fa-times"></i> Hủy
+              </button>
             </div>
           </div>
         </div>
@@ -1359,6 +1550,247 @@ function AdminRestaurants() {
         .btn-add i {
           font-size: 18px;
           margin-right: 6px;
+        }
+
+        /* Status styles */
+        .status-badge {
+          padding: 6px 12px;
+          border-radius: 20px;
+          font-size: 13px;
+          font-weight: 500;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          transition: all 0.2s;
+        }
+        
+        .status-badge.active {
+          background-color: #e8f5e9;
+          color: #2e7d32;
+          border: 1px solid #a5d6a7;
+        }
+        
+        .status-badge.maintenance {
+          background-color: #ffebee;
+          color: #c62828;
+          border: 1px solid #ef9a9a;
+        }
+        
+        .status-badge:hover {
+          opacity: 0.8;
+          transform: translateY(-1px);
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .closure-reason {
+          font-style: italic;
+          color: #c62828;
+          margin-top: 4px;
+          font-size: 12px;
+        }
+        
+        /* Status change modal */
+        .status-change-modal {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          z-index: 1060;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          animation: modalFadeIn 0.3s ease;
+        }
+        
+        @keyframes modalFadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        
+        .status-change-modal .modal-content {
+          width: 450px;
+          max-width: 90%;
+          background-color: white;
+          border-radius: 8px;
+          box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+          overflow: hidden;
+          animation: modalSlideIn 0.3s ease;
+        }
+        
+        @keyframes modalSlideIn {
+          from { transform: translateY(-20px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .status-change-modal .modal-header {
+          background-color: #f8f9fa;
+          padding: 15px 20px;
+          border-bottom: 1px solid #eee;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+        
+        .status-change-modal .modal-header h3 {
+          margin: 0;
+          font-size: 18px;
+          color: #333;
+        }
+        
+        .status-change-modal .modal-body {
+          padding: 20px;
+        }
+        
+        .restaurant-name-container {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          font-size: 16px;
+          margin-bottom: 20px;
+          padding-bottom: 15px;
+          border-bottom: 1px solid #eee;
+        }
+        
+        .restaurant-name-container i {
+          color: #007bff;
+          font-size: 18px;
+        }
+        
+        .restaurant-name-container strong {
+          color: #333;
+        }
+        
+        .status-options {
+          display: flex;
+          flex-direction: column;
+          gap: 20px;
+        }
+        
+        .option-label {
+          display: block;
+          margin-bottom: 8px;
+          font-weight: 600;
+          color: #555;
+        }
+        
+        .status-radio-group {
+          display: flex;
+          flex-direction: column;
+          gap: 15px;
+          margin-top: 8px;
+        }
+        
+        .radio-label {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          cursor: pointer;
+          padding: 8px 10px;
+          border-radius: 4px;
+          transition: background-color 0.2s;
+        }
+        
+        .radio-label:hover {
+          background-color: #f5f5f5;
+        }
+        
+        .radio-label input[type="radio"] {
+          position: absolute;
+          opacity: 0;
+        }
+        
+        .radio-custom {
+          display: inline-block;
+          width: 18px;
+          height: 18px;
+          border-radius: 50%;
+          border: 2px solid #ccc;
+          position: relative;
+          transition: all 0.2s;
+        }
+        
+        .radio-label input[type="radio"]:checked + .radio-custom {
+          border-color: #007bff;
+        }
+        
+        .radio-label input[type="radio"]:checked + .radio-custom:after {
+          content: "";
+          position: absolute;
+          top: 3px;
+          left: 3px;
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background-color: #007bff;
+        }
+        
+        .closure-reason-container {
+          animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(-10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .status-change-modal .form-control {
+          border-radius: 4px;
+          border: 1px solid #ddd;
+          padding: 10px;
+          transition: border-color 0.2s, box-shadow 0.2s;
+          width: 100%;
+          resize: vertical;
+        }
+        
+        .status-change-modal .form-control:focus {
+          border-color: #80bdff;
+          box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+          outline: none;
+        }
+        
+        .modal-footer {
+          display: flex;
+          justify-content: flex-end;
+          gap: 10px;
+          padding: 15px 20px;
+          border-top: 1px solid #eee;
+          background-color: #f8f9fa;
+        }
+        
+        .update-btn, .cancel-btn {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 8px 16px;
+          border-radius: 4px;
+          cursor: pointer;
+          font-weight: 500;
+          transition: all 0.2s;
+          border: none;
+        }
+        
+        .update-btn {
+          background-color: #007bff;
+          color: white;
+        }
+        
+        .update-btn:hover {
+          background-color: #0069d9;
+        }
+        
+        .update-btn:disabled {
+          background-color: #80bdff;
+          cursor: not-allowed;
+        }
+        
+        .cancel-btn {
+          background-color: #6c757d;
+          color: white;
+        }
+        
+        .cancel-btn:hover {
+          background-color: #5a6268;
         }
       `}</style>
     </div>
