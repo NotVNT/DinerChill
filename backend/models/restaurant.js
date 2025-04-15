@@ -102,6 +102,15 @@ module.exports = (sequelize, DataTypes) => {
     capacity: {
       type: DataTypes.INTEGER,
       allowNull: true
+    },
+    status: {
+      type: DataTypes.ENUM('active', 'maintenance'),
+      allowNull: false,
+      defaultValue: 'active'
+    },
+    closureReason: {
+      type: DataTypes.TEXT,
+      allowNull: true
     }
   }, {
     sequelize,

@@ -658,31 +658,3 @@
 .restaurant-status-controls {
   margin-top: 8px;
 }
-
-.toggle-closure-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: #f8f9fa;
-  border: 1px solid #dee2e6;
-  color: #6c757d;
-  border-radius: 4px;
-  padding: 4px 8px;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.toggle-closure-btn.is-closed {
-  background: #fff3cd;
-  border-color: #ffc107;
-  color: #856404;
-}
-
-.toggle-closure-btn:hover {
-  background: #e9ecef;
-}
-
-.toggle-closure-btn.is-closed:hover {
-  background: #ffe8a1;
-}

@@ -297,19 +297,6 @@ function AdminTables() {
                     Cập nhật: {formatLastUpdated(restaurant.updatedAt)}
                   </span>
                 </div>
-                <div className="restaurant-status-controls">
-                  <button 
-                    className={`toggle-closure-btn ${restaurant.isTemporarilyClosed ? 'is-closed' : ''}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleToggleClosure(restaurant.id);
-                    }}
-                    title={restaurant.isTemporarilyClosed ? 'Mở cửa lại' : 'Đánh dấu tạm đóng cửa'}
-                  >
-                    <i className={`bi ${restaurant.isTemporarilyClosed ? 'bi-unlock-fill' : 'bi-lock-fill'}`}></i>
-                    {restaurant.isTemporarilyClosed ? 'Đang tạm đóng' : 'Tạm đóng cửa'}
-                  </button>
-                </div>
                 <button 
                   className="view-tables-btn"
                   onClick={() => handleSelectRestaurant(restaurant)}

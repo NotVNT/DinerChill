@@ -75,7 +75,7 @@ router.post('/restaurants', authenticateAdmin, upload.array('restaurantImages', 
     const { 
       name, cuisineType, address, description, 
       openingTime, closingTime, phone, email, 
-      priceRange, capacity 
+      priceRange, capacity, status
     } = req.body;
 
     // Validate required fields
@@ -94,7 +94,8 @@ router.post('/restaurants', authenticateAdmin, upload.array('restaurantImages', 
       phone: phone || '',
       email: email || '',
       priceRange: priceRange || '200.000đ - 500.000đ',
-      capacity: capacity ? parseInt(capacity) : null
+      capacity: capacity ? parseInt(capacity) : null,
+      status: status || 'active'
     });
 
     // Upload hình ảnh lên Cloudinary nếu có
@@ -151,8 +152,11 @@ router.put('/restaurants/:id', authenticateAdmin, upload.array('restaurantImages
     const { 
       name, cuisineType, address, description, 
       openingTime, closingTime, phone, email, 
-      priceRange, capacity, deleteImageIds 
+      priceRange, capacity, deleteImageIds, status,
+      existingCloudImages, closureReason
     } = req.body;
+
+    console.log('Update restaurant request received:', { id, existingCloudImages, status, closureReason });
 
     // Tìm nhà hàng theo id
     const restaurant = await Restaurant.findByPk(id);
@@ -169,6 +173,40 @@ router.put('/restaurants/:id', authenticateAdmin, upload.array('restaurantImages
       return res.status(404).json({ message: 'Không tìm thấy nhà hàng' });
     }
 
+    // Get all current images for this restaurant
+    const currentImages = await RestaurantImage.findAll({
+      where: { restaurant_id: id }
+    });
+    
+    console.log(`Found ${currentImages.length} existing images for restaurant ${id}`);
+
+    // If existingCloudImages is provided, determine which images to keep
+    if (existingCloudImages) {
+      try {
+        let imagesToKeep = [];
+        
+        if (typeof existingCloudImages === 'string') {
+          imagesToKeep = JSON.parse(existingCloudImages);
+        } else if (Array.isArray(existingCloudImages)) {
+          imagesToKeep = existingCloudImages;
+        }
+        
+        console.log('Images to keep:', imagesToKeep);
+        
+        // Delete images that are not in the "keep" list
+        if (Array.isArray(imagesToKeep)) {
+          for (const image of currentImages) {
+            if (!imagesToKeep.includes(image.image_url)) {
+              console.log(`Deleting image: ${image.id} (${image.image_url})`);
+              await image.destroy();
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error processing existing cloud images:', error);
+      }
+    }
+    
     // Xóa hình ảnh đã chọn nếu có
     if (deleteImageIds && deleteImageIds.length > 0) {
       try {
@@ -229,7 +267,9 @@ router.put('/restaurants/:id', authenticateAdmin, upload.array('restaurantImages
       phone: phone || restaurant.phone,
       email: email || restaurant.email,
       priceRange: priceRange || restaurant.priceRange,
-      capacity: capacity ? parseInt(capacity) : restaurant.capacity
+      capacity: capacity ? parseInt(capacity) : restaurant.capacity,
+      status: status || restaurant.status,
+      closureReason: status === 'maintenance' ? (closureReason || '') : ''
     });
 
     // Lấy dữ liệu nhà hàng đã cập nhật, kèm theo images
