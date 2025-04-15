@@ -3,6 +3,7 @@ import { adminAPI } from '../../services/api';
 
 function AdminRestaurants() {
   const [restaurants, setRestaurants] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -32,6 +33,7 @@ function AdminRestaurants() {
 
   useEffect(() => {
     fetchRestaurants();
+    fetchCategories();
   }, []);
 
   const fetchRestaurants = async () => {
@@ -45,6 +47,16 @@ function AdminRestaurants() {
       setError('Không thể tải danh sách nhà hàng. Vui lòng thử lại sau.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const data = await adminAPI.getCategories();
+      setCategories(data);
+    } catch (err) {
+      console.error('Error fetching categories:', err);
+      setError('Không thể tải danh sách danh mục. Vui lòng thử lại sau.');
     }
   };
 
@@ -154,7 +166,7 @@ function AdminRestaurants() {
       formDataToSend.append('phone', formData.phone || '');
       
       // Use provided email or generate a default one if empty
-      formDataToSend.append('email', formData.email || ``);
+      formDataToSend.append('email', formData.email || '');
       
       formDataToSend.append('priceRange', formData.priceRange || '');
       formDataToSend.append('status', 'active'); // Always set status to 'active'
@@ -412,16 +424,21 @@ function AdminRestaurants() {
               
               <div className="form-group">
                 <label htmlFor="cuisine">Loại ẩm thực</label>
-                <input
+                <select
                   id="cuisine"
-                  type="text"
                   name="cuisine"
                   className="form-control"
                   value={formData.cuisine}
                   onChange={handleChange}
-                  placeholder="Ví dụ: Việt Nam, Ý, Nhật Bản..."
                   required
-                />
+                >
+                  <option value="">Chọn loại ẩm thực</option>
+                  {categories.map(category => (
+                    <option key={category.id} value={category.name}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
               </div>
               
               <div className="form-group">
