@@ -26,6 +26,8 @@ function AdminTables() {
     description: '',
     tableCode: generateTableCode()
   });
+  const [restaurantTableCounts, setRestaurantTableCounts] = useState({});
+  const [availableTableCounts, setAvailableTableCounts] = useState({});
 
   // Fetch restaurants data
   useEffect(() => {
@@ -65,6 +67,41 @@ function AdminTables() {
     };
     fetchTables();
   }, [selectedRestaurant]);
+
+  // Thêm useEffect để lấy số lượng bàn của mỗi nhà hàng và đếm số bàn trống
+  useEffect(() => {
+    const fetchTableCounts = async () => {
+      try {
+        // Lấy tất cả các bàn một lần
+        const allTables = await adminAPI.getTables();
+        
+        // Đếm số bàn và số bàn trống cho mỗi nhà hàng
+        const counts = {};
+        const availableCounts = {};
+        
+        allTables.forEach(table => {
+          if (table.restaurantId) {
+            // Tổng số bàn
+            counts[table.restaurantId] = (counts[table.restaurantId] || 0) + 1;
+            
+            // Số bàn trống (có trạng thái 'available')
+            if (table.status === 'available') {
+              availableCounts[table.restaurantId] = (availableCounts[table.restaurantId] || 0) + 1;
+            }
+          }
+        });
+        
+        setRestaurantTableCounts(counts);
+        setAvailableTableCounts(availableCounts);
+      } catch (error) {
+        console.error('Error fetching table counts:', error);
+      }
+    };
+    
+    if (restaurants.length > 0) {
+      fetchTableCounts();
+    }
+  }, [restaurants]);
 
   // Handle selecting a restaurant
   const handleSelectRestaurant = (restaurant) => {
@@ -141,6 +178,46 @@ function AdminTables() {
     }
   };
 
+  // Determine restaurant status based on opening/closing times and temporary closure
+  const getRestaurantStatus = (restaurant) => {
+    // If restaurant has a temporary closure flag
+    if (restaurant.isTemporarilyClosed) {
+      return 'temporary-closed';
+    }
+    
+    const now = new Date();
+    const currentTime = now.getHours() * 60 + now.getMinutes();
+    
+    // Parse opening and closing times to minutes since midnight
+    const parseTimeToMinutes = (timeString) => {
+      if (!timeString) return null;
+      
+      const [hours, minutes] = timeString.split(':').map(Number);
+      return hours * 60 + (minutes || 0);
+    };
+    
+    const openingMinutes = parseTimeToMinutes(restaurant.openingTime);
+    const closingMinutes = parseTimeToMinutes(restaurant.closingTime);
+    
+    // If opening/closing times are not set, default to closed
+    if (openingMinutes === null || closingMinutes === null) {
+      return 'closed';
+    }
+    
+    // Handle case where closing time is on the next day
+    if (closingMinutes < openingMinutes) {
+      return (currentTime >= openingMinutes || currentTime < closingMinutes) 
+        ? 'open' 
+        : 'closed';
+    }
+    
+    // Normal case
+    return (currentTime >= openingMinutes && currentTime < closingMinutes) 
+      ? 'open' 
+      : 'closed';
+  };
+  
+  // Return appropriate status label
   const getStatusLabel = (status) => {
     const statusLabels = {
       available: 'Trống',
@@ -150,40 +227,122 @@ function AdminTables() {
     };
     return statusLabels[status] || status;
   };
+  
+  // Return restaurant status label
+  const getRestaurantStatusLabel = (status) => {
+    const statusLabels = {
+      'open': 'Đang hoạt động',
+      'closed': 'Ngoài giờ mở cửa',
+      'temporary-closed': 'Tạm đóng cửa'
+    };
+    return statusLabels[status] || status;
+  };
+
+  // Hàm định dạng thời gian cập nhật
+  const formatLastUpdated = (date) => {
+    if (!date) return '';
+    
+    const updateDate = new Date(date);
+    return updateDate.toLocaleString('vi-VN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  // Add the handler function
+  const handleToggleClosure = async (restaurantId) => {
+    try {
+      const result = await adminAPI.toggleRestaurantClosure(restaurantId);
+      
+      // Update the local restaurants state
+      setRestaurants(restaurants.map(restaurant => 
+        restaurant.id === restaurantId 
+          ? { ...restaurant, isTemporarilyClosed: !restaurant.isTemporarilyClosed }
+          : restaurant
+      ));
+      
+      // Show success notification
+      alert(result.message);
+    } catch (error) {
+      console.error('Error toggling restaurant closure:', error);
+      alert('Có lỗi xảy ra khi cập nhật trạng thái nhà hàng');
+    }
+  };
 
   return (
     <div className="admin-tables-container">
       {!selectedRestaurant ? (
         // Restaurant List View
         <div className="restaurant-list">
-          {restaurants.map(restaurant => (
-            <div key={restaurant.id} className="restaurant-item">
-              <div className="restaurant-info">
-                <span className="restaurant-name">Nhà hàng: {restaurant.name}</span>
-                <span className="table-count">
-                  Tổng số bàn: {restaurant.tableCount || '...'}
-                </span>
+          {restaurants.map(restaurant => {
+            const status = getRestaurantStatus(restaurant);
+            
+            return (
+              <div key={restaurant.id} className="restaurant-item">
+                <div className="restaurant-info">
+                  <div className="restaurant-name-wrapper">
+                    <span className={`status-indicator ${status}`} title={getRestaurantStatusLabel(status)}></span>
+                    <span className="restaurant-name">Nhà hàng: {restaurant.name}</span>
+                  </div>
+                  <span className="restaurant-hours">
+                    Giờ mở cửa: {restaurant.openingTime || '--'} - {restaurant.closingTime || '--'}
+                  </span>
+                  <span className="table-count">
+                    Bàn trống/Tổng số: {availableTableCounts[restaurant.id] || 0}/{restaurantTableCounts[restaurant.id] || 0}
+                  </span>
+                  <span className="last-updated">
+                    Cập nhật: {formatLastUpdated(restaurant.updatedAt)}
+                  </span>
+                </div>
+                <div className="restaurant-status-controls">
+                  <button 
+                    className={`toggle-closure-btn ${restaurant.isTemporarilyClosed ? 'is-closed' : ''}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleToggleClosure(restaurant.id);
+                    }}
+                    title={restaurant.isTemporarilyClosed ? 'Mở cửa lại' : 'Đánh dấu tạm đóng cửa'}
+                  >
+                    <i className={`bi ${restaurant.isTemporarilyClosed ? 'bi-unlock-fill' : 'bi-lock-fill'}`}></i>
+                    {restaurant.isTemporarilyClosed ? 'Đang tạm đóng' : 'Tạm đóng cửa'}
+                  </button>
+                </div>
+                <button 
+                  className="view-tables-btn"
+                  onClick={() => handleSelectRestaurant(restaurant)}
+                  title="Xem chi tiết bàn"
+                >
+                  <i className="bi bi-eye-fill"></i>
+                </button>
               </div>
-              <button 
-                className="view-tables-btn"
-                onClick={() => handleSelectRestaurant(restaurant)}
-              >
-                <i className="fas fa-arrow-right"></i>
-              </button>
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
-        // Tables View for Selected Restaurant
+        // Restaurant Detail View
         <div className="restaurant-tables">
           <div className="restaurant-header">
             <button 
               className="back-btn"
               onClick={handleBackToRestaurants}
+              title="Quay lại danh sách nhà hàng"
             >
-              <i className="fas fa-arrow-left"></i> Quay lại
+              <i className="bi bi-arrow-left-circle-fill"></i>
             </button>
-            <h2>{selectedRestaurant.name}</h2>
+            <div className="restaurant-info-header">
+              <div className="restaurant-title">
+                <span className={`status-indicator ${getRestaurantStatus(selectedRestaurant)}`} title={getRestaurantStatusLabel(getRestaurantStatus(selectedRestaurant))}></span>
+                <h2>{selectedRestaurant.name}</h2>
+              </div>
+              <div className="table-stats">
+                <div className="table-count-display">Tổng số bàn: {tables.length}</div>
+                <div className="table-count-reserved">Đã đặt: {tables.filter(table => table.status === 'reserved').length}</div>
+                <div className="table-count-occupied">Đang sử dụng: {tables.filter(table => table.status === 'occupied').length}</div>
+              </div>
+            </div>
             <button 
               className="add-table-btn"
               onClick={handleAddTable}
