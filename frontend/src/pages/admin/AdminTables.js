@@ -18,6 +18,9 @@ function AdminTables() {
   const [tables, setTables] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [timeFilter, setTimeFilter] = useState('all');
   const [currentTable, setCurrentTable] = useState({
     restaurantId: '',
     tableNumber: '',
@@ -180,9 +183,9 @@ function AdminTables() {
 
   // Determine restaurant status based on opening/closing times and temporary closure
   const getRestaurantStatus = (restaurant) => {
-    // If restaurant has a temporary closure flag
-    if (restaurant.isTemporarilyClosed) {
-      return 'temporary-closed';
+    // Check for maintenance status first
+    if (restaurant.status === 'maintenance') {
+      return 'maintenance';
     }
     
     const now = new Date();
@@ -233,7 +236,7 @@ function AdminTables() {
     const statusLabels = {
       'open': 'Đang hoạt động',
       'closed': 'Ngoài giờ mở cửa',
-      'temporary-closed': 'Tạm đóng cửa'
+      'maintenance': 'Tạm ngưng'
     };
     return statusLabels[status] || status;
   };
@@ -252,61 +255,115 @@ function AdminTables() {
     });
   };
 
-  // Add the handler function
-  const handleToggleClosure = async (restaurantId) => {
-    try {
-      const result = await adminAPI.toggleRestaurantClosure(restaurantId);
-      
-      // Update the local restaurants state
-      setRestaurants(restaurants.map(restaurant => 
-        restaurant.id === restaurantId 
-          ? { ...restaurant, isTemporarilyClosed: !restaurant.isTemporarilyClosed }
-          : restaurant
-      ));
-      
-      // Show success notification
-      alert(result.message);
-    } catch (error) {
-      console.error('Error toggling restaurant closure:', error);
-      alert('Có lỗi xảy ra khi cập nhật trạng thái nhà hàng');
+  const getStatusDotStyle = (status) => {
+    switch (status) {
+      case 'open':
+        return { backgroundColor: '#4CAF50' }; // Green
+      case 'closed':
+        return { backgroundColor: '#9E9E9E' }; // Grey
+      case 'maintenance':
+        return { backgroundColor: '#F44336' }; // Red
+      default:
+        return { backgroundColor: '#9E9E9E' }; // Default grey
     }
   };
+
+  // Filter restaurants based on search query and filters
+  const filteredRestaurants = restaurants.filter(restaurant => {
+    const matchesSearch = restaurant.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const status = getRestaurantStatus(restaurant);
+    const matchesStatus = statusFilter === 'all' || status === statusFilter;
+    
+    // Check time filter
+    let matchesTime = true;
+    if (timeFilter !== 'all') {
+      const [openHour] = restaurant.openingTime?.split(':').map(Number) || [0];
+      
+      switch(timeFilter) {
+        case 'morning':
+          matchesTime = openHour >= 6 && openHour < 12;
+          break;
+        case 'afternoon':
+          matchesTime = openHour >= 12 && openHour < 17;
+          break;
+        case 'evening':
+          matchesTime = openHour >= 17;
+          break;
+        default:
+          matchesTime = true;
+          break;
+      }
+    }
+    
+    return matchesSearch && matchesStatus && matchesTime;
+  });
 
   return (
     <div className="admin-tables-container">
       {!selectedRestaurant ? (
         // Restaurant List View
-        <div className="restaurant-list">
-          {restaurants.map(restaurant => {
-            const status = getRestaurantStatus(restaurant);
-            
-            return (
-              <div key={restaurant.id} className="restaurant-item">
-                <div className="restaurant-info">
-                  <div className="restaurant-name-wrapper">
-                    <span className={`status-indicator ${status}`} title={getRestaurantStatusLabel(status)}></span>
-                    <span className="restaurant-name">Nhà hàng: {restaurant.name}</span>
+        <div>
+          <div className="search-filter-container">
+            <input
+              type="text"
+              placeholder="Tìm kiếm nhà hàng..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="search-input"
+            />
+            <select 
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="status-filter"
+            >
+              <option value="all">Tất cả trạng thái</option>
+              <option value="open">Đang mở cửa</option>
+              <option value="maintenance">Tạm ngưng</option>
+              <option value="closed">Hết giờ hoạt động</option>
+            </select>
+            <select 
+              value={timeFilter}
+              onChange={(e) => setTimeFilter(e.target.value)}
+              className="time-filter"
+            >
+              <option value="all">Tất cả thời gian</option>
+              <option value="morning">Buổi sáng (6h-12h)</option>
+              <option value="afternoon">Buổi chiều (12h-17h)</option>
+              <option value="evening">Buổi tối (Sau 17h)</option>
+            </select>
+          </div>
+          <div className="restaurant-list">
+            {filteredRestaurants.map(restaurant => {
+              const status = getRestaurantStatus(restaurant);
+              
+              return (
+                <div key={restaurant.id} className="restaurant-item">
+                  <div className="restaurant-info">
+                    <div className="restaurant-name-wrapper">
+                      <span className={`status-indicator ${status}`} title={getRestaurantStatusLabel(status)} style={getStatusDotStyle(status)}></span>
+                      <span className="restaurant-name">Nhà hàng: {restaurant.name}</span>
+                    </div>
+                    <span className="restaurant-hours">
+                      Giờ mở cửa: {restaurant.openingTime || '--'} - {restaurant.closingTime || '--'}
+                    </span>
+                    <span className="table-count">
+                      Bàn trống/Tổng số: {availableTableCounts[restaurant.id] || 0}/{restaurantTableCounts[restaurant.id] || 0}
+                    </span>
+                    <span className="last-updated">
+                      Cập nhật: {formatLastUpdated(restaurant.updatedAt)}
+                    </span>
                   </div>
-                  <span className="restaurant-hours">
-                    Giờ mở cửa: {restaurant.openingTime || '--'} - {restaurant.closingTime || '--'}
-                  </span>
-                  <span className="table-count">
-                    Bàn trống/Tổng số: {availableTableCounts[restaurant.id] || 0}/{restaurantTableCounts[restaurant.id] || 0}
-                  </span>
-                  <span className="last-updated">
-                    Cập nhật: {formatLastUpdated(restaurant.updatedAt)}
-                  </span>
+                  <button 
+                    className="view-tables-btn"
+                    onClick={() => handleSelectRestaurant(restaurant)}
+                    title="Xem chi tiết bàn"
+                  >
+                    <i className="bi bi-eye-fill"></i>
+                  </button>
                 </div>
-                <button 
-                  className="view-tables-btn"
-                  onClick={() => handleSelectRestaurant(restaurant)}
-                  title="Xem chi tiết bàn"
-                >
-                  <i className="bi bi-eye-fill"></i>
-                </button>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       ) : (
         // Restaurant Detail View
@@ -321,7 +378,7 @@ function AdminTables() {
             </button>
             <div className="restaurant-info-header">
               <div className="restaurant-title">
-                <span className={`status-indicator ${getRestaurantStatus(selectedRestaurant)}`} title={getRestaurantStatusLabel(getRestaurantStatus(selectedRestaurant))}></span>
+                <span className={`status-indicator ${getRestaurantStatus(selectedRestaurant)}`} title={getRestaurantStatusLabel(getRestaurantStatus(selectedRestaurant))} style={getStatusDotStyle(getRestaurantStatus(selectedRestaurant))}></span>
                 <h2>{selectedRestaurant.name}</h2>
               </div>
               <div className="table-stats">
