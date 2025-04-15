@@ -72,11 +72,6 @@ router.get('/restaurants', authenticateAdmin, async (req, res) => {
 // Thêm nhà hàng mới với upload nhiều hình ảnh
 router.post('/restaurants', authenticateAdmin, upload.array('restaurantImages', 10), async (req, res) => {
   try {
-    // In ra thông tin debug
-    console.log('Request Body:', req.body);
-    console.log('Files received:', req.files ? req.files.length : 'No files');
-
-    // Lấy dữ liệu từ request body
     const { 
       name, cuisineType, address, description, 
       openingTime, closingTime, phone, email, 
@@ -88,16 +83,16 @@ router.post('/restaurants', authenticateAdmin, upload.array('restaurantImages', 
       return res.status(400).json({ message: 'Tên nhà hàng là bắt buộc' });
     }
 
-    // Tạo nhà hàng mới trong database
+    // Tạo nhà hàng mới trong database với giá trị mặc định "Chưa cập nhật"
     const newRestaurant = await Restaurant.create({
       name,
       cuisineType: cuisineType || 'Chưa phân loại',
       address: address || 'Chưa cập nhật',
-      description: description || '',
-      openingTime: openingTime || '10:00',
-      closingTime: closingTime || '22:00',
+      description: description || 'Chưa cập nhật',
+      openingTime: openingTime || '1:00',
+      closingTime: closingTime || '23:00',
       phone: phone || '',
-      email: email || `contact@${name.toLowerCase().replace(/\s+/g, '')}.com`,
+      email: email || '',
       priceRange: priceRange || '200.000đ - 500.000đ',
       capacity: capacity ? parseInt(capacity) : null
     });
