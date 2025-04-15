@@ -22,10 +22,10 @@ function AdminLayout() {
     if (path.includes('/admin/reservations')) return 'Quản lý đặt bàn';
     if (path.includes('/admin/reviews')) return 'Quản lý đánh giá';
     if (path.includes('/admin/menus')) return 'Quản lý thực đơn';
-    if (path.includes('/admin/tables')) return 'Quản lý bàn';
     if (path.includes('/admin/categories')) return 'Quản lý danh mục';
     if (path.includes('/admin/promotions')) return 'Quản lý khuyến mãi';
     if (path.includes('/admin/payments')) return 'Quản lý thanh toán';
+    if (path.includes('/admin/tables')) return 'Quản lý bàn';
     return 'Quản trị viên';
   };
 
@@ -67,12 +67,6 @@ function AdminLayout() {
               </NavLink>
             </li>
             <li>
-              <NavLink to="/admin/tables">
-                <i>🪑</i>
-                <span>Quản lý bàn</span>
-              </NavLink>
-            </li>
-            <li>
               <NavLink to="/admin/categories">
                 <i>📁</i>
                 <span>Quản lý danh mục</span>
@@ -94,6 +88,12 @@ function AdminLayout() {
               <NavLink to="/admin/payments">
                 <i>💰</i>
                 <span>Quản lý thanh toán</span>
+              </NavLink>
+            </li>
+            <li>
+              <NavLink to="/admin/tables">
+                <i>🪑</i>
+                <span>Quản lý bàn</span>
               </NavLink>
             </li>
             <li>

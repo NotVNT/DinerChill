@@ -33,7 +33,10 @@ module.exports = (sequelize, DataTypes) => {
     },
     tableNumber: {
       type: DataTypes.STRING,
-      allowNull: false
+      allowNull: false,
+      validate: {
+        notEmpty: true
+      }
     },
     capacity: {
       type: DataTypes.INTEGER,
@@ -43,11 +46,6 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.ENUM('available', 'reserved', 'occupied', 'unavailable'),
       defaultValue: 'available'
     },
-    location: {
-      type: DataTypes.STRING,
-      allowNull: true,
-      comment: 'Vị trí bàn trong nhà hàng (ví dụ: trong nhà, ngoài trời, tầng 2)'
-    },
     description: {
       type: DataTypes.TEXT,
       allowNull: true
@@ -55,11 +53,23 @@ module.exports = (sequelize, DataTypes) => {
     isActive: {
       type: DataTypes.BOOLEAN,
       defaultValue: true
+    },
+    tableCode: {
+      type: DataTypes.STRING(6),
+      allowNull: true,
+      unique: true
     }
   }, {
     sequelize,
     modelName: 'Table',
-    tableName: 'tables'
+    tableName: 'tables',
+    indexes: [
+      {
+        unique: true,
+        fields: ['restaurantId', 'tableNumber'],
+        name: 'unique_table_number_per_restaurant'
+      }
+    ]
   });
   
   return Table;

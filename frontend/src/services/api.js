@@ -147,8 +147,10 @@ export async function fetchWithAuth(endpoint, options = {}) {
         throw new Error(`Lỗi ${response.status}: ${response.statusText}`);
       }
       
-      // Throw error with message from server
-      throw new Error(errorData.message || `Lỗi ${response.status}`);
+      // Create an error object with response data
+      const error = new Error(errorData.message || `Lỗi ${response.status}`);
+      error.response = { data: errorData, status: response.status };
+      throw error;
     }
     
     // Parse successful response
@@ -173,6 +175,23 @@ export const adminAPI = {
     body: JSON.stringify(userData)
   }),
   deleteUser: (id) => fetchWithAuth(`/admin/users/${id}`, {
+    method: 'DELETE'
+  }),
+  
+  // Categories
+  getCategories: () => fetchWithAuth('/admin/categories'),
+  
+  createCategory: (formData) => fetchWithAuth('/admin/categories', {
+    method: 'POST',
+    body: formData
+  }),
+  
+  updateCategory: (id, formData) => fetchWithAuth(`/admin/categories/${id}`, {
+    method: 'PUT',
+    body: formData
+  }),
+  
+  deleteCategory: (id) => fetchWithAuth(`/admin/categories/${id}`, {
     method: 'DELETE'
   }),
   
@@ -252,7 +271,39 @@ export const adminAPI = {
   getReviews: () => fetchWithAuth('/admin/reviews'),
   deleteReview: (id) => fetchWithAuth(`/admin/reviews/${id}`, {
     method: 'DELETE'
-  })
+  }),
+
+  // Tables
+  getTables: async (filters = {}) => {
+    try {
+      // Thêm restaurantId vào query params
+      const queryParams = new URLSearchParams();
+      if (filters.restaurantId) {
+        queryParams.append('restaurantId', filters.restaurantId);
+      }
+      
+      const response = await fetchWithAuth('/admin/tables', {
+        params: queryParams
+      });
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  },
+  
+  createTable: (tableData) => fetchWithAuth('/admin/tables', {
+    method: 'POST',
+    body: JSON.stringify(tableData)
+  }),
+  
+  updateTable: (id, tableData) => fetchWithAuth(`/admin/tables/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(tableData)
+  }),
+  
+  deleteTable: (id) => fetchWithAuth(`/admin/tables/${id}`, {
+    method: 'DELETE'
+  }),
 };
 
 // Thêm API cho danh sách yêu thích

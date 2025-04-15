@@ -22,7 +22,6 @@ import AdminRestaurants from './pages/admin/AdminRestaurants';
 import AdminReservations from './pages/admin/AdminReservations';
 import AdminReviews from './pages/admin/AdminReviews';
 import AdminMenus from './pages/admin/AdminMenus';
-import AdminTables from './pages/admin/AdminTables';
 import AdminCategories from './pages/admin/AdminCategories';
 import AdminPromotions from './pages/admin/AdminPromotions';
 import AdminPayments from './pages/admin/AdminPayments';
@@ -31,6 +30,7 @@ import AdminRoute from './components/AdminRoute';
 import FavoritesPage from './pages/profile_imformation/FavoritesPage';
 import ChangePasswordPage from './pages/profile_imformation/ChangePasswordPage';
 import WalletPaymentPage from './pages/profile_imformation/WalletPaymentPage';
+import AdminTables from './pages/admin/AdminTables';
 
 function App() {
   return (
@@ -47,11 +47,11 @@ function App() {
             <Route index element={<AdminDashboard />} />
             <Route path="restaurants" element={<AdminRestaurants />} />
             <Route path="menus" element={<AdminMenus />} />
-            <Route path="tables" element={<AdminTables />} />
             <Route path="categories" element={<AdminCategories />} />
             <Route path="promotions" element={<AdminPromotions />} />
             <Route path="reservations" element={<AdminReservations />} />
             <Route path="payments" element={<AdminPayments />} />
+            <Route path="tables" element={<AdminTables />} />
             <Route path="reviews" element={<AdminReviews />} />
           </Route>
           
