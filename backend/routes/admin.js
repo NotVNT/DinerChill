@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Restaurant, RestaurantImage, Category, Reservation, User, Table } = require('../models');
+const { Restaurant, RestaurantImage, Category, Reservation, User, Table, Promotion } = require('../models');
 const authenticateAdmin = require('../middleware/authenticate').authenticateAdmin;
 const multer = require('multer');
 const fs = require('fs');
@@ -619,5 +619,169 @@ const generateTableCode = () => {
   }
   return result;
 };
+
+// Get all promotions
+router.get('/promotions', authenticateAdmin, async (req, res) => {
+  try {
+    const promotions = await Promotion.findAll({
+      order: [['createdAt', 'DESC']]
+    });
+    res.json(promotions);
+  } catch (error) {
+    console.error('Error fetching promotions:', error);
+    res.status(500).json({ message: 'Không thể tải danh sách khuyến mãi' });
+  }
+});
+
+// Create a new promotion
+router.post('/promotions', authenticateAdmin, async (req, res) => {
+  try {
+    const {
+      code,
+      description,
+      discountType,
+      discountValue,
+      startDate,
+      endDate,
+      minimumOrderAmount,
+      maximumDiscount,
+      usageLimit,
+      isActive,
+      restaurantId
+    } = req.body;
+
+    // Create promotion
+    const promotion = await Promotion.create({
+      name: code, // Using code as name since your model requires name
+      code,
+      description,
+      discountType: discountType === 'percentage' ? 'percent' : 'fixed', // Convert to match enum
+      discountValue,
+      startDate,
+      endDate,
+      minOrderValue: minimumOrderAmount || 0,
+      maxDiscountValue: maximumDiscount || null,
+      usageLimit: usageLimit || null,
+      isActive,
+      usageCount: 0,
+      restaurantId // Lưu trực tiếp restaurantId vào bảng promotion
+    });
+
+    // Không sử dụng mối quan hệ nhiều-nhiều
+    // if (restaurantId) {
+    //   const restaurant = await Restaurant.findByPk(restaurantId);
+    //   if (restaurant) {
+    //     await promotion.addRestaurant(restaurant);
+    //   }
+    // }
+
+    res.status(201).json(promotion);
+  } catch (error) {
+    console.error('Error creating promotion:', error);
+    res.status(500).json({ message: 'Không thể thêm khuyến mãi' });
+  }
+});
+
+// Get a specific promotion
+router.get('/promotions/:id', authenticateAdmin, async (req, res) => {
+  try {
+    const promotion = await Promotion.findByPk(req.params.id);
+    if (!promotion) {
+      return res.status(404).json({ message: 'Không tìm thấy khuyến mãi' });
+    }
+    res.json(promotion);
+  } catch (error) {
+    console.error('Error fetching promotion:', error);
+    res.status(500).json({ message: 'Không thể tải thông tin khuyến mãi' });
+  }
+});
+
+// Update a promotion
+router.put('/promotions/:id', authenticateAdmin, async (req, res) => {
+  try {
+    const promotion = await Promotion.findByPk(req.params.id);
+    if (!promotion) {
+      return res.status(404).json({ message: 'Không tìm thấy khuyến mãi' });
+    }
+
+    const {
+      code,
+      description,
+      discountType,
+      discountValue,
+      startDate,
+      endDate,
+      minimumOrderAmount,
+      maximumDiscount,
+      usageLimit,
+      isActive,
+      restaurantId
+    } = req.body;
+
+    // Update promotion
+    await promotion.update({
+      name: code, // Using code as name
+      code,
+      description,
+      discountType: discountType === 'percentage' ? 'percent' : 'fixed',
+      discountValue,
+      startDate,
+      endDate,
+      minOrderValue: minimumOrderAmount || 0,
+      maxDiscountValue: maximumDiscount || null,
+      usageLimit: usageLimit || null,
+      isActive,
+      restaurantId // Cập nhật trực tiếp restaurantId
+    });
+
+    // Không sử dụng mối quan hệ nhiều-nhiều
+    // if (restaurantId) {
+    //   await promotion.setRestaurants([]);
+    //   const restaurant = await Restaurant.findByPk(restaurantId);
+    //   if (restaurant) {
+    //     await promotion.addRestaurant(restaurant);
+    //   }
+    // }
+
+    res.json(promotion);
+  } catch (error) {
+    console.error('Error updating promotion:', error);
+    res.status(500).json({ message: 'Không thể cập nhật khuyến mãi' });
+  }
+});
+
+// Toggle promotion status
+router.patch('/promotions/:id/status', authenticateAdmin, async (req, res) => {
+  try {
+    const promotion = await Promotion.findByPk(req.params.id);
+    if (!promotion) {
+      return res.status(404).json({ message: 'Không tìm thấy khuyến mãi' });
+    }
+
+    const { isActive } = req.body;
+    await promotion.update({ isActive });
+
+    res.json(promotion);
+  } catch (error) {
+    console.error('Error toggling promotion status:', error);
+    res.status(500).json({ message: 'Không thể thay đổi trạng thái khuyến mãi' });
+  }
+});
+
+// Delete a promotion
+router.delete('/promotions/:id', authenticateAdmin, async (req, res) => {
+  try {
+    const promotion = await Promotion.findByPk(req.params.id);
+    if (!promotion) {
+      return res.status(404).json({ message: 'Không tìm thấy khuyến mãi' });
+    }
+
+    await promotion.destroy();
+    res.json({ message: 'Đã xóa khuyến mãi thành công' });
+  } catch (error) {
+    console.error('Error deleting promotion:', error);
+    res.status(500).json({ message: 'Không thể xóa khuyến mãi' });
+  }
+});
 
 module.exports = router; 

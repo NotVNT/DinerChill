@@ -104,7 +104,7 @@ export const reservationAPI = {
 };
 
 // Helper để gọi API với authentication
-export async function fetchWithAuth(endpoint, options = {}) {
+export async function fetchWithAuth(endpoint, options = {}, retryCount = 2) {
   try {
     console.log(`Gọi API: ${endpoint}`, options);
     
@@ -134,29 +134,52 @@ export async function fetchWithAuth(endpoint, options = {}) {
       headers
     };
     
-    // Make API call
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
-    
-    // Handle response
-    if (!response.ok) {
-      let errorData;
-      try {
-        errorData = await response.json();
-      } catch (e) {
-        // If can't parse JSON, use status text
-        throw new Error(`Lỗi ${response.status}: ${response.statusText}`);
+    try {
+      // Make API call with timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
+      
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        ...config,
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      
+      // Handle response
+      if (!response.ok) {
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch (e) {
+          // If can't parse JSON, use status text
+          throw new Error(`Lỗi ${response.status}: ${response.statusText}`);
+        }
+        
+        // Create an error object with response data
+        const error = new Error(errorData.message || `Lỗi ${response.status}`);
+        error.response = { data: errorData, status: response.status };
+        throw error;
       }
       
-      // Create an error object with response data
-      const error = new Error(errorData.message || `Lỗi ${response.status}`);
-      error.response = { data: errorData, status: response.status };
-      throw error;
+      // Parse successful response
+      const result = await response.json();
+      console.log(`Kết quả từ API ${endpoint}:`, result);
+      return result;
+    } catch (fetchError) {
+      if (fetchError.name === 'AbortError') {
+        throw new Error('Yêu cầu bị hủy do quá thời gian chờ');
+      }
+      
+      if (fetchError.message === 'Failed to fetch' && retryCount > 0) {
+        console.log(`Đang thử lại kết nối (${retryCount} lần còn lại)...`);
+        // Thử lại sau 1 giây
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        return fetchWithAuth(endpoint, options, retryCount - 1);
+      }
+      
+      throw fetchError;
     }
-    
-    // Parse successful response
-    const result = await response.json();
-    console.log(`Kết quả từ API ${endpoint}:`, result);
-    return result;
   } catch (error) {
     console.error(`Lỗi khi gọi API ${endpoint}:`, error);
     throw error;
@@ -177,6 +200,37 @@ export const adminAPI = {
   deleteUser: (id) => fetchWithAuth(`/admin/users/${id}`, {
     method: 'DELETE'
   }),
+  
+  // Promotions
+  promotions: {
+    getAll: () => fetchWithAuth('/admin/promotions'),
+    create: (promotionData) => fetchWithAuth('/admin/promotions', {
+      method: 'POST',
+      body: JSON.stringify(promotionData)
+    }),
+    getById: (id) => fetchWithAuth(`/admin/promotions/${id}`),
+    update: (id, promotionData) => fetchWithAuth(`/admin/promotions/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(promotionData)
+    }),
+    delete: (id) => fetchWithAuth(`/admin/promotions/${id}`, {
+      method: 'DELETE'
+    }),
+    toggleStatus: async (id, isActive) => {
+      try {
+        return await fetchWithAuth(`/admin/promotions/${id}/status`, {
+          method: 'PATCH',
+          body: JSON.stringify({ isActive })
+        });
+      } catch (error) {
+        if (error.message === 'Failed to fetch') {
+          console.error('Lỗi kết nối tới máy chủ khi cập nhật trạng thái');
+          throw new Error('Không thể kết nối tới máy chủ. Vui lòng kiểm tra kết nối mạng hoặc thử lại sau.');
+        }
+        throw error;
+      }
+    }
+  },
   
   // Categories
   getCategories: () => fetchWithAuth('/admin/categories'),
@@ -214,14 +268,18 @@ export const adminAPI = {
         formData.has('restaurantImages')
       );
       
+      // Tăng timeout cho việc tạo nhà hàng có hình ảnh
       const response = await fetchWithAuth('/admin/restaurants', {
         method: 'POST',
         body: formData
-      });
+      }, 3); // Thêm 3 lần thử lại
       
       return response;
     } catch (error) {
       console.error('Lỗi khi tạo nhà hàng:', error);
+      if (error.message === 'Yêu cầu bị hủy do quá thời gian chờ') {
+        throw new Error('Không thể lưu thông tin nhà hàng: Upload hình ảnh mất nhiều thời gian, vui lòng thử giảm kích thước hình hoặc thử lại sau');
+      }
       throw error;
     }
   },
@@ -230,14 +288,18 @@ export const adminAPI = {
     try {
       console.log('Đang gửi request cập nhật nhà hàng', id);
       
+      // Tăng timeout cho việc cập nhật nhà hàng có hình ảnh
       const response = await fetchWithAuth(`/admin/restaurants/${id}`, {
         method: 'PUT',
         body: formData
-      });
+      }, 3); // Thêm 3 lần thử lại
       
       return response;
     } catch (error) {
       console.error('Lỗi khi cập nhật nhà hàng:', error);
+      if (error.message === 'Yêu cầu bị hủy do quá thời gian chờ') {
+        throw new Error('Không thể lưu thông tin nhà hàng: Upload hình ảnh mất nhiều thời gian, vui lòng thử giảm kích thước hình hoặc thử lại sau');
+      }
       throw error;
     }
   },
