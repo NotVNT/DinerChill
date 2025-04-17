@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { adminAPI } from '../../services/api';
+import '../../styles/admin_layout/admin_restaurant.css';
 
 function AdminRestaurants() {
   const [restaurants, setRestaurants] = useState([]);
@@ -10,6 +11,7 @@ function AdminRestaurants() {
   const [editingRestaurant, setEditingRestaurant] = useState(null);
   const [viewingRestaurant, setViewingRestaurant] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [statusChangeModal, setStatusChangeModal] = useState({
     isOpen: false,
     restaurant: null,
@@ -379,6 +381,41 @@ function AdminRestaurants() {
     }
   };
 
+  // Filter restaurants based on search query
+  const filteredRestaurants = restaurants.filter(restaurant => {
+    if (!searchQuery.trim()) return true;
+    
+    // Function to normalize Vietnamese text (remove diacritics)
+    const normalizeVietnamese = (str) => {
+      return str.normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
+        .toLowerCase();
+    };
+    
+    // Check if search query contains diacritics
+    const hasAccents = (str) => {
+      return /[\u0300-\u036f]/.test(str.normalize('NFD'));
+    };
+    
+    const queryHasAccents = hasAccents(searchQuery);
+    
+    if (queryHasAccents) {
+      // If query has accents, do exact match (case insensitive)
+      const lowerQuery = searchQuery.toLowerCase();
+      const lowerName = (restaurant.name || '').toLowerCase();
+      const lowerAddress = (restaurant.address || '').toLowerCase();
+      
+      return lowerName.includes(lowerQuery) || lowerAddress.includes(lowerQuery);
+    } else {
+      // If query has no accents, use normalized search (accent insensitive)
+      const normalizedQuery = normalizeVietnamese(searchQuery);
+      const normalizedName = normalizeVietnamese(restaurant.name || '');
+      const normalizedAddress = normalizeVietnamese(restaurant.address || '');
+      
+      return normalizedName.includes(normalizedQuery) || normalizedAddress.includes(normalizedQuery);
+    }
+  });
+
   return (
     <div className="admin-restaurants">
       <div className="page-header">
@@ -634,6 +671,20 @@ function AdminRestaurants() {
       ) : (
         <div className="card restaurant-table-card">
           <div className="card-body">
+            <div className="search-container">
+              <input
+                type="text"
+                className="search-input"
+                placeholder="Tìm kiếm theo tên nhà hàng hoặc địa chỉ..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            {searchQuery && (
+              <div className="search-results-info">
+                <i className="fa fa-search"></i> Tìm thấy {filteredRestaurants.length} nhà hàng
+              </div>
+            )}
             <div className="table-responsive">
               <table className="table table-hover admin-table">
                 <thead className="thead-light">
@@ -648,8 +699,8 @@ function AdminRestaurants() {
                   </tr>
                 </thead>
                 <tbody>
-                  {restaurants && restaurants.length > 0 ? (
-                    restaurants.map(restaurant => (
+                  {filteredRestaurants && filteredRestaurants.length > 0 ? (
+                    filteredRestaurants.map(restaurant => (
                       <tr key={restaurant.id}>
                         <td>{restaurant.id}</td>
                         <td>
@@ -715,13 +766,25 @@ function AdminRestaurants() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="6" className="text-center no-data">
+                      <td colSpan="7" className="text-center no-data">
                         <div className="empty-state">
-                          <i className="fa fa-utensils fa-3x"></i>
-                          <p>Không có dữ liệu nhà hàng</p>
-                          <button className="btn btn-primary" onClick={() => setEditingRestaurant({})}>
-                            Thêm nhà hàng đầu tiên
-                          </button>
+                          {searchQuery ? (
+                            <>
+                              <i className="fa fa-search fa-3x"></i>
+                              <p>Không tìm thấy nhà hàng nào phù hợp với "{searchQuery}"</p>
+                              <button className="btn btn-secondary" onClick={() => setSearchQuery('')}>
+                                Xóa tìm kiếm
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <i className="fa fa-utensils fa-3x"></i>
+                              <p>Không có dữ liệu nhà hàng</p>
+                              <button className="btn btn-primary" onClick={() => setEditingRestaurant({})}>
+                                Thêm nhà hàng đầu tiên
+                              </button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -956,860 +1019,6 @@ function AdminRestaurants() {
           </div>
         </div>
       )}
-
-      <style jsx>{`
-        .admin-restaurants {
-          padding: 20px;
-        }
-        .page-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 20px;
-        }
-        .card {
-          border-radius: 8px;
-          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-          margin-bottom: 20px;
-        }
-        .card-header {
-          background-color: #f8f9fa;
-          border-bottom: 1px solid #eee;
-          padding: 15px 20px;
-        }
-        .card-body {
-          padding: 20px;
-        }
-        .form-group {
-          margin-bottom: 20px;
-        }
-        .form-control {
-          border-radius: 4px;
-          border: 1px solid #ddd;
-          padding: 10px 12px;
-          transition: border-color 0.2s;
-        }
-        .form-control:focus {
-          border-color: #80bdff;
-          box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-        }
-        .form-buttons {
-          display: flex;
-          gap: 10px;
-          margin-top: 20px;
-        }
-        .btn {
-          padding: 8px 16px;
-          border-radius: 4px;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-        .btn-primary {
-          background-color: #007bff;
-          border-color: #007bff;
-          color: white;
-        }
-        .btn-success {
-          background-color: #28a745;
-          border-color: #28a745;
-          color: white;
-        }
-        .btn-secondary {
-          background-color: #6c757d;
-          border-color: #6c757d;
-          color: white;
-        }
-        .btn-danger {
-          background-color: #dc3545;
-          border-color: #dc3545;
-          color: white;
-        }
-        .btn-info {
-          background-color: #17a2b8;
-          border-color: #17a2b8;
-          color: white;
-        }
-        .btn:hover {
-          opacity: 0.9;
-        }
-        .alert {
-          padding: 12px 15px 12px 45px;
-          border-radius: 4px;
-          margin-bottom: 20px;
-          position: relative;
-          animation: fadeIn 0.3s ease;
-        }
-        .alert-icon {
-          position: absolute;
-          left: 15px;
-          top: 50%;
-          transform: translateY(-50%);
-          font-size: 20px;
-        }
-        .alert-danger {
-          background-color: #f8d7da;
-          border-color: #f5c6cb;
-          color: #721c24;
-        }
-        .alert-success {
-          background-color: #d4edda;
-          border-color: #c3e6cb;
-          color: #155724;
-          font-weight: 500;
-        }
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(-10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .table {
-          width: 100%;
-          border-collapse: collapse;
-        }
-        .table th, .table td {
-          padding: 12px 15px;
-          border-bottom: 1px solid #dee2e6;
-          vertical-align: middle;
-        }
-        .thead-light th {
-          background-color: #f8f9fa;
-          border-color: #dee2e6;
-          font-weight: 600;
-        }
-        .restaurant-thumbnail {
-          border-radius: 4px;
-          object-fit: cover;
-        }
-        .empty-state {
-          padding: 40px 0;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 15px;
-          color: #6c757d;
-        }
-        .loading-container {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          padding: 40px 0;
-          gap: 15px;
-        }
-        .image-upload-container {
-          margin-bottom: 15px;
-        }
-        .image-upload-area {
-          position: relative;
-          border: 2px dashed #ddd;
-          border-radius: 8px;
-          padding: 20px;
-          text-align: center;
-          cursor: pointer;
-          transition: all 0.3s;
-          background-color: #f9f9f9;
-          margin-bottom: 15px;
-        }
-        .image-upload-area:hover {
-          border-color: #80bdff;
-          background-color: #f0f7ff;
-        }
-        .image-upload-input {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          opacity: 0;
-          cursor: pointer;
-        }
-        .image-upload-placeholder {
-          padding: 20px;
-          color: #666;
-        }
-        .image-upload-placeholder i {
-          font-size: 32px;
-          margin-bottom: 10px;
-          color: #007bff;
-        }
-        .image-upload-placeholder p {
-          margin-bottom: 5px;
-          font-weight: 500;
-        }
-        .image-upload-placeholder small {
-          color: #888;
-        }
-        .image-preview-container {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 10px;
-          margin-top: 15px;
-        }
-        .image-preview-item {
-          position: relative;
-          width: 100px;
-          height: 100px;
-          border-radius: 4px;
-          overflow: hidden;
-          border: 1px solid #ddd;
-        }
-        .preview-thumbnail {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-        .remove-image-btn {
-          position: absolute;
-          top: 5px;
-          right: 5px;
-          background: rgba(255, 255, 255, 0.8);
-          border: none;
-          border-radius: 50%;
-          width: 20px;
-          height: 20px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          font-size: 12px;
-          color: #dc3545;
-        }
-        .remove-image-btn:hover {
-          background: rgba(255, 255, 255, 1);
-          color: #bd2130;
-        }
-        .legacy-url-field {
-          margin-top: 10px;
-          padding-top: 10px;
-          border-top: 1px dashed #eee;
-        }
-        .input-group {
-          display: flex;
-          flex-direction: column;
-        }
-        .add-button {
-          display: flex;
-          align-items: center;
-          gap: 5px;
-        }
-        .form-row {
-          display: flex;
-          flex-wrap: wrap;
-          margin-right: -10px;
-          margin-left: -10px;
-        }
-        .col-md-6 {
-          flex: 0 0 50%;
-          max-width: 50%;
-          padding-right: 10px;
-          padding-left: 10px;
-        }
-        @media (max-width: 768px) {
-          .col-md-6 {
-            flex: 0 0 100%;
-            max-width: 100%;
-          }
-          .form-buttons {
-            flex-direction: column;
-          }
-        }
-
-        /* Modal Chi tiết nhà hàng */
-        .restaurant-detail-modal {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          z-index: 1050;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .modal-backdrop {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background-color: rgba(0, 0, 0, 0.5);
-          z-index: -1;
-        }
-
-        .modal-content {
-          background-color: white;
-          border-radius: 8px;
-          box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
-          width: 90%;
-          max-width: 800px;
-          max-height: 90vh;
-          overflow-y: auto;
-          position: relative;
-          animation: modalFadeIn 0.3s ease;
-        }
-
-        @keyframes modalFadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(-30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .modal-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 15px 20px;
-          border-bottom: 1px solid #ddd;
-        }
-
-        .modal-header h2 {
-          margin: 0;
-          font-size: 1.5rem;
-          color: #333;
-        }
-
-        .close-btn {
-          background: none;
-          border: none;
-          font-size: 1.5rem;
-          cursor: pointer;
-          color: #777;
-        }
-
-        .close-btn:hover {
-          color: #333;
-        }
-
-        .modal-body {
-          padding: 20px;
-        }
-
-        .restaurant-detail-content {
-          display: flex;
-          flex-direction: column;
-          gap: 20px;
-        }
-
-        .detail-header {
-          padding-bottom: 15px;
-          border-bottom: 1px solid #eee;
-        }
-
-        .restaurant-name {
-          font-size: 1.8rem;
-          font-weight: bold;
-          color: #333;
-          margin-bottom: 5px;
-        }
-
-        .restaurant-cuisine {
-          font-size: 1.1rem;
-          color: #666;
-        }
-
-        .detail-image {
-          width: 100%;
-          display: flex;
-          justify-content: center;
-        }
-
-        .detail-image img {
-          max-width: 100%;
-          max-height: 300px;
-          object-fit: contain;
-          border-radius: 8px;
-          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .detail-info-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 20px;
-        }
-
-        .detail-section {
-          margin-bottom: 20px;
-        }
-
-        .detail-section h3 {
-          font-size: 1.2rem;
-          margin-bottom: 15px;
-          padding-bottom: 5px;
-          border-bottom: 1px solid #eee;
-          color: #555;
-        }
-
-        .detail-row {
-          display: flex;
-          margin-bottom: 10px;
-        }
-
-        .detail-label {
-          width: 150px;
-          font-weight: 600;
-          color: #666;
-        }
-
-        .detail-value {
-          flex: 1;
-          color: #333;
-        }
-
-        .detail-description {
-          margin-top: 10px;
-        }
-
-        .detail-description h3 {
-          font-size: 1.2rem;
-          margin-bottom: 10px;
-        }
-
-        .detail-description p {
-          line-height: 1.6;
-          color: #555;
-        }
-
-        .detail-actions {
-          display: flex;
-          gap: 10px;
-          margin-top: 20px;
-          padding-top: 20px;
-          border-top: 1px solid #eee;
-        }
-
-        .btn-secondary {
-          background-color: #6c757d;
-          color: white;
-        }
-
-        .btn-secondary:hover {
-          background-color: #5a6268;
-        }
-
-        /* Restaurant image gallery */
-        .restaurant-images-gallery {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-          gap: 15px;
-          margin: 20px 0;
-          width: 100%;
-        }
-        
-        .gallery-image-item {
-          border-radius: 8px;
-          overflow: hidden;
-          box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
-          aspect-ratio: 4/3;
-          cursor: pointer;
-          transition: transform 0.2s ease;
-        }
-        
-        .gallery-image-item:hover {
-          transform: scale(1.02);
-        }
-        
-        .gallery-image {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-        
-        .single-image-container {
-          width: 100%;
-          max-height: 300px;
-          overflow: hidden;
-          border-radius: 8px;
-          box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
-          margin: 20px 0;
-        }
-        
-        .detail-single-image {
-          width: 100%;
-          height: 100%;
-          object-fit: contain;
-        }
-        
-        .no-image-placeholder {
-          width: 100%;
-          height: 200px;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          background-color: #f9f9f9;
-          border-radius: 8px;
-          border: 2px dashed #ddd;
-          margin: 20px 0;
-          color: #888;
-        }
-        
-        .no-image-placeholder i {
-          font-size: 48px;
-          margin-bottom: 10px;
-          opacity: 0.5;
-        }
-        
-        /* Responsive adjustments */
-        @media (max-width: 768px) {
-          .restaurant-images-gallery {
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-          }
-        }
-        
-        @media (max-width: 480px) {
-          .restaurant-images-gallery {
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-          }
-        }
-
-        .no-image-placeholder-small {
-          width: 50px;
-          height: 50px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background-color: #f9f9f9;
-          border-radius: 4px;
-          border: 1px solid #ddd;
-          color: #aaa;
-        }
-        
-        .no-image-placeholder-small i {
-          font-size: 18px;
-        }
-
-        /* Action buttons styling */
-        .action-buttons {
-          display: flex;
-          justify-content: flex-start;
-          gap: 8px;
-        }
-        
-        .btn-action {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 6px;
-          padding: 6px 12px;
-          border: none;
-          border-radius: 4px;
-          font-size: 14px;
-          font-weight: 500;
-          cursor: pointer;
-          transition: all 0.2s ease;
-        }
-        
-        .btn-action i {
-          font-size: 16px;
-        }
-        
-        .btn-view {
-          background-color: #17a2b8;
-          color: white;
-        }
-        
-        .btn-view:hover {
-          background-color: #138496;
-        }
-        
-        .btn-edit {
-          background-color: #ffc107;
-          color: #212529;
-        }
-        
-        .btn-edit:hover {
-          background-color: #e0a800;
-        }
-        
-        .btn-delete {
-          background-color: #dc3545;
-          color: white;
-        }
-        
-        .btn-delete:hover {
-          background-color: #c82333;
-        }
-        
-        @media (max-width: 768px) {
-          .btn-action span {
-            display: none;
-          }
-          
-          .btn-action {
-            padding: 8px;
-          }
-          
-          .action-buttons {
-            gap: 5px;
-          }
-        }
-
-        .btn-add {
-          background-color: #28a745;
-          color: white;
-          font-size: 16px;
-          padding: 10px 20px;
-          font-weight: 600;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .btn-add:hover {
-          background-color: #218838;
-          transform: translateY(-1px);
-          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-        }
-
-        .btn-add i {
-          font-size: 18px;
-          margin-right: 6px;
-        }
-
-        /* Status styles */
-        .status-badge {
-          padding: 6px 12px;
-          border-radius: 20px;
-          font-size: 13px;
-          font-weight: 500;
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          transition: all 0.2s;
-        }
-        
-        .status-badge.active {
-          background-color: #e8f5e9;
-          color: #2e7d32;
-          border: 1px solid #a5d6a7;
-        }
-        
-        .status-badge.maintenance {
-          background-color: #ffebee;
-          color: #c62828;
-          border: 1px solid #ef9a9a;
-        }
-        
-        .status-badge:hover {
-          opacity: 0.8;
-          transform: translateY(-1px);
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        
-        .closure-reason {
-          font-style: italic;
-          color: #c62828;
-          margin-top: 4px;
-          font-size: 12px;
-        }
-        
-        /* Status change modal */
-        .status-change-modal {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          z-index: 1060;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          animation: modalFadeIn 0.3s ease;
-        }
-        
-        @keyframes modalFadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        
-        .status-change-modal .modal-content {
-          width: 450px;
-          max-width: 90%;
-          background-color: white;
-          border-radius: 8px;
-          box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-          overflow: hidden;
-          animation: modalSlideIn 0.3s ease;
-        }
-        
-        @keyframes modalSlideIn {
-          from { transform: translateY(-20px); opacity: 0; }
-          to { transform: translateY(0); opacity: 1; }
-        }
-        
-        .status-change-modal .modal-header {
-          background-color: #f8f9fa;
-          padding: 15px 20px;
-          border-bottom: 1px solid #eee;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-        
-        .status-change-modal .modal-header h3 {
-          margin: 0;
-          font-size: 18px;
-          color: #333;
-        }
-        
-        .status-change-modal .modal-body {
-          padding: 20px;
-        }
-        
-        .restaurant-name-container {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          font-size: 16px;
-          margin-bottom: 20px;
-          padding-bottom: 15px;
-          border-bottom: 1px solid #eee;
-        }
-        
-        .restaurant-name-container i {
-          color: #007bff;
-          font-size: 18px;
-        }
-        
-        .restaurant-name-container strong {
-          color: #333;
-        }
-        
-        .status-options {
-          display: flex;
-          flex-direction: column;
-          gap: 20px;
-        }
-        
-        .option-label {
-          display: block;
-          margin-bottom: 8px;
-          font-weight: 600;
-          color: #555;
-        }
-        
-        .status-radio-group {
-          display: flex;
-          flex-direction: column;
-          gap: 15px;
-          margin-top: 8px;
-        }
-        
-        .radio-label {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          cursor: pointer;
-          padding: 8px 10px;
-          border-radius: 4px;
-          transition: background-color 0.2s;
-        }
-        
-        .radio-label:hover {
-          background-color: #f5f5f5;
-        }
-        
-        .radio-label input[type="radio"] {
-          position: absolute;
-          opacity: 0;
-        }
-        
-        .radio-custom {
-          display: inline-block;
-          width: 18px;
-          height: 18px;
-          border-radius: 50%;
-          border: 2px solid #ccc;
-          position: relative;
-          transition: all 0.2s;
-        }
-        
-        .radio-label input[type="radio"]:checked + .radio-custom {
-          border-color: #007bff;
-        }
-        
-        .radio-label input[type="radio"]:checked + .radio-custom:after {
-          content: "";
-          position: absolute;
-          top: 3px;
-          left: 3px;
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          background-color: #007bff;
-        }
-        
-        .closure-reason-container {
-          animation: fadeIn 0.3s ease;
-        }
-        
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(-10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .status-change-modal .form-control {
-          border-radius: 4px;
-          border: 1px solid #ddd;
-          padding: 10px;
-          transition: border-color 0.2s, box-shadow 0.2s;
-          width: 100%;
-          resize: vertical;
-        }
-        
-        .status-change-modal .form-control:focus {
-          border-color: #80bdff;
-          box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-          outline: none;
-        }
-        
-        .modal-footer {
-          display: flex;
-          justify-content: flex-end;
-          gap: 10px;
-          padding: 15px 20px;
-          border-top: 1px solid #eee;
-          background-color: #f8f9fa;
-        }
-        
-        .update-btn, .cancel-btn {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          padding: 8px 16px;
-          border-radius: 4px;
-          cursor: pointer;
-          font-weight: 500;
-          transition: all 0.2s;
-          border: none;
-        }
-        
-        .update-btn {
-          background-color: #007bff;
-          color: white;
-        }
-        
-        .update-btn:hover {
-          background-color: #0069d9;
-        }
-        
-        .update-btn:disabled {
-          background-color: #80bdff;
-          cursor: not-allowed;
-        }
-        
-        .cancel-btn {
-          background-color: #6c757d;
-          color: white;
-        }
-        
-        .cancel-btn:hover {
-          background-color: #5a6268;
-        }
-      `}</style>
     </div>
   );
 }

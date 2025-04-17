@@ -231,11 +231,6 @@ function Header() {
               </Link>
             </li>
             <li className="nav-item">
-              <Link to="/thuc-don">
-                <i className="nav-icon">🍽️</i> Thực đơn
-              </Link>
-            </li>
-            <li className="nav-item">
               <Link to="/bo-suu-tap">
                 <i className="nav-icon">🌟</i> Gợi ý
               </Link>

@@ -21,7 +21,6 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminRestaurants from './pages/admin/AdminRestaurants';
 import AdminReservations from './pages/admin/AdminReservations';
 import AdminReviews from './pages/admin/AdminReviews';
-import AdminMenus from './pages/admin/AdminMenus';
 import AdminCategories from './pages/admin/AdminCategories';
 import AdminPromotions from './pages/admin/AdminPromotions';
 import AdminPayments from './pages/admin/AdminPayments';
@@ -46,7 +45,6 @@ function App() {
             {/* Thêm routes con cho admin */}
             <Route index element={<AdminDashboard />} />
             <Route path="restaurants" element={<AdminRestaurants />} />
-            <Route path="menus" element={<AdminMenus />} />
             <Route path="categories" element={<AdminCategories />} />
             <Route path="promotions" element={<AdminPromotions />} />
             <Route path="reservations" element={<AdminReservations />} />
