@@ -1,0 +1,623 @@
+/* Admin Layout - Thiết kế hiện đại và sang trọng */
+.admin-layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f8f9fa;
+  font-family: 'Roboto', 'Segoe UI', sans-serif;
+  position: relative;
+}
+
+/* Sidebar với gradient màu cam */
+.admin-sidebar {
+  width: 280px;
+  background: linear-gradient(135deg, #ff9966 0%, #ff5e62 100%);
+  color: white;
+  padding: 0;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.15);
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  overflow-y: auto;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  z-index: 900;
+}
+
+.sidebar-collapsed .admin-sidebar {
+  width: 70px;
+}
+
+/* Nút thu gọn sidebar với hiệu ứng hover */
+.sidebar-toggle {
+  position: absolute;
+  top: 20px;
+  right: 15px;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 16px;
+  backdrop-filter: blur(5px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+}
+
+.sidebar-toggle:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+/* Logo với hiệu ứng chuyển động */
+.admin-logo {
+  padding: 24px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: center;
+  position: relative;
+  background: rgba(255, 255, 255, 0.05);
+  margin-bottom: 10px;
+}
+
+.admin-logo h2 {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.5px;
+  transition: opacity 0.3s, transform 0.3s;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.admin-logo:after {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+}
+
+.sidebar-collapsed .admin-logo h2 {
+  opacity: 0;
+  transform: scale(0.8);
+}
+
+/* Wrapper cho phần nội dung với bóng đổ và bo góc */
+.admin-content-wrapper {
+  flex: 1;
+  margin-left: 280px;
+  transition: margin-left 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  width: calc(100% - 280px);
+  background-color: #f8f9fa;
+  position: relative;
+}
+
+.sidebar-collapsed .admin-content-wrapper {
+  margin-left: 70px;
+  width: calc(100% - 70px);
+}
+
+/* Header quản trị với thiết kế mới */
+.admin-header {
+  background: white;
+  padding: 18px 25px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid #f0f0f0;
+  position: sticky;
+  top: 0;
+  z-index: 800;
+}
+
+.admin-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #333;
+  font-weight: 600;
+  position: relative;
+  padding-left: 15px;
+}
+
+.admin-header h1:before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 70%;
+  width: 4px;
+  background: #d81f26;
+  border-radius: 2px;
+}
+
+.admin-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.current-date {
+  color: #666;
+  font-size: 0.9rem;
+  background: #f5f5f5;
+  padding: 6px 12px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+}
+
+.current-date:before {
+  content: "📅";
+  margin-right: 6px;
+}
+
+.admin-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f8f9fa;
+  padding: 8px 15px;
+  border-radius: 30px;
+  border: 1px solid #eaeaea;
+  transition: all 0.2s;
+}
+
+.admin-profile:hover {
+  background: #f0f0f0;
+}
+
+.admin-profile span {
+  font-weight: 500;
+  color: #333;
+}
+
+.logout-btn {
+  background-color: white;
+  border: 1px solid #ddd;
+  color: #333;
+  padding: 8px 15px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+}
+
+.logout-btn:before {
+  content: "🚪";
+  margin-right: 6px;
+  font-size: 14px;
+}
+
+.logout-btn:hover {
+  background-color: #f8d7da;
+  border-color: #f5c6cb;
+  color: #721c24;
+}
+
+/* Nội dung chính với margin và padding */
+.admin-content {
+  padding: 30px;
+  overflow-y: auto;
+}
+
+/* Thông tin người dùng với hiệu ứng nền */
+.admin-user {
+  padding: 15px 20px;
+  margin-bottom: 15px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  justify-content: center;
+  position: relative;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.admin-user:after {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+}
+
+.admin-user p {
+  margin: 0;
+  font-weight: 500;
+  font-size: 1.1rem;
+  color: #fff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 8px 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.admin-user p:before {
+  content: "⚙️";
+  margin-right: 8px;
+  font-size: 1.1rem;
+}
+
+/* Menu điều hướng với hiệu ứng hover */
+.admin-nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.admin-nav li {
+  margin: 6px 0;
+}
+
+.admin-nav li a {
+  display: flex;
+  align-items: center;
+  padding: 14px 20px;
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: none;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  border-left: 4px solid transparent;
+  font-size: 1rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.admin-nav li a:before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 0;
+  background: rgba(255, 255, 255, 0.1);
+  transition: width 0.3s ease;
+  z-index: -1;
+}
+
+.admin-nav li a:hover:before {
+  width: 100%;
+}
+
+.admin-nav li a:hover {
+  color: #fff;
+  border-left-color: #fff;
+  background-color: rgba(255, 255, 255, 0.1);
+  transform: translateX(4px);
+}
+
+.admin-nav li a.active {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  border-left-color: #fff;
+  font-weight: 500;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.admin-nav li a i {
+  margin-right: 12px;
+  font-size: 1.2rem;
+  width: 24px;
+  text-align: center;
+  transition: transform 0.2s;
+}
+
+.admin-nav li a:hover i {
+  transform: scale(1.2);
+}
+
+/* Nút trở về trang chủ */
+.admin-nav .home-btn {
+  margin: 25px 15px;
+  display: flex;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.1) 100%);
+  color: white;
+  text-decoration: none;
+  padding: 14px 20px;
+  text-align: center;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.admin-nav .home-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-3px);
+  box-shadow: 0 7px 14px rgba(0, 0, 0, 0.15);
+}
+
+.admin-nav .home-btn i {
+  margin-right: 10px;
+  font-size: 1.2rem;
+}
+
+/* Cards với thiết kế shadow và hover */
+.dashboard-stat {
+  background: white;
+  border-radius: 12px;
+  padding: 25px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s;
+  border: 1px solid #f0f0f0;
+  position: relative;
+  overflow: hidden;
+}
+
+.dashboard-stat:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-stat:before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, #d81f26, #ff5f6d);
+}
+
+/* Bảng dữ liệu với thiết kế mới */
+.admin-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background-color: white;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 30px;
+  border: 1px solid #f0f0f0;
+}
+
+.admin-table thead {
+  background: linear-gradient(90deg, #f7f7f7, #ffffff);
+}
+
+.admin-table th {
+  text-align: left;
+  padding: 16px;
+  font-weight: 600;
+  color: #333;
+  border-bottom: 2px solid #f0f0f0;
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 10;
+}
+
+.admin-table td {
+  padding: 16px;
+  border-bottom: 1px solid #f5f5f5;
+  color: #555;
+  transition: all 0.2s;
+}
+
+.admin-table tbody tr {
+  transition: all 0.2s;
+}
+
+.admin-table tbody tr:hover {
+  background-color: #f9f9f9;
+}
+
+.admin-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Animation cho các thẻ thống kê */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dashboard-stats .stat-card {
+  animation: fadeInUp 0.6s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+  animation-delay: calc(var(--index) * 0.1s);
+  opacity: 0;
+}
+
+/* Responsive design với các breakpoint chuẩn */
+@media (max-width: 992px) {
+  .admin-sidebar {
+    width: 70px;
+  }
+  
+  .admin-logo h2 {
+    opacity: 0;
+  }
+  
+  .admin-nav li a span {
+    display: none;
+  }
+  
+  .admin-nav li a {
+    justify-content: center;
+    padding: 15px 0;
+  }
+  
+  .admin-user p {
+    display: none;
+  }
+  
+  .admin-user {
+    justify-content: center;
+  }
+  
+  .admin-content-wrapper {
+    margin-left: 70px;
+    width: calc(100% - 70px);
+  }
+  
+  .home-btn span {
+    display: none;
+  }
+  
+  .home-btn {
+    justify-content: center;
+    padding: 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+    padding: 15px;
+  }
+  
+  .admin-header-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .admin-content {
+    padding: 15px;
+  }
+  
+  .dashboard-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Cửa sổ chỉnh sửa và form elements */
+.admin-form-group {
+  margin-bottom: 20px;
+}
+
+.admin-form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #333;
+}
+
+.admin-form-control {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.2s;
+  background-color: #fff;
+}
+
+.admin-form-control:focus {
+  border-color: #d81f26;
+  box-shadow: 0 0 0 3px rgba(216, 31, 38, 0.1);
+  outline: none;
+}
+
+/* Scrollbars tinh tế */
+.admin-sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.admin-sidebar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.admin-sidebar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+.admin-sidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Notification badge cho menu items có thông báo */
+.notification-badge {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  background-color: #ff3b30;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: bold;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Các hiệu ứng đổ bóng khác */
+.box-shadow-normal {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.box-shadow-hover {
+  transition: box-shadow 0.3s;
+}
+
+.box-shadow-hover:hover {
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Ẩn text trong các menu item khi sidebar bị thu gọn */
+.sidebar-collapsed .admin-nav li a span {
+  display: none;
+}
+
+/* Căn giữa các icon trong menu khi sidebar bị thu gọn */
+.sidebar-collapsed .admin-nav li a {
+  justify-content: center;
+  padding: 15px 0;
+}
+
+/* Ẩn tên người dùng khi sidebar bị thu gọn */
+.sidebar-collapsed .admin-user p {
+  display: none;
+}
+
+/* Ẩn tiêu đề logo khi sidebar bị thu gọn */
+.sidebar-collapsed .admin-logo h2 {
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* Điều chỉnh khoảng cách phần nội dung khi sidebar bị thu gọn */
+.sidebar-collapsed .admin-content-wrapper {
+  margin-left: 70px;
+  width: calc(100% - 70px);
+}
+
+/* Căn giữa nút Home khi sidebar bị thu gọn */
+.sidebar-collapsed .home-btn {
+  justify-content: center;
+  padding: 15px 0;
+}
+
+/* Ẩn text trong nút Home khi sidebar bị thu gọn */
+.sidebar-collapsed .home-btn span {
+  display: none;
+} 

@@ -1,0 +1,769 @@
+/* Header Styles */
+.site-header {
+  background-color: #e71a0f;
+  color: #fff;
+  padding: 8px 0;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  width: 100%;
+}
+
+.container {
+  padding-left: 4px;
+  padding-right: 4px;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.logo-link {
+  text-decoration: none;
+  color: white;
+  display: flex;
+  align-items: center;
+  margin-right: 0;
+  flex-shrink: 0;
+}
+
+.logo {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  font-size: 1.3rem;
+  margin-right: 20px;
+  white-space: nowrap;
+}
+
+.main-nav {
+  display: flex;
+  align-items: center;
+  flex-grow: 1;
+  margin-left: 0;
+}
+
+.nav-list {
+  display: flex;
+  align-items: center;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  margin-left: -5px;
+  height: 100%;
+  flex-wrap: nowrap;
+  gap: 0;
+}
+
+.nav-item {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  margin: 0;
+}
+
+.nav-item a, 
+.nav-link,
+.location-btn,
+.account-btn {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 4px;
+  text-decoration: none;
+  color: white;
+  font-size: 0.75rem;
+  transition: color 0.3s;
+  white-space: nowrap;
+}
+
+.nav-item a:hover, 
+.nav-link:hover,
+.location-btn:hover,
+.account-btn:hover {
+  color: #ffe4e4;
+}
+
+/* User Menu */
+.user-menu {
+  position: relative;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.account-btn {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0 4px;
+  text-decoration: none;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+/* Dropdown Menu */
+.dropdown-menu {
+  top: 40px;
+  position: absolute;
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  min-width: 200px;
+  z-index: 1000;
+}
+
+/* Media queries cho header responsive */
+@media (max-width: 1400px) {
+  .nav-item a, .nav-item-dropdown {
+    padding: 8px 6px;
+    font-size: 0.85rem;
+  }
+  
+  .nav-icon {
+    margin-right: 3px;
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 1200px) {
+  .container {
+    padding: 0 10px;
+  }
+  
+  .logo {
+    font-size: 1.3rem;
+  }
+  
+  .nav-item a, .nav-item-dropdown {
+    padding: 8px 5px;
+    font-size: 0.8rem;
+  }
+  
+  .nav-icon {
+    margin-right: 2px;
+  }
+  
+  .main-nav ul {
+    gap: 2px;
+  }
+}
+
+@media (max-width: 992px) {
+  .container {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .logo-link {
+    margin-right: 0;
+    margin-bottom: 5px;
+  }
+  
+  .main-nav {
+    width: 100%;
+    order: 2;
+  }
+  
+  .main-nav ul {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  
+  .user-nav {
+    margin-left: 0;
+    order: 1;
+  }
+}
+
+/* Mobile menu styles */
+@media (max-width: 768px) {
+  .menu-toggle {
+    display: block;
+  }
+  
+  .main-nav {
+    display: none;
+  }
+  
+  .main-nav.open {
+    display: flex;
+  }
+  
+  .main-nav ul {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .nav-item {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+/* Header auth styles */
+.auth-nav {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  margin-left: auto;
+}
+
+.auth-buttons {
+  display: none;
+}
+
+/* Điều chỉnh user menu */
+.user-menu {
+  position: relative;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+/* Giữ dropdown menu ở vị trí chính xác và thêm khoảng trống bên trên */
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  padding: 8px 0;
+  z-index: 100;
+  min-width: 200px;
+  margin-top: 0; /* Giảm khoảng cách */
+  display: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+/* Tạo vùng đệm vô hình bên trên dropdown menu để giữ kết nối hover */
+.dropdown-menu::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: 0;
+  width: 100%;
+  height: 10px;
+  background-color: transparent;
+}
+
+/* Hiển thị dropdown khi hover vào user menu */
+.user-menu:hover .dropdown-menu,
+.dropdown-menu:hover {
+  display: block;
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Style cho account button */
+.account-btn {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0 4px;
+  cursor: pointer;
+  margin-left: 15px;
+}
+
+/* Style cho dropdown menu items */
+.dropdown-menu a,
+.dropdown-menu button {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  color: #333;
+  text-decoration: none;
+  padding: 8px 16px;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.dropdown-menu a:hover,
+.dropdown-menu button:hover {
+  background-color: #f8f8f8;
+  color: #ff6b6b;
+}
+
+/* Simple animation for dropdown appearance */
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Styles cho Food Dropdown Menu */
+.food-menu-container {
+  position: relative;
+}
+
+.nav-link {
+  cursor: pointer;
+  color: #333;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+}
+
+.nav-link:hover {
+  color: #ff6b6b;
+}
+
+.food-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background-color: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  padding: 15px;
+  z-index: 100;
+  min-width: 600px;
+  margin-top: -1px;
+}
+
+.food-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.food-grid a {
+  color: #333;
+  text-decoration: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+  display: block;
+  text-align: left;
+}
+
+.food-grid a:hover {
+  background-color: #f8f8f8;
+  color: #ff6b6b;
+}
+
+@media (max-width: 768px) {
+  .food-dropdown-menu {
+    min-width: 300px;
+    left: -100px;
+  }
+  
+  .food-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Style cho dropdown arrow */
+.dropdown-arrow {
+  display: inline-block;
+  margin-left: 5px;
+  font-style: normal;
+  font-size: 0.8em;
+  transition: transform 0.3s ease;
+}
+
+.dropdown-arrow.open {
+  transform: rotate(180deg);
+}
+
+/* Logo link style */
+.logo-link {
+  text-decoration: none;
+}
+
+/* Blog dropdown menu specific styling */
+.blog-dropdown-menu {
+  min-width: 700px; /* Wider than the food dropdown */
+}
+
+.blog-grid {
+  grid-template-columns: repeat(3, 1fr); /* 3 columns instead of 4 */
+  gap: 12px; /* Slightly more gap */
+}
+
+.blog-grid a {
+  white-space: nowrap; /* Prevent text wrapping */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 10px 15px; /* More padding */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .blog-dropdown-menu {
+    min-width: 300px;
+    left: -100px;
+  }
+  
+  .blog-grid {
+    grid-template-columns: repeat(1, 1fr); /* Single column on mobile */
+  }
+}
+
+/* Style for location button */
+.location-btn {
+  display: inline-flex;
+  align-items: center;
+  color: #333;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 0.3s;
+  height: 100%;
+  vertical-align: middle;
+}
+
+.location-btn:hover {
+  color: #ff6b6b;
+  background-color: transparent;
+}
+
+.location-icon {
+  margin-right: 2px;
+  font-style: normal;
+  font-size: 1em;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* Thêm hiệu ứng pulse cho icon vị trí */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.location-btn:hover .location-icon {
+  animation: pulse 1s infinite;
+}
+
+/* Style cho tất cả các nav item có icon */
+.nav-item {
+  display: inline-flex;
+  align-items: center;
+  color: #333;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 0.3s;
+  height: 100%;
+  vertical-align: middle;
+}
+
+.nav-item:hover {
+  color: #ff6b6b;
+}
+
+.nav-icon {
+  margin-right: 2px;
+  font-size: 0.8rem;
+  font-style: normal;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 14px;
+  height: 14px;
+}
+
+/* Thêm hiệu ứng pulse cho tất cả các icon */
+.nav-item:hover .nav-icon,
+.nav-link:hover .nav-icon {
+  animation: pulse 1s infinite;
+}
+
+/* Điều chỉnh cho nav-link để hiển thị icon */
+.nav-link {
+  cursor: pointer;
+  color: #333;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Đảm bảo dropdown arrow đặt đúng vị trí */
+.dropdown-arrow {
+  margin-left: 5px;
+}
+
+/* Styling cho biểu tượng tài khoản */
+.account-btn {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  color: #333;
+  font-weight: 500;
+  padding: 0 4px;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  font-size: 0.75rem;
+  margin-left: 15px;
+}
+
+.account-btn:hover {
+  color: #ff6b6b;
+}
+
+.account-icon {
+  margin-right: 6px;
+  font-style: normal;
+  font-size: 1.1em;
+}
+
+.account-btn:hover .account-icon {
+  animation: pulse 1s infinite;
+}
+
+/* Styling cho dropdown menu */
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  padding: 8px 0;
+  z-index: 100;
+  min-width: 200px;
+  margin-top: -12px;
+  display: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.dropdown-menu a,
+.dropdown-menu button {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  color: #333;
+  text-decoration: none;
+  padding: 8px 16px;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.dropdown-menu a:hover,
+.dropdown-menu button:hover {
+  background-color: #f8f8f8;
+  color: #ff6b6b;
+}
+
+.menu-icon {
+  margin-right: 8px;
+  font-style: normal;
+}
+
+/* Thêm style cho nav-icon */
+.nav-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 14px;
+  height: 14px;
+  margin-right: 2px;
+  font-style: normal;
+}
+
+/* Điều chỉnh khoảng cách cho các nav-item */
+.nav-item {
+  margin: 0;
+  position: relative;
+}
+
+.nav-item a {
+  display: flex;
+  align-items: center;
+  color: #333;
+  text-decoration: none;
+  padding: 0 4px;
+  font-weight: 500;
+  transition: color 0.2s;
+  white-space: nowrap;
+}
+
+.nav-item a:hover {
+  color: #ff6b6b;
+}
+
+/* Style cho dropdown-toggle */
+.dropdown-toggle {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.dropdown-icon {
+  font-size: 0.7rem;
+  margin-left: 4px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+  .nav-list {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .nav-item {
+    margin: 5px 0;
+  }
+}
+
+/* Điều chỉnh header để các phần tử thẳng hàng */
+.header {
+  background-color: #d81f26;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  justify-content: space-between;
+}
+
+/* Điều chỉnh nav list */
+.main-nav {
+  display: flex;
+  align-items: center;
+  flex-grow: 1;
+  justify-content: center;
+}
+
+.nav-list {
+  display: flex;
+  align-items: center;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  flex-wrap: nowrap;
+}
+
+/* Đảm bảo tất cả nav-item có cùng chiều cao và căn giữa */
+.nav-item {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  margin: 0;
+}
+
+.nav-item a, 
+.nav-link,
+.location-btn,
+.account-btn {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 4px;
+  text-decoration: none;
+  color: white;
+  font-size: 0.75rem;
+  transition: color 0.3s;
+  white-space: nowrap;
+}
+
+.nav-item a:hover, 
+.nav-link:hover,
+.location-btn:hover,
+.account-btn:hover {
+  color: #ffe4e4;
+}
+
+/* Đảm bảo tất cả các icon có kích thước giống nhau */
+.nav-icon, 
+.location-icon,
+.account-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 14px;
+  height: 14px;
+  margin-right: 2px;
+  font-style: normal;
+}
+
+/* Điều chỉnh dropdown container */
+.food-menu-container,
+.blog-menu-container {
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+/* Điều chỉnh dropdown menu */
+.food-dropdown-menu,
+.blog-dropdown-menu {
+  top: 100%;
+  margin-top: 12px;
+}
+
+/* Điều chỉnh user menu */
+.user-menu {
+  position: relative;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.account-btn {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0 4px;
+}
+
+/* Giữ dropdown menu ở vị trí chính xác */
+.dropdown-menu {
+  top: 40px;
+}
+
+/* Điều chỉnh container chung */
+.container {
+  padding-left: 8px;
+  padding-right: 8px;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Đảm bảo không có padding thừa cho nav-item đầu tiên */
+.nav-list > li:first-child {
+  padding-left: 0;
+}
+
+/* Thêm font Poppins cho nav-link */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');

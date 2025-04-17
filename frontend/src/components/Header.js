@@ -11,12 +11,25 @@ function Header() {
   const [isHoveringDropdown, setIsHoveringDropdown] = useState(false);
   const timeoutRef = useRef(null);
   const foodMenuRef = useRef(null);
+  const [showBlogMenu, setShowBlogMenu] = useState(false);
+  const [isHoveringBlog, setIsHoveringBlog] = useState(false);
+  const [isHoveringBlogDropdown, setIsHoveringBlogDropdown] = useState(false);
+  const blogMenuRef = useRef(null);
+  const blogTimeoutRef = useRef(null);
+  const [isHoveringUser, setIsHoveringUser] = useState(false);
+  const [isHoveringUserDropdown, setIsHoveringUserDropdown] = useState(false);
+  const userTimeoutRef = useRef(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   // Close menu when clicking outside
   useEffect(() => {
     function handleClickOutside(event) {
       if (foodMenuRef.current && !foodMenuRef.current.contains(event.target)) {
         setShowFoodMenu(false);
+      }
+      
+      if (blogMenuRef.current && !blogMenuRef.current.contains(event.target)) {
+        setShowBlogMenu(false);
       }
     }
     
@@ -50,6 +63,51 @@ function Header() {
     };
   }, [isHoveringFood, isHoveringDropdown]);
   
+  // Add a new effect for blog menu dropdown
+  useEffect(() => {
+    if (isHoveringBlog || isHoveringBlogDropdown) {
+      // If hovering over either element, clear any timeout and show the menu
+      if (blogTimeoutRef.current) {
+        clearTimeout(blogTimeoutRef.current);
+        blogTimeoutRef.current = null;
+      }
+      setShowBlogMenu(true);
+    } else {
+      // If not hovering over either, set a timeout to hide the menu
+      blogTimeoutRef.current = setTimeout(() => {
+        setShowBlogMenu(false);
+      }, 100);
+    }
+
+    // Cleanup timeout when component unmounts or effect runs again
+    return () => {
+      if (blogTimeoutRef.current) {
+        clearTimeout(blogTimeoutRef.current);
+      }
+    };
+  }, [isHoveringBlog, isHoveringBlogDropdown]);
+  
+  // Thêm effect để kiểm soát hiển thị user menu khi hover
+  useEffect(() => {
+    if (isHoveringUser || isHoveringUserDropdown) {
+      if (userTimeoutRef.current) {
+        clearTimeout(userTimeoutRef.current);
+        userTimeoutRef.current = null;
+      }
+      setShowMenu(true);
+    } else {
+      userTimeoutRef.current = setTimeout(() => {
+        setShowMenu(false);
+      }, 100);
+    }
+
+    return () => {
+      if (userTimeoutRef.current) {
+        clearTimeout(userTimeoutRef.current);
+      }
+    };
+  }, [isHoveringUser, isHoveringUserDropdown]);
+  
   const handleLogout = () => {
     logout();
     navigate('/');
@@ -63,15 +121,33 @@ function Header() {
     setShowFoodMenu(!showFoodMenu);
   };
   
+  const toggleBlogMenu = () => {
+    setShowBlogMenu(!showBlogMenu);
+  };
+  
+  const toggleMobileMenu = () => {
+    setMobileMenuOpen(!mobileMenuOpen);
+  };
+  
   return (
     <header className="site-header">
       <div className="container">
-        <Link to="/" className="logo-link">
-          <h1 className="logo">DinerChill</h1>
-        </Link>
-        <nav className="main-nav">
+        <div className="logo-container">
+          <Link to="/" className="logo-link">
+            <h1 className="logo">DinerChill</h1>
+          </Link>
+          
+          <div className="hamburger-menu" onClick={toggleMobileMenu}>
+            <span className="hamburger-icon"></span>
+          </div>
+        </div>
+        <nav className={`main-nav ${mobileMenuOpen ? 'mobile-active' : ''}`}>
           <ul>
-            <li><Link to="/restaurants">Nhà hàng</Link></li>
+            <li className="nav-item">
+              <Link to="/nha-hang">
+                <i className="nav-icon">🏠</i> Nhà hàng
+              </Link>
+            </li>
             <li 
               className="food-menu-container" 
               ref={foodMenuRef}
@@ -82,7 +158,7 @@ function Header() {
                 className="nav-link"
                 onClick={toggleFoodMenu}
               >
-                Ăn uống <i className={`dropdown-arrow ${showFoodMenu ? 'open' : ''}`}>▼</i>
+                <i className="nav-icon">🍽️</i> Ăn uống <i className={`dropdown-arrow ${showFoodMenu ? 'open' : ''}`}>▼</i>
               </span>
               {showFoodMenu && (
                 <div 
@@ -109,35 +185,105 @@ function Header() {
                 </div>
               )}
             </li>
-            <li><Link to="/reservation">Đặt bàn</Link></li>
+            <li 
+              className="food-menu-container blog-menu-container" 
+              ref={blogMenuRef}
+              onMouseEnter={() => setIsHoveringBlog(true)}
+              onMouseLeave={() => setIsHoveringBlog(false)}
+            >
+              <span 
+                className="nav-link"
+                onClick={toggleBlogMenu}
+              >
+                <i className="nav-icon">📰</i> Tin tức & Blog <i className={`dropdown-arrow ${showBlogMenu ? 'open' : ''}`}>▼</i>
+              </span>
+              {showBlogMenu && (
+                <div 
+                  className="food-dropdown-menu blog-dropdown-menu"
+                  onMouseEnter={() => setIsHoveringBlogDropdown(true)}
+                  onMouseLeave={() => setIsHoveringBlogDropdown(false)}
+                >
+                  <div className="food-grid blog-grid">
+                    <Link to="/blog/tin-tuc-moi-nhat">Tin tức mới nhất</Link>
+                    <Link to="/blog/meo-kinh-nghiem">Mẹo & Kinh nghiệm ẩm thực</Link>
+                    <Link to="/blog/cong-thuc">Công thức món ăn</Link>
+                    <Link to="/blog/danh-gia-review">Đánh giá & Review</Link>
+                    <Link to="/blog/su-kien-khuyen-mai">Sự kiện & Khuyến mãi</Link>
+                    <Link to="/blog/cau-chuyen-am-thuc">Câu chuyện ẩm thực</Link>
+                    <Link to="/blog/hau-truong-nha-hang">Hậu trường nhà hàng</Link>
+                  </div>
+                </div>
+              )}
+            </li>
+            <li className="nav-item">
+              <Link to="/vi-tri">
+                <i className="nav-icon">📍</i> Vị Trí Gần Bạn
+              </Link>
+            </li>
+            <li className="nav-item">
+              <Link to="/dat-ban">
+                <i className="nav-icon">📅</i> Đặt bàn
+              </Link>
+            </li>
+            <li className="nav-item">
+              <Link to="/khuyen-mai">
+                <i className="nav-icon">🎁</i> Khuyến mãi
+              </Link>
+            </li>
+            <li className="nav-item">
+              <Link to="/bo-suu-tap">
+                <i className="nav-icon">🌟</i> Gợi ý
+              </Link>
+            </li>
           </ul>
         </nav>
         <div className="auth-nav">
           {user ? (
             <div className="user-menu">
-              <span className="user-greeting" onClick={toggleMenu}>Xin chào, {user.name}</span>
+              <span className="user-greeting account-btn" onClick={toggleMenu}>
+                <i className="account-icon">👤</i> {user.name}
+              </span>
               {showMenu && (
                 <div className="dropdown-menu">
-                  <Link to="/profile" onClick={() => setShowMenu(false)}>Thông tin tài khoản</Link>
-                  {!user.isAdmin && (
-                    <Link to="/my-reservations" onClick={() => setShowMenu(false)}>Đặt bàn của tôi</Link>
+                  <Link to="/profile" onClick={() => setShowMenu(false)}>
+                    <i className="menu-icon">👤</i> Thông tin tài khoản
+                  </Link>
+                  {user.isAdmin ? (
+                    <Link to="/admin" onClick={() => setShowMenu(false)}>
+                      <i className="menu-icon">⚙️</i> Quản trị viên
+                    </Link>
+                  ) : (
+                    <Link to="/my-reservations" onClick={() => setShowMenu(false)}>
+                      <i className="menu-icon">📅</i> Đặt bàn của tôi
+                    </Link>
                   )}
-                  {user.isAdmin && (
-                    <Link to="/admin" onClick={() => setShowMenu(false)}>Quản trị viên</Link>
-                  )}
-                  <button onClick={handleLogout}>Đăng xuất</button>
+                  <button onClick={handleLogout}>
+                    <i className="menu-icon">🚪</i> Đăng xuất
+                  </button>
                 </div>
               )}
             </div>
           ) : (
-            <div className="user-menu">
-              <span className="account-button" onClick={toggleMenu}>Tài khoản</span>
-              {showMenu && (
-                <div className="dropdown-menu">
-                  <Link to="/login" onClick={() => setShowMenu(false)}>Đăng nhập</Link>
-                  <Link to="/register" onClick={() => setShowMenu(false)}>Đăng ký</Link>
-                </div>
-              )}
+            <div 
+              className="user-menu"
+              onMouseEnter={() => setIsHoveringUser(true)}
+              onMouseLeave={() => setIsHoveringUser(false)}
+            >
+              <span className="account-btn">
+                <i className="account-icon">👤</i> Tài khoản
+              </span>
+              <div 
+                className="dropdown-menu"
+                onMouseEnter={() => setIsHoveringUserDropdown(true)}
+                onMouseLeave={() => setIsHoveringUserDropdown(false)}
+              >
+                <Link to="/login">
+                  <i className="menu-icon">🔑</i> Đăng nhập
+                </Link>
+                <Link to="/register">
+                  <i className="menu-icon">📝</i> Đăng ký
+                </Link>
+              </div>
             </div>
           )}
         </div>
