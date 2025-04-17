@@ -49,17 +49,6 @@ function AdminDashboard() {
         
         <div className="dashboard-stats">
           <div className="stat-card">
-            <h3>Người dùng</h3>
-            <p className="stat-number">{dashboardData?.totalUsers || 0}</p>
-            <button 
-              className="btn btn-primary" 
-              onClick={() => navigate('/admin/users')}
-            >
-              Quản lý người dùng
-            </button>
-          </div>
-          
-          <div className="stat-card">
             <h3>Nhà hàng</h3>
             <p className="stat-number">{dashboardData?.totalRestaurants || 0}</p>
             <button 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
+import '../../styles/identity/AuthPages.css';
 
 function LoginPage() {
   const { login } = useApp();
@@ -45,57 +46,75 @@ function LoginPage() {
   return (
     <div className="auth-page">
       <div className="auth-container">
-        <h1>Đăng nhập</h1>
-        
-        {error && (
-          <div className="error-message">
-            {error}
-          </div>
-        )}
-        
-        <form onSubmit={handleSubmit} className="auth-form">
-          <div className="form-group">
-            <label htmlFor="email">Email</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-              autoComplete="email"
-            />
+        <div className="auth-card">
+          <div className="auth-header">
+            <h1>Đăng nhập</h1>
+            <p>Chào mừng trở lại! Đăng nhập để tiếp tục</p>
           </div>
           
-          <div className="form-group">
-            <label htmlFor="password">Mật khẩu</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              autoComplete="current-password"
-            />
-          </div>
+          {error && (
+            <div className="auth-error">
+              <i className="error-icon">⚠️</i>
+              <span>{error}</span>
+            </div>
+          )}
           
-          <button 
-            type="submit" 
-            className="btn btn-primary btn-block"
-            disabled={loading}
-          >
-            {loading ? 'Đang xử lý...' : 'Đăng nhập'}
-          </button>
-        </form>
-        
-        <div className="auth-links">
-          <p>
-            Chưa có tài khoản? <Link to="/register">Đăng ký ngay</Link>
-          </p>
-          <p>
-            <Link to="/forgot-password">Quên mật khẩu?</Link>
-          </p>
+          <form onSubmit={handleSubmit} className="auth-form">
+            <div className="form-group">
+              <label htmlFor="email">Email</label>
+              <div className="input-with-icon">
+                <span className="input-icon">✉️</span>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="Nhập địa chỉ email"
+                  required
+                  autoComplete="email"
+                />
+              </div>
+            </div>
+            
+            <div className="form-group">
+              <label htmlFor="password">Mật khẩu</label>
+              <div className="input-with-icon">
+                <span className="input-icon">🔒</span>
+                <input
+                  type="password"
+                  id="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  placeholder="Nhập mật khẩu"
+                  required
+                  autoComplete="current-password"
+                />
+              </div>
+            </div>
+            
+            <div className="forgot-password">
+              <Link to="/forgot-password">Quên mật khẩu?</Link>
+            </div>
+            
+            <button 
+              type="submit" 
+              className="auth-button"
+              disabled={loading}
+            >
+              {loading ? 
+                <><i className="loading-icon">⏳</i> Đang xử lý...</> : 
+                <><i className="button-icon">🔑</i> Đăng nhập</>
+              }
+            </button>
+          </form>
+          
+          <div className="auth-footer">
+            <p>
+              Chưa có tài khoản? <Link to="/register" className="register-link">Đăng ký ngay</Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>

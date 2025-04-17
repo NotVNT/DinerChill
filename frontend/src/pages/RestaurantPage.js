@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import RestaurantCard from '../components/RestaurantCard';
+import FilterBox from '../components/FilterBox';
 import { useApp } from '../context/AppContext';
 
 function RestaurantPage() {
@@ -21,10 +22,42 @@ function RestaurantPage() {
     setFilteredRestaurants(results);
   }, [searchTerm, selectedCuisine, restaurants]);
   
-  // Lấy danh sách các loại ẩm thực từ dữ liệu nhà hàng
+  // Tạo các chức năng để sử dụng setSearchTerm và setSelectedCuisine
+  const handleSearch = (term) => {
+    setSearchTerm(term);
+  };
+  
+  const handleCuisineSelect = (cuisine) => {
+    setSelectedCuisine(cuisine);
+  };
+  
+  // Sử dụng danh sách cuisine từ dữ liệu nhà hàng
   const cuisines = restaurants.length > 0 
     ? [...new Set(restaurants.map(restaurant => restaurant.cuisine))]
     : [];
+    
+  // Hiển thị danh sách các loại ẩm thực
+  const renderCuisineFilters = () => {
+    return (
+      <div className="cuisine-filters">
+        <button 
+          className={selectedCuisine === '' ? 'active' : ''} 
+          onClick={() => handleCuisineSelect('')}
+        >
+          Tất cả
+        </button>
+        {cuisines.map(cuisine => (
+          <button 
+            key={cuisine}
+            className={selectedCuisine === cuisine ? 'active' : ''}
+            onClick={() => handleCuisineSelect(cuisine)}
+          >
+            {cuisine}
+          </button>
+        ))}
+      </div>
+    );
+  };
 
   if (loading) {
     return <div className="loading">Đang tải danh sách nhà hàng...</div>;
@@ -33,40 +66,33 @@ function RestaurantPage() {
   if (error) {
     return <div className="error-message">{error}</div>;
   }
-
+  
   return (
     <div className="restaurant-page">
-      <h1>Nhà hàng nổi bật</h1>
-      
-      <div className="filters">
-        <input 
-          type="text" 
-          placeholder="Tìm kiếm nhà hàng..." 
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-        <select 
-          value={selectedCuisine}
-          onChange={(e) => setSelectedCuisine(e.target.value)}
-        >
-          <option value="">Tất cả ẩm thực</option>
-          {cuisines.map(cuisine => (
-            <option key={cuisine} value={cuisine}>{cuisine}</option>
-          ))}
-        </select>
+      <div className="container">
+        <FilterBox />
       </div>
       
-      {filteredRestaurants.length === 0 ? (
-        <div className="no-results">
-          <p>Không tìm thấy nhà hàng phù hợp. Vui lòng thử tìm kiếm khác.</p>
-        </div>
-      ) : (
-        <div className="restaurant-grid">
-          {filteredRestaurants.map(restaurant => (
+      <div className="search-controls">
+        <input
+          type="text"
+          placeholder="Tìm kiếm nhà hàng..."
+          value={searchTerm}
+          onChange={(e) => handleSearch(e.target.value)}
+          className="search-input"
+        />
+        {renderCuisineFilters()}
+      </div>
+      
+      <div className="restaurant-list">
+        {filteredRestaurants.length > 0 ? (
+          filteredRestaurants.map(restaurant => (
             <RestaurantCard key={restaurant.id} restaurant={restaurant} />
-          ))}
-        </div>
-      )}
+          ))
+        ) : (
+          <div className="no-results">Không tìm thấy nhà hàng nào phù hợp</div>
+        )}
+      </div>
     </div>
   );
 }

@@ -8,15 +8,29 @@ const jwt = require('jsonwebtoken');
 const { User } = require('./models');
 const { Op } = require('sequelize');
 const dotenv = require('dotenv');
+const adminRoutes = require('./routes/admin');
+const fs = require('fs');
 
 // Đọc biến môi trường từ file .env
 dotenv.config();
+
+// Tạo thư mục uploads nếu chưa tồn tại
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Serve static files from uploads directory
+app.use('/uploads', express.static(uploadsDir));
+
 const JWT_SECRET = process.env.JWT_SECRET || 'dinerchillsecretkey';
 
 // Middleware
 app.use(cors({
-  origin: 'http://localhost:3000', // URL của frontend
-  credentials: true
+  origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -357,6 +371,9 @@ app.post('/api/auth/reset-password', async (req, res) => {
     res.status(500).json({ message: 'Đã xảy ra lỗi server' });
   }
 });
+
+// Thêm vào cuối file server.js trước app.listen
+app.use('/api/admin', adminRoutes);
 
 // Khởi động server
 app.listen(PORT, async () => {
