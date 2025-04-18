@@ -334,6 +334,10 @@ export const adminAPI = {
   deleteReview: (id) => fetchWithAuth(`/admin/reviews/${id}`, {
     method: 'DELETE'
   }),
+  updateReviewVerification: (id, isVerified) => fetchWithAuth(`/admin/reviews/${id}/verify`, {
+    method: 'PATCH',
+    body: JSON.stringify({ isVerified })
+  }),
 
   // Tables
   getTables: async (filters = {}) => {

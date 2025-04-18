@@ -328,7 +328,38 @@ function AdminTables() {
 
   // Filter restaurants based on search query and filters
   const filteredRestaurants = restaurants.filter(restaurant => {
-    const matchesSearch = restaurant.name.toLowerCase().includes(searchQuery.toLowerCase());
+    // Function to normalize Vietnamese text (remove diacritics)
+    const normalizeVietnamese = (str) => {
+      return str.normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
+        .toLowerCase();
+    };
+    
+    // Check if search query contains diacritics
+    const hasAccents = (str) => {
+      return /[\u0300-\u036f]/.test(str.normalize('NFD'));
+    };
+    
+    let matchesSearch = true;
+    
+    if (searchQuery.trim()) {
+      const queryHasAccents = hasAccents(searchQuery);
+      
+      if (queryHasAccents) {
+        // If query has accents, do exact match (case insensitive)
+        const lowerQuery = searchQuery.toLowerCase();
+        const lowerName = (restaurant.name || '').toLowerCase();
+        
+        matchesSearch = lowerName.includes(lowerQuery);
+      } else {
+        // If query has no accents, use normalized search (accent insensitive)
+        const normalizedQuery = normalizeVietnamese(searchQuery);
+        const normalizedName = normalizeVietnamese(restaurant.name || '');
+        
+        matchesSearch = normalizedName.includes(normalizedQuery);
+      }
+    }
+    
     const status = getRestaurantStatus(restaurant);
     const matchesStatus = statusFilter === 'all' || status === statusFilter;
     
@@ -357,9 +388,40 @@ function AdminTables() {
   });
 
   const filterTables = () => {
+    // Function to normalize Vietnamese text (remove diacritics)
+    const normalizeVietnamese = (str) => {
+      return String(str).normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
+        .toLowerCase();
+    };
+    
+    // Check if search query contains diacritics
+    const hasAccents = (str) => {
+      return /[\u0300-\u036f]/.test(String(str).normalize('NFD'));
+    };
+    
     return tables.filter((table) => {
-      const searchMatch = table.tableNumber.toString().includes(tableSearchQuery) ||
-        (table.tableCode && table.tableCode.toLowerCase().includes(tableSearchQuery.toLowerCase()));
+      let searchMatch = true;
+      
+      if (tableSearchQuery.trim()) {
+        const tableNumberStr = String(table.tableNumber);
+        const tableCodeStr = String(table.tableCode || '').toLowerCase();
+        const queryHasAccents = hasAccents(tableSearchQuery);
+        
+        if (queryHasAccents) {
+          // If query has accents, do exact match (case insensitive)
+          const lowerQuery = tableSearchQuery.toLowerCase();
+          searchMatch = tableNumberStr.includes(lowerQuery) || tableCodeStr.includes(lowerQuery);
+        } else {
+          // If query has no accents, use normalized search (accent insensitive)
+          const normalizedQuery = normalizeVietnamese(tableSearchQuery);
+          const normalizedTableNumber = normalizeVietnamese(tableNumberStr);
+          const normalizedTableCode = normalizeVietnamese(tableCodeStr);
+          
+          searchMatch = normalizedTableNumber.includes(normalizedQuery) || 
+                        normalizedTableCode.includes(normalizedQuery);
+        }
+      }
       
       const statusMatch = tableStatusFilter === 'all' || 
         (tableStatusFilter === 'available' && table.status === 'available') ||
