@@ -45,6 +45,16 @@ export const authAPI = {
     body: JSON.stringify(userData)
   }),
   
+  verifyEmail: (email, code) => fetchAPI('/auth/verify-email', {
+    method: 'POST',
+    body: JSON.stringify({ email, code })
+  }),
+  
+  resendVerification: (email) => fetchAPI('/auth/resend-verification', {
+    method: 'POST',
+    body: JSON.stringify({ email })
+  }),
+  
   getCurrentUser: () => fetchAPI('/auth/me'),
   
   updateProfile: (userData) => fetchAPI('/auth/profile', {

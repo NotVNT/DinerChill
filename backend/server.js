@@ -5,11 +5,12 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 5000;
 const jwt = require('jsonwebtoken');
-const { User } = require('./models');
+const { User, TempUser } = require('./models');
 const { Op } = require('sequelize');
 const dotenv = require('dotenv');
 const adminRoutes = require('./routes/admin');
 const fs = require('fs');
+const { sendVerificationEmail } = require('./utils/emailService');
 
 // Đọc biến môi trường từ file .env
 dotenv.config();
@@ -27,7 +28,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'dinerchillsecretkey';
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
+  origin: ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:5000', 'http://localhost:5001'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -79,6 +80,11 @@ const authenticateAdmin = async (req, res, next) => {
   }
 };
 
+// Generate a random verification code
+const generateVerificationCode = () => {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+};
+
 // Route đăng nhập
 app.post('/api/auth/login', async (req, res) => {
   const { email, password } = req.body;
@@ -94,6 +100,15 @@ app.post('/api/auth/login', async (req, res) => {
     
     if (!isMatch) {
       return res.status(401).json({ message: 'Email hoặc mật khẩu không đúng' });
+    }
+    
+    // Check if user is verified
+    if (!user.isVerified) {
+      return res.status(403).json({ 
+        message: 'Email chưa được xác thực. Vui lòng xác thực email của bạn trước khi đăng nhập.',
+        requiresVerification: true,
+        email: user.email
+      });
     }
     
     const token = jwt.sign(
@@ -120,23 +135,90 @@ app.post('/api/auth/register', async (req, res) => {
   const { name, email, phone, password } = req.body;
   
   try {
-    // Kiểm tra email đã tồn tại chưa
+    // Kiểm tra email đã tồn tại chưa trong cả 2 bảng users và temp_users
     const existingUser = await User.findOne({ where: { email } });
+    const existingTempUser = await TempUser.findOne({ where: { email } });
     
     if (existingUser) {
       return res.status(400).json({ message: 'Email đã được sử dụng' });
     }
     
-    // Tạo người dùng mới
-    const newUser = await User.create({
+    // Nếu đã có trong bảng tạm, xóa record cũ để tạo mới
+    if (existingTempUser) {
+      await existingTempUser.destroy();
+    }
+    
+    // Generate verification code
+    const verificationCode = generateVerificationCode();
+    const verificationExpires = new Date(Date.now() + 30 * 60 * 1000); // expires in 30 minutes
+    
+    // Lưu thông tin người dùng vào bảng tạm thời
+    const newTempUser = await TempUser.create({
       name,
       email,
       phone,
       password,
-      isAdmin: false
+      verificationCode,
+      verificationExpires
     });
     
-    // Tạo token
+    // Send verification email
+    try {
+      await sendVerificationEmail(email, verificationCode);
+    } catch (emailError) {
+      console.error('Error sending verification email:', emailError);
+      // Delete the temp user if email fails
+      await newTempUser.destroy();
+      return res.status(500).json({ message: 'Không thể gửi email xác thực. Vui lòng thử lại sau.' });
+    }
+    
+    res.status(201).json({
+      message: 'Đăng ký thành công. Vui lòng kiểm tra email để xác thực tài khoản.',
+      email: newTempUser.email,
+      requiresVerification: true
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Đã xảy ra lỗi server' });
+  }
+});
+
+// Route xác thực email
+app.post('/api/auth/verify-email', async (req, res) => {
+  const { email, code } = req.body;
+  
+  try {
+    // Tìm người dùng trong bảng tạm thời
+    const tempUser = await TempUser.findOne({ 
+      where: { 
+        email,
+        verificationCode: code,
+        verificationExpires: { [Op.gt]: new Date() }
+      }
+    });
+    
+    if (!tempUser) {
+      return res.status(400).json({ message: 'Mã xác thực không hợp lệ hoặc đã hết hạn' });
+    }
+    
+    // Chuyển thông tin từ bảng tạm sang bảng chính thức
+    // Sử dụng User.build() và save() thay vì create() để có thể bỏ qua hooks
+    const newUser = User.build({
+      name: tempUser.name,
+      email: tempUser.email,
+      phone: tempUser.phone,
+      password: tempUser.password, // Password đã được hash từ bảng tạm
+      isAdmin: false,
+      isVerified: true
+    });
+    
+    // Bỏ qua hooks để không hash lại password
+    await newUser.save({ hooks: false });
+    
+    // Xóa bản ghi tạm thời
+    await tempUser.destroy();
+    
+    // Generate token for automatic login
     const token = jwt.sign(
       { id: newUser.id, name: newUser.name, isAdmin: newUser.isAdmin },
       JWT_SECRET,
@@ -146,9 +228,50 @@ app.post('/api/auth/register', async (req, res) => {
     // Không gửi mật khẩu trong phản hồi
     const { password: _, ...userWithoutPassword } = newUser.toJSON();
     
-    res.status(201).json({
+    res.json({
+      message: 'Xác thực email thành công!',
       token,
       user: userWithoutPassword
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Đã xảy ra lỗi server' });
+  }
+});
+
+// Route resend verification code
+app.post('/api/auth/resend-verification', async (req, res) => {
+  const { email } = req.body;
+  
+  try {
+    // Tìm người dùng trong bảng tạm thời
+    const tempUser = await TempUser.findOne({ where: { email } });
+    
+    if (!tempUser) {
+      return res.status(404).json({ message: 'Không tìm thấy thông tin đăng ký hoặc đã được xác thực' });
+    }
+    
+    // Generate new verification code
+    const verificationCode = generateVerificationCode();
+    const verificationExpires = new Date(Date.now() + 30 * 60 * 1000); // expires in 30 minutes
+    
+    // Update user with new verification code
+    await tempUser.update({
+      verificationCode,
+      verificationExpires
+    });
+    
+    // Send verification email
+    try {
+      await sendVerificationEmail(email, verificationCode);
+    } catch (emailError) {
+      console.error('Error sending verification email:', emailError);
+      return res.status(500).json({ message: 'Không thể gửi email xác thực. Vui lòng thử lại sau.' });
+    }
+    
+    res.json({
+      message: 'Mã xác thực mới đã được gửi đến email của bạn',
+      email: tempUser.email
     });
   } catch (err) {
     console.error(err);
@@ -359,6 +482,7 @@ app.post('/api/auth/reset-password', async (req, res) => {
     }
     
     // Cập nhật mật khẩu và xóa thông tin reset
+    // Ở đây ta cung cấp mật khẩu mới chưa hash nên cần giữ hooks để hash password
     await user.update({
       password: newPassword,
       resetCode: null,
@@ -375,15 +499,29 @@ app.post('/api/auth/reset-password', async (req, res) => {
 // Thêm vào cuối file server.js trước app.listen
 app.use('/api/admin', adminRoutes);
 
-// Khởi động server
-app.listen(PORT, async () => {
-  console.log(`Server đang chạy tại http://localhost:${PORT}`);
-  try {
-    // Kiểm tra kết nối database khi khởi động server
-    const { sequelize } = require('./models');
-    await sequelize.authenticate();
-    console.log('Kết nối database thành công.');
-  } catch (error) {
-    console.error('Không thể kết nối đến database:', error);
-  }
-});
+// Hàm khởi động server với port cụ thể
+const startServer = (port) => {
+  const server = app.listen(port, async () => {
+    console.log(`Server đang chạy tại http://localhost:${port}`);
+    try {
+      // Kiểm tra kết nối database khi khởi động server
+      const { sequelize } = require('./models');
+      await sequelize.authenticate();
+      console.log('Kết nối database thành công.');
+    } catch (error) {
+      console.error('Không thể kết nối đến database:', error);
+    }
+  });
+
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.log(`Port ${port} đã được sử dụng. Thử port ${port + 1}...`);
+      startServer(port + 1);
+    } else {
+      console.error('Lỗi khởi động server:', err);
+    }
+  });
+};
+
+// Bắt đầu với port mặc định
+startServer(PORT);

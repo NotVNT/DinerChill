@@ -172,12 +172,40 @@ export function AppProvider({ children }) {
   // Đăng ký người dùng mới
   const register = async (userData) => {
     try {
-      const { user, token } = await authAPI.register(userData);
-      localStorage.setItem('dinerchillToken', token);
-      setUser(user);
-      return user;
+      const response = await authAPI.register(userData);
+      // Only set user and token if the response doesn't require verification
+      if (!response.requiresVerification) {
+        localStorage.setItem('dinerchillToken', response.token);
+        setUser(response.user);
+      }
+      return response;
     } catch (err) {
       console.error('Register error:', err);
+      throw err;
+    }
+  };
+  
+  // Xác thực email
+  const verifyEmail = async (email, code) => {
+    try {
+      const response = await authAPI.verifyEmail(email, code);
+      if (response.token) {
+        localStorage.setItem('dinerchillToken', response.token);
+        setUser(response.user);
+      }
+      return response;
+    } catch (err) {
+      console.error('Email verification error:', err);
+      throw err;
+    }
+  };
+  
+  // Gửi lại mã xác thực
+  const resendVerification = async (email) => {
+    try {
+      return await authAPI.resendVerification(email);
+    } catch (err) {
+      console.error('Resend verification error:', err);
       throw err;
     }
   };
@@ -231,7 +259,9 @@ export function AppProvider({ children }) {
     cancelReservation,
     getRestaurantById,
     addReview,
-    changePassword
+    changePassword,
+    verifyEmail,
+    resendVerification
   };
 
   return (
