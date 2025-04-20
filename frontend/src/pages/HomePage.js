@@ -1,9 +1,18 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import SearchBar from '../components/SearchBar';
+import FilterBox from '../components/FilterBox';
+import '../styles/HomePage.css';
 
 function HomePage() {
   return (
     <div className="home-page">
+      <SearchBar />
+      
+      <div className="container">
+        <FilterBox />
+      </div>
+      
       <div className="hero-section">
         <h1>Chào mừng đến với DinerChill</h1>
         <p>Nền tảng đặt bàn nhà hàng trực tuyến số 1</p>

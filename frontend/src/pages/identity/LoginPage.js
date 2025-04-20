@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
+import '../../styles/identity/AuthPages.css';
 
 function LoginPage() {
   const { login } = useApp();
@@ -11,12 +12,13 @@ function LoginPage() {
   const from = location.state?.from?.pathname || '/';
   
   const [formData, setFormData] = useState({
-    email: '',
+    emailOrPhone: '',
     password: ''
   });
   
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [loginAttempts, setLoginAttempts] = useState(0);
   
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -36,66 +38,120 @@ function LoginPage() {
       // Chuyển hướng người dùng sau khi đăng nhập thành công
       navigate(from, { replace: true });
     } catch (err) {
-      setError(err.message || 'Đăng nhập không thành công. Vui lòng kiểm tra lại thông tin.');
+      // Tăng số lần thử đăng nhập
+      setLoginAttempts(prevAttempts => prevAttempts + 1);
+      
+      // Xử lý lỗi tùy thuộc vào số lần thử đăng nhập
+      if (err.message && err.message.includes('đăng nhập bằng Google')) {
+        setError('Tài khoản hoặc mật khẩu đăng nhập không chính xác');
+      } else if (loginAttempts >= 1) { // Đã thử 1 lần trước đó, đây là lần thứ 2+
+        setError('Tài khoản hoặc mật khẩu đăng nhập không chính xác. Vui lòng nhấn "Quên mật khẩu?" để đặt lại mật khẩu mới.');
+      } else {
+        setError('Tài khoản hoặc mật khẩu đăng nhập không chính xác');
+      }
     } finally {
       setLoading(false);
     }
   };
   
+  // Hàm xử lý khi người dùng nhấn đăng nhập với Google
+  const handleGoogleLogin = () => {
+    window.location.href = `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/auth/google`;
+  };
+  
   return (
     <div className="auth-page">
       <div className="auth-container">
-        <h1>Đăng nhập</h1>
-        
-        {error && (
-          <div className="error-message">
-            {error}
-          </div>
-        )}
-        
-        <form onSubmit={handleSubmit} className="auth-form">
-          <div className="form-group">
-            <label htmlFor="email">Email</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-              autoComplete="email"
-            />
+        <div className="auth-card">
+          <div className="auth-header">
+            <h1>Đăng nhập</h1>
+            <p>Chào mừng trở lại! Đăng nhập để tiếp tục</p>
+
           </div>
           
-          <div className="form-group">
-            <label htmlFor="password">Mật khẩu</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              autoComplete="current-password"
-            />
+          {error && (
+            <div className="auth-error">
+              <i className="error-icon">⚠️</i>
+              <span>{error}</span>
+            </div>
+          )}
+          
+          <form onSubmit={handleSubmit} className="auth-form">
+            <div className="form-group">
+              <label htmlFor="emailOrPhone">Tài khoản</label>
+              <div className="input-with-icon">
+                <span className="input-icon">✉️</span>
+                <input
+                  type="text"
+                  id="emailOrPhone"
+                  name="emailOrPhone"
+                  value={formData.emailOrPhone}
+                  onChange={handleChange}
+                  placeholder="Nhập email hoặc số điện thoại"
+                  required
+                  autoComplete="username"
+                />
+              </div>
+            </div>
+            
+            <div className="form-group">
+              <label htmlFor="password">Mật khẩu</label>
+              <div className="input-with-icon">
+                <span className="input-icon">🔒</span>
+                <input
+                  type="password"
+                  id="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  placeholder="Nhập mật khẩu"
+                  required
+                  autoComplete="current-password"
+                />
+              </div>
+            </div>
+            
+            <div className="forgot-password">
+              <Link to="/forgot-password">Quên mật khẩu?</Link>
+            </div>
+            
+            <button 
+              type="submit" 
+              className="auth-button"
+              disabled={loading}
+            >
+              {loading ? 
+                <><i className="loading-icon">⏳</i> Đang xử lý...</> : 
+                <><i className="button-icon">🔑</i> Đăng nhập</>
+              }
+            </button>
+          </form>
+          
+          <div className="auth-divider">
+            <span>HOẶC</span>
           </div>
           
-          <button 
-            type="submit" 
-            className="btn btn-primary btn-block"
-            disabled={loading}
-          >
-            {loading ? 'Đang xử lý...' : 'Đăng nhập'}
-          </button>
-        </form>
-        
-        <div className="auth-links">
-          <p>
-            Chưa có tài khoản? <Link to="/register">Đăng ký ngay</Link>
-          </p>
-          <p>
-            <Link to="/forgot-password">Quên mật khẩu?</Link>
-          </p>
+          <div className="social-login">
+            <button 
+              type="button"
+              className="google-login-button"
+              onClick={handleGoogleLogin}
+            >
+              <img 
+                src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
+                alt="Google logo" 
+                className="google-logo"
+              />
+              <span>Đăng nhập với Google</span>
+            </button>
+          </div>
+          
+
+          <div className="auth-footer">
+            <p>
+              Chưa có tài khoản? <Link to="/register" className="register-link">Đăng ký ngay</Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>

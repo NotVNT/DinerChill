@@ -1,0 +1,90 @@
+/* If HomePage.css doesn't exist, create it with this content */
+
+/* Password Notification Banner */
+.password-notification-banner {
+  margin-bottom: 20px;
+  border-radius: 8px;
+  overflow: hidden;
+  max-width: 1200px;
+  margin: 0 auto 20px;
+  padding: 0 20px;
+}
+
+.password-notification-content {
+  display: flex;
+  align-items: center;
+  background-color: #e3f2fd;
+  padding: 16px;
+  border-left: 4px solid #2196f3;
+  position: relative;
+  border-radius: 8px;
+}
+
+.password-notification-icon {
+  margin-right: 16px;
+  color: #2196f3;
+  flex-shrink: 0;
+}
+
+.password-notification-text {
+  flex: 1;
+}
+
+.password-notification-text p {
+  margin: 0;
+  color: #333;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.password-notification-text a {
+  color: #2196f3;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.password-notification-text a:hover {
+  color: #0d47a1;
+  text-decoration: underline;
+}
+
+.password-notification-dismiss {
+  background: none;
+  border: none;
+  color: #607d8b;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.password-notification-dismiss:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: #455a64;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .password-notification-content {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 12px;
+  }
+  
+  .password-notification-icon {
+    margin-right: 0;
+    margin-bottom: 10px;
+  }
+  
+  .password-notification-dismiss {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+  }
+}
+
+/* Existing HomePage.css styles would go below here */ 

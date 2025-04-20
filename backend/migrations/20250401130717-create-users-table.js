@@ -38,6 +38,18 @@ module.exports = {
         type: Sequelize.DATE,
         allowNull: true
       },
+      isVerified: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false
+      },
+      verificationToken: {
+        type: Sequelize.STRING,
+        allowNull: true
+      },
+      verificationExpires: {
+        type: Sequelize.DATE,
+        allowNull: true
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE

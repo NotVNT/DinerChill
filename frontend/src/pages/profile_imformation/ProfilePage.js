@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import '../../styles/profile_imformation/ProfilePage.css';
+import LogoutHandler from '../identity/LogoutHandler';
 
 function ProfilePage() {
   const { user, updateProfile } = useApp();
@@ -13,11 +14,7 @@ function ProfilePage() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    phone: '',
-    birthDay: '01',
-    birthMonth: '01',
-    birthYear: '1990',
-    gender: 'Nam'
+    phone: ''
   });
   
   // Avatar state
@@ -36,7 +33,6 @@ function ProfilePage() {
         name: user.name || '',
         email: user.email || '',
         phone: user.phone || '',
-        // Add other fields if they exist in your user object
       }));
     }
   }, [user]);
@@ -224,16 +220,7 @@ function ProfilePage() {
                 </Link>
               </li>
               <li>
-                <Link to="/logout" className="logout-btn">
-                  <span className="nav-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                      <polyline points="16 17 21 12 16 7"></polyline>
-                      <line x1="21" y1="12" x2="9" y2="12"></line>
-                    </svg>
-                  </span>
-                  Thoát
-                </Link>
+                <LogoutHandler />
               </li>
             </ul>
           </nav>
@@ -408,89 +395,6 @@ function ProfilePage() {
                       required
                     />
                   </div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="profile-card">
-              <div className="profile-card-header">
-                <h2>
-                  <span className="section-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                      <line x1="16" y1="2" x2="16" y2="6"></line>
-                      <line x1="8" y1="2" x2="8" y2="6"></line>
-                      <line x1="3" y1="10" x2="21" y2="10"></line>
-                    </svg>
-                  </span>
-                  Thông tin cá nhân bổ sung
-                </h2>
-              </div>
-              
-              <div className="form-group">
-                <label>Ngày sinh</label>
-                <div className="date-selectors">
-                  <select 
-                    name="birthDay" 
-                    value={formData.birthDay}
-                    onChange={handleChange}
-                  >
-                    {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
-                      <option key={day} value={day < 10 ? `0${day}` : day}>
-                        {day}
-                      </option>
-                    ))}
-                  </select>
-                  
-                  <select 
-                    name="birthMonth" 
-                    value={formData.birthMonth}
-                    onChange={handleChange}
-                  >
-                    {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
-                      <option key={month} value={month < 10 ? `0${month}` : month}>
-                        Tháng {month}
-                      </option>
-                    ))}
-                  </select>
-                  
-                  <select 
-                    name="birthYear" 
-                    value={formData.birthYear}
-                    onChange={handleChange}
-                  >
-                    {Array.from({ length: 100 }, (_, i) => new Date().getFullYear() - i).map(year => (
-                      <option key={year} value={year}>
-                        {year}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              
-              <div className="form-group">
-                <label>Giới tính</label>
-                <div className="gender-options">
-                  <label className="gender-option">
-                    <input
-                      type="radio"
-                      name="gender"
-                      value="Nam"
-                      checked={formData.gender === 'Nam'}
-                      onChange={handleChange}
-                    />
-                    Nam
-                  </label>
-                  <label className="gender-option">
-                    <input
-                      type="radio"
-                      name="gender"
-                      value="Nữ"
-                      checked={formData.gender === 'Nữ'}
-                      onChange={handleChange}
-                    />
-                    Nữ
-                  </label>
                 </div>
               </div>
             </div>

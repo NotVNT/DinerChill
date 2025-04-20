@@ -144,18 +144,6 @@ main {
   margin-bottom: 2rem;
 }
 
-.filters {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 2rem;
-}
-
-.filters input, .filters select {
-  padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-}
-
 .restaurant-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -580,82 +568,15 @@ main {
   color: #666;
 }
 
-/* Styles cho Food Dropdown Menu */
-.food-menu-container {
-  position: relative;
+/* Container để bao bọc nội dung và giữ cho nó có kích thước đồng nhất */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 15px;
 }
 
-.nav-link {
-  cursor: pointer;
-  color: #333;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-}
-
-.nav-link:hover {
-  color: #ff6b6b;
-}
-
-.food-dropdown-menu {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  background-color: white;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  border-radius: 4px;
-  padding: 15px;
-  z-index: 100;
-  min-width: 600px;
-  margin-top: -1px;
-}
-
-.food-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-}
-
-.food-grid a {
-  color: #333;
-  text-decoration: none;
-  padding: 8px 12px;
-  border-radius: 4px;
-  transition: background-color 0.2s;
-  display: block;
-  text-align: left;
-}
-
-.food-grid a:hover {
-  background-color: #f8f8f8;
-  color: #ff6b6b;
-}
-
-@media (max-width: 768px) {
-  .food-dropdown-menu {
-    min-width: 300px;
-    left: -100px;
-  }
-  
-  .food-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-/* Style cho dropdown arrow */
-.dropdown-arrow {
-  display: inline-block;
-  margin-left: 5px;
-  font-style: normal;
-  font-size: 0.8em;
-  transition: transform 0.3s ease;
-}
-
-.dropdown-arrow.open {
-  transform: rotate(180deg);
-}
-
-/* Logo link style */
-.logo-link {
-  text-decoration: none;
+/* Đảm bảo FilterBox nằm đúng vị trí trong layout */
+.home-page .container,
+.restaurant-page .container {
+  margin-bottom: 20px;
 }

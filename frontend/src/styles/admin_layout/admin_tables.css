@@ -1,0 +1,993 @@
+/* Styles for the table management page */
+.admin-tables-container {
+  padding: 24px;
+  background-color: #f8f9fa;
+  min-height: calc(100vh - 64px);
+}
+
+.table-controls {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.search-filter-container {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  align-items: center;
+}
+
+.search-container {
+  margin-bottom: 20px;
+  padding: 0 4px;
+}
+
+.search-input {
+  flex: 2;
+  padding: 12px 16px;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  background-color: white;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #80bdff;
+  box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+
+.search-input::placeholder {
+  color: #adb5bd;
+}
+
+.status-filter,
+.time-filter {
+  flex: 1;
+  padding: 12px 16px;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  font-size: 14px;
+  background-color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #495057;
+}
+
+.status-filter:focus,
+.time-filter:focus {
+  outline: none;
+  border-color: #80bdff;
+  box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+
+.status-filter:hover,
+.time-filter:hover {
+  border-color: #ced4da;
+}
+
+/* Style for the select arrows */
+.status-filter,
+.time-filter {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+  padding-right: 40px;
+}
+
+.add-table-btn {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.add-table-btn:hover {
+  background: #218838;
+}
+
+/* Table styles */
+.tables-list {
+  overflow-x: auto;
+}
+
+.tables-list table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tables-list th,
+.tables-list td {
+  padding: 12px;
+  border: 1px solid #ddd;
+  text-align: left;
+}
+
+.tables-list th {
+  background-color: #f2f2f2;
+  font-weight: 600;
+}
+
+.tables-list tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.tables-list tr:hover {
+  background-color: #f5f5f5;
+}
+
+/* Status badges */
+.status-badge {
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  display: inline-block;
+}
+
+.badge-success {
+  background-color: #e6f4ea;
+  color: #0d652d;
+}
+
+.badge-warning {
+  background-color: #fff8e6;
+  color: #b06000;
+}
+
+.badge-danger {
+  background-color: #fce8e6;
+  color: #c5221f;
+}
+
+.badge-secondary {
+  background-color: #f1f3f4;
+  color: #5f6368;
+}
+
+/* Table actions */
+.table-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.edit-btn, .delete-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s ease;
+}
+
+.edit-btn {
+  background: #e9ecef;
+  color: #495057;
+}
+
+.edit-btn:hover {
+  background: #dee2e6;
+}
+
+.delete-btn {
+  background: #dc3545;
+  color: white;
+}
+
+.delete-btn:hover {
+  background: #c82333;
+}
+
+/* Modal styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.table-modal {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.table-modal h2 {
+  margin: 0 0 24px 0;
+  color: #2c3e50;
+  font-size: 20px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: #495057;
+  font-weight: 500;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #80bdff;
+  box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+
+.capacity-input-group {
+  display: flex;
+  align-items: stretch;
+}
+
+.capacity-input-group input {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.capacity-addon {
+  padding: 10px 16px;
+  background: #e9ecef;
+  border: 1px solid #ced4da;
+  border-left: none;
+  border-top-right-radius: 8px;
+  border-bottom-right-radius: 8px;
+  color: #495057;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.save-btn, .cancel-btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.save-btn {
+  background: #28a745;
+  color: white;
+}
+
+.save-btn:hover {
+  background: #218838;
+}
+
+.cancel-btn {
+  background: #dc3545;
+  color: white;
+}
+
+.cancel-btn:hover {
+  background: #c82333;
+}
+
+/* No tables message */
+.no-tables {
+  text-align: center;
+  padding: 40px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+}
+
+/* Cập nhật style cho input group sức chứa */
+.capacity-input-group {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  overflow: hidden; /* Đảm bảo các góc bo tròn đẹp */
+  background: #fff;
+}
+
+.capacity-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: none; /* Bỏ border của input */
+  outline: none; /* Bỏ outline khi focus */
+  width: calc(100% - 60px);
+  font-size: 14px;
+}
+
+.capacity-input:focus {
+  box-shadow: none; /* Bỏ box shadow khi focus */
+}
+
+.capacity-addon {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  background-color: #f8f9fa;
+  border-left: 1px solid #ddd;
+  color: #495057;
+  min-width: 60px;
+  font-size: 14px;
+  justify-content: center;
+  user-select: none; /* Không cho phép select text */
+}
+
+/* Hover effect cho cả group */
+.capacity-input-group:hover {
+  border-color: #bbb;
+}
+
+/* Focus effect cho cả group */
+.capacity-input-group:focus-within {
+  border-color: #80bdff;
+  box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+
+/* Đảm bảo input type number không có mũi tên */
+.capacity-input::-webkit-inner-spin-button,
+.capacity-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.capacity-input[type=number] {
+  -moz-appearance: textfield;
+}
+
+/* Style cho mã bàn */
+.table-code {
+  font-family: monospace;
+  font-weight: 600;
+  letter-spacing: 1px;
+  background-color: #f8f9fa;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #dee2e6;
+}
+
+/* Add these new styles */
+.restaurant-list {
+
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+
+  gap: 16px;
+}
+
+.restaurant-item {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+
+  align-items: flex-start;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  border: 1px solid #e9ecef;
+  height: 160px;
+  position: relative;
+  overflow: hidden;
+
+}
+
+.restaurant-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.restaurant-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  width: calc(100% - 50px);
+  overflow: hidden;
+  text-align: left;
+  padding-left: 15px;
+}
+
+.restaurant-name-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+
+}
+
+.restaurant-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: #2c3e50;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.restaurant-hours, .table-count, .last-updated {
+  margin-left: 15px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.restaurant-hours {
+  color: #6c757d;
+  font-size: 14px;
+
+}
+
+.table-count {
+  color: #6c757d;
+  font-size: 14px;
+
+}
+
+.table-count::before {
+  content: "\f236";  /* Font Awesome chair icon */
+  font-family: "Font Awesome 5 Free";
+  font-weight: 900;
+}
+
+.last-updated {
+  color: #adb5bd;
+  font-size: 12px;
+
+}
+
+.last-updated::before {
+  content: "\f017";  /* Font Awesome clock icon */
+  font-family: "Font Awesome 5 Free";
+  font-weight: 900;
+}
+
+.view-tables-btn {
+  background: #007bff;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 16px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 40px;
+
+  position: absolute;
+  top: 50%;
+  right: 20px;
+  transform: translateY(-50%);
+
+}
+
+.view-tables-btn:hover {
+  background: #0056b3;
+  transform: scale(1.05);
+}
+
+.view-tables-btn i {
+  font-size: 20px;
+}
+
+/* Thêm hiệu ứng khi focus vào nút */
+.view-tables-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+}
+
+/* Thêm hiệu ứng khi nhấn nút */
+.view-tables-btn:active {
+  transform: scale(0.95);
+}
+
+
+/* Restaurant header section with enhanced styling */
+.restaurant-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 25px;
+  background-color: white;
+  padding: 24px;
+  border-radius: 16px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  gap: 20px;
+  border: 1px solid #f0f0f0;
+  position: relative;
+  overflow: hidden;
+}
+
+.restaurant-header::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 6px;
+  height: 100%;
+  background: linear-gradient(to bottom, #4CAF50, #45a049);
+  border-top-left-radius: 16px;
+  border-bottom-left-radius: 16px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  max-width: 65%;
+  padding-left: 10px;
+}
+
+.restaurant-info-header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.restaurant-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.restaurant-title h2 {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: #333;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+/* Status indicators and counts */
+.table-stats {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.table-count-display, .table-count-reserved, .table-count-occupied {
+  font-size: 14px;
+  padding: 6px 16px;
+  border-radius: 30px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  transition: all 0.2s;
+}
+
+.table-count-display {
+  color: #2c6353;
+  background-color: #e9f7ed;
+  border: 1px solid #d1e7dd;
+}
+
+.table-count-display:before {
+  content: "\f236";  /* Font Awesome chair icon */
+  font-family: "Font Awesome 5 Free";
+  font-weight: 900;
+  margin-right: 8px;
+  font-size: 12px;
+}
+
+.table-count-reserved {
+  color: #856404;
+  background-color: #fff9e6;
+  border: 1px solid #ffe8a1;
+}
+
+.table-count-reserved:before {
+  content: "\f02a";  /* Font Awesome tag icon */
+  font-family: "Font Awesome 5 Free";
+  font-weight: 900;
+  margin-right: 8px;
+  font-size: 12px;
+}
+
+.table-count-occupied {
+  color: #721c24;
+  background-color: #fce9eb;
+  border: 1px solid #f5c6cb;
+}
+
+.table-count-occupied:before {
+  content: "\f4fc";  /* Font Awesome user-check icon */
+  font-family: "Font Awesome 5 Free";
+  font-weight: 900;
+  margin-right: 8px;
+  font-size: 12px;
+}
+
+/* Action container with search and add button */
+.action-container {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-left: auto;
+  flex-wrap: nowrap;
+}
+
+.table-search-container {
+  position: relative;
+  width: 320px;
+}
+
+.table-search-input {
+  padding-left: 40px !important;
+  height: 42px !important;
+  border-radius: 50px !important;
+  background-color: #f8f9fa !important;
+  border: 1px solid #dee2e6 !important;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05) !important;
+  transition: all 0.3s ease !important;
+  font-size: 14px !important;
+}
+
+.table-search-input:focus {
+  background-color: #fff !important;
+  border-color: #80bdff !important;
+  box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25) !important;
+}
+
+.search-icon {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6c757d;
+  z-index: 5;
+  pointer-events: none;
+}
+
+/* Enhanced add button */
+.add-table-btn {
+  background-color: #28a745 !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 50px !important;
+  padding: 8px 20px !important;
+  font-weight: 500 !important;
+  height: 42px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.3s ease !important;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1) !important;
+}
+
+.add-table-btn:hover {
+  background-color: #218838 !important;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
+  transform: translateY(-1px);
+}
+
+.add-table-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 3px rgba(0,0,0,0.1) !important;
+}
+
+/* Improved back button */
+.back-btn {
+  background: #f1f3f4;
+  border: none;
+  color: #5f6368;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.3s;
+  padding: 10px;
+  margin-right: 15px;
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.back-btn:hover {
+  background: #e8eaed;
+  color: #202124;
+  transform: scale(1.05);
+
+}
+
+/* Tables Grid */
+.tables-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+  padding: 20px 0;
+}
+
+.table-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e9ecef;
+  transition: all 0.3s ease;
+}
+
+.table-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.table-header span {
+  font-size: 16px;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.table-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.table-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 14px;
+  color: #495057;
+}
+
+.table-status {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.status-available {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-reserved {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.status-occupied {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.status-unavailable {
+  background: #e9ecef;
+  color: #495057;
+}
+
+.restaurant-info-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.table-count-display {
+  font-size: 14px;
+  color: #666;
+  background-color: #f8f9fa;
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1px solid #e9ecef;
+}
+
+.table-stats {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.table-count-reserved {
+  font-size: 14px;
+  color: #856404;
+  background-color: #fff3cd;
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1px solid #ffeeba;
+}
+
+.table-count-occupied {
+  font-size: 14px;
+  color: #721c24;
+  background-color: #f8d7da;
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1px solid #f5c6cb;
+}
+
+/* Add styles for restaurant status indicators */
+.restaurant-name-wrapper, .restaurant-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.status-indicator {
+
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 8px;
+  position: relative;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8);
+
+}
+
+.status-indicator.open {
+  background-color: #4CAF50;
+}
+
+.status-indicator.closed {
+  background-color: #9E9E9E;
+}
+
+.status-indicator.maintenance {
+  background-color: #F44336;
+}
+
+.restaurant-hours {
+  color: #6c757d;
+  font-size: 14px;
+}
+
+/* Restaurant title in detail view */
+.restaurant-title {
+  display: flex;
+  align-items: center;
+}
+
+/* Existing table stats styling */
+.table-stats {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.table-count-reserved {
+  font-size: 14px;
+  color: #856404;
+  background-color: #fff3cd;
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1px solid #ffeeba;
+}
+
+.table-count-occupied {
+  font-size: 14px;
+  color: #721c24;
+  background-color: #f8d7da;
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1px solid #f5c6cb;
+}
+
+.restaurant-status-controls {
+  margin-top: 8px;
+}
+
+
+/* Add responsive behavior for smaller screens */
+@media (max-width: 992px) {
+  .restaurant-list {
+    grid-template-columns: 1fr;
+  }
+
+  .action-container {
+    width: 100%;
+    margin-left: 0;
+    justify-content: space-between;
+  }
+
+  .table-search-container {
+    width: calc(100% - 140px);
+  }
+}
+
+@media (max-width: 576px) {
+  .action-container {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .table-search-container {
+    width: 100%;
+  }
+
+  .add-table-btn {
+    width: 100%;
+  }
+}
+
+/* Additional styling for the top status counters */
+.admin-tables-container {
+  padding: 24px;
+  background-color: #f8f9fa;
+  min-height: calc(100vh - 64px);
+}
+
+/* Enhanced top restaurant title and stats area */
+.admin-tables-container > div:first-child > div:first-child {
+  padding-bottom: 10px;
+}
+
+/* Status indicator dot styling */
+.status-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 8px;
+  position: relative;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8);
+}
+
+.status-indicator.open {
+  background-color: #4CAF50;
+}
+
+.status-indicator.closed {
+  background-color: #9E9E9E;
+}
+
+.status-indicator.maintenance {
+  background-color: #F44336;
+}
+
