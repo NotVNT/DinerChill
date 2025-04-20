@@ -1,3 +1,2 @@
-
-GOOGLE_CLIENT_ID=147343860193-nto2d3i92v2g5pgcjs1of1278ptnb5kk.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=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
+.env
+node_modules/
