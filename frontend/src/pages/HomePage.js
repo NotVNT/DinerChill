@@ -2,8 +2,12 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import SearchBar from '../components/SearchBar';
 import FilterBox from '../components/FilterBox';
+import { useApp } from '../context/AppContext';
+import '../styles/HomePage.css';
 
 function HomePage() {
+  const { user } = useApp();
+  
   return (
     <div className="home-page">
       <SearchBar />

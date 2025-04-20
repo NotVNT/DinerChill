@@ -45,6 +45,16 @@ export const authAPI = {
     body: JSON.stringify(userData)
   }),
   
+  verifyEmail: (email, code) => fetchAPI('/auth/verify-email', {
+    method: 'POST',
+    body: JSON.stringify({ email, code })
+  }),
+  
+  resendVerification: (email) => fetchAPI('/auth/resend-verification', {
+    method: 'POST',
+    body: JSON.stringify({ email })
+  }),
+  
   getCurrentUser: () => fetchAPI('/auth/me'),
   
   updateProfile: (userData) => fetchAPI('/auth/profile', {
@@ -52,7 +62,17 @@ export const authAPI = {
     body: JSON.stringify(userData)
   }),
   
+  checkEmail: (email) => fetchAPI('/auth/check-email', {
+    method: 'POST',
+    body: JSON.stringify({ email })
+  }),
+  
   forgotPassword: (data) => fetchAPI('/auth/forgot-password', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  }),
+  
+  verifyResetCode: (data) => fetchAPI('/auth/verify-reset-code', {
     method: 'POST',
     body: JSON.stringify(data)
   }),
@@ -65,6 +85,11 @@ export const authAPI = {
   changePassword: (data) => fetchAPI('/auth/change-password', {
     method: 'POST',
     body: JSON.stringify(data)
+  }),
+  
+  setPassword: (newPassword) => fetchAPI('/auth/set-password', {
+    method: 'POST',
+    body: JSON.stringify({ newPassword })
   }),
 };
 
@@ -126,6 +151,7 @@ export async function fetchWithAuth(endpoint, options = {}, retryCount = 2) {
       delete headers['Content-Type'];
     } else if (!headers['Content-Type'] && !(options.body instanceof FormData)) {
       headers['Content-Type'] = 'application/json';
+
     }
     
     // Create fetch config
@@ -180,6 +206,7 @@ export async function fetchWithAuth(endpoint, options = {}, retryCount = 2) {
       
       throw fetchError;
     }
+
   } catch (error) {
     console.error(`Lỗi khi gọi API ${endpoint}:`, error);
     throw error;
@@ -334,6 +361,12 @@ export const adminAPI = {
   deleteReview: (id) => fetchWithAuth(`/admin/reviews/${id}`, {
     method: 'DELETE'
   }),
+
+  updateReviewVerification: (id, isVerified) => fetchWithAuth(`/admin/reviews/${id}/verify`, {
+    method: 'PATCH',
+    body: JSON.stringify({ isVerified })
+  }),
+
 
   // Tables
   getTables: async (filters = {}) => {

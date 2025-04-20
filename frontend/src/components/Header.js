@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
+import '../styles/layout/logout-confirmation.css';
+import LogoutConfirmation from '../pages/identity/LogoutConfirmation';
 
 function Header() {
   const { user, logout } = useApp();
@@ -20,6 +22,7 @@ function Header() {
   const [isHoveringUserDropdown, setIsHoveringUserDropdown] = useState(false);
   const userTimeoutRef = useRef(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   
   // Close menu when clicking outside
   useEffect(() => {
@@ -109,8 +112,18 @@ function Header() {
   }, [isHoveringUser, isHoveringUserDropdown]);
   
   const handleLogout = () => {
+    setShowMenu(false);
+    setShowLogoutConfirm(true);
+  };
+  
+  const confirmLogout = () => {
     logout();
     navigate('/');
+    setShowLogoutConfirm(false);
+  };
+
+  const cancelLogout = () => {
+    setShowLogoutConfirm(false);
   };
   
   const toggleMenu = () => {
@@ -288,6 +301,12 @@ function Header() {
           )}
         </div>
       </div>
+      {showLogoutConfirm && (
+        <LogoutConfirmation
+          onCancel={cancelLogout}
+          onConfirm={confirmLogout}
+        />
+      )}
     </header>
   );
 }
