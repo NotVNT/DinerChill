@@ -31,6 +31,10 @@ module.exports = (sequelize, DataTypes) => {
 
     // Method để kiểm tra mật khẩu
     async validatePassword(password) {
+      // Nếu tài khoản Google (không có password), trả về false
+      if (!this.password) {
+        return false;
+      }
       return await bcrypt.compare(password, this.password);
     }
   }
@@ -55,11 +59,12 @@ module.exports = (sequelize, DataTypes) => {
     },
     phone: {
       type: DataTypes.STRING,
-      allowNull: false
+      allowNull: false,
+      unique: true
     },
     password: {
       type: DataTypes.STRING,
-      allowNull: false
+      allowNull: true // Cho phép null cho tài khoản Google
     },
     isAdmin: {
       type: DataTypes.BOOLEAN,
@@ -77,6 +82,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DATE,
       allowNull: true
     },
+    failedLoginAttempts: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0
+    },
     createdAt: {
       type: DataTypes.DATE,
       allowNull: false
@@ -84,6 +93,10 @@ module.exports = (sequelize, DataTypes) => {
     updatedAt: {
       type: DataTypes.DATE,
       allowNull: false
+    },
+    googleId: {
+      type: DataTypes.STRING,
+      allowNull: true
     }
   }, {
     sequelize,
@@ -98,7 +111,7 @@ module.exports = (sequelize, DataTypes) => {
         }
       },
       beforeUpdate: async (user) => {
-        if (user.changed('password')) {
+        if (user.changed('password') && user.password) {
           const salt = await bcrypt.genSalt(10);
           user.password = await bcrypt.hash(user.password, salt);
         }

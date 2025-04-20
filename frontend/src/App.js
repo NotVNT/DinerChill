@@ -30,11 +30,13 @@ import FavoritesPage from './pages/profile_imformation/FavoritesPage';
 import ChangePasswordPage from './pages/profile_imformation/ChangePasswordPage';
 import WalletPaymentPage from './pages/profile_imformation/WalletPaymentPage';
 import AdminTables from './pages/admin/AdminTables';
+import TokenHandler from './components/TokenHandler';
 
 function App() {
   return (
     <Router>
       <AppProvider>
+        <TokenHandler />
         <Routes>
           {/* Admin Routes - không có Header/Footer */}
           <Route path="/admin/*" element={

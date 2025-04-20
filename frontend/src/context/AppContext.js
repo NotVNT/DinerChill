@@ -243,6 +243,20 @@ export function AppProvider({ children }) {
     }
   };
 
+  // Google Login
+  const googleLogin = async (tokenId) => {
+    try {
+      const response = await authAPI.googleLogin(tokenId);
+      setUser(response.user);
+      // Lưu token vào localStorage
+      localStorage.setItem('dinerchillToken', response.token);
+      return true;
+    } catch (error) {
+      console.error('Google login error:', error);
+      throw error;
+    }
+  };
+
   // Giá trị context
   const contextValue = {
     restaurants,
@@ -261,7 +275,9 @@ export function AppProvider({ children }) {
     addReview,
     changePassword,
     verifyEmail,
-    resendVerification
+    resendVerification,
+    googleLogin,
+    setUser
   };
 
   return (

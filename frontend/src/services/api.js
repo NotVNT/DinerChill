@@ -62,7 +62,17 @@ export const authAPI = {
     body: JSON.stringify(userData)
   }),
   
+  checkEmail: (email) => fetchAPI('/auth/check-email', {
+    method: 'POST',
+    body: JSON.stringify({ email })
+  }),
+  
   forgotPassword: (data) => fetchAPI('/auth/forgot-password', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  }),
+  
+  verifyResetCode: (data) => fetchAPI('/auth/verify-reset-code', {
     method: 'POST',
     body: JSON.stringify(data)
   }),
@@ -75,6 +85,11 @@ export const authAPI = {
   changePassword: (data) => fetchAPI('/auth/change-password', {
     method: 'POST',
     body: JSON.stringify(data)
+  }),
+  
+  setPassword: (newPassword) => fetchAPI('/auth/set-password', {
+    method: 'POST',
+    body: JSON.stringify({ newPassword })
   }),
 };
 

@@ -142,14 +142,18 @@ function RegisterPage() {
       return;
     }
     
-    // Kiểm tra số điện thoại nếu có nhập
-    if (formData.phone.trim() !== '') {
-      const phoneRegex = /^0\d{9,10}$/;
-      
-      if (!phoneRegex.test(formData.phone)) {
-        setPhoneError('Số điện thoại phải bắt đầu bằng số 0 và có 10-11 chữ số');
-        return;
-      }
+    // Kiểm tra mật khẩu có đủ yêu cầu (ít nhất 6 ký tự, có cả chữ và số)
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{6,}$/;
+    if (!passwordRegex.test(formData.password)) {
+      setError('Mật khẩu phải có ít nhất 6 ký tự và bao gồm cả chữ và số.');
+      return;
+    }
+    
+    // Kiểm tra số điện thoại (luôn bắt buộc)
+    const phoneRegex = /^0\d{9,10}$/;
+    if (!phoneRegex.test(formData.phone)) {
+      setPhoneError('Số điện thoại phải bắt đầu bằng số 0 và có 10-11 chữ số');
+      return;
     }
     
     setLoading(true);
@@ -277,7 +281,7 @@ function RegisterPage() {
               
               <form onSubmit={handleSubmit} className="auth-form">
                 <div className="form-group">
-                  <label htmlFor="name">Họ tên</label>
+                  <label htmlFor="name">Họ tên<span className="required">*</span></label>
                   <div className="input-with-icon">
                     <span className="input-icon">👤</span>
                     <input
@@ -293,7 +297,7 @@ function RegisterPage() {
                 </div>
                 
                 <div className="form-group">
-                  <label htmlFor="email">Email</label>
+                  <label htmlFor="email">Email<span className="required">*</span></label>
                   <div className="input-with-icon">
                     <span className="input-icon">✉️</span>
                     <input
@@ -309,7 +313,7 @@ function RegisterPage() {
                 </div>
                 
                 <div className="form-group">
-                  <label htmlFor="phone">Số điện thoại (không bắt buộc)</label>
+                  <label htmlFor="phone">Số điện thoại<span className="required">*</span></label>
                   <div className="input-with-icon">
                     <span className="input-icon">📱</span>
                     <input
@@ -318,7 +322,8 @@ function RegisterPage() {
                       name="phone"
                       value={formData.phone}
                       onChange={handleChange}
-                      placeholder="Nhập số điện thoại VN (bắt đầu bằng số 0)"
+                      placeholder="Nhập số điện thoại (bắt đầu bằng số 0)"
+                      required
                     />
                   </div>
                   {phoneError && (
@@ -330,7 +335,7 @@ function RegisterPage() {
                 </div>
                 
                 <div className="form-group">
-                  <label htmlFor="password">Mật khẩu</label>
+                  <label htmlFor="password">Mật khẩu<span className="required">*</span></label>
                   <div className="input-with-icon">
                     <span className="input-icon">🔒</span>
                     <input
@@ -339,7 +344,7 @@ function RegisterPage() {
                       name="password"
                       value={formData.password}
                       onChange={handleChange}
-                      placeholder="Tạo mật khẩu (ít nhất 6 ký tự)"
+                      placeholder="Mật khẩu ít nhất 6 ký tự (gồm chữ và số)"
                       required
                       minLength="6"
                       autoComplete="new-password"
@@ -356,7 +361,7 @@ function RegisterPage() {
                 </div>
                 
                 <div className="form-group">
-                  <label htmlFor="confirmPassword">Xác nhận mật khẩu</label>
+                  <label htmlFor="confirmPassword">Xác nhận mật khẩu<span className="required">*</span></label>
                   <div className="input-with-icon">
                     <span className="input-icon">🔒</span>
                     <input

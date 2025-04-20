@@ -180,29 +180,92 @@
   color: #333;
 }
 
+/* Logout button styling */
 .logout-btn {
-  background-color: white;
-  border: 1px solid #ddd;
-  color: #333;
-  padding: 8px 15px;
+  background-color: #f99233;
+  color: white;
+  border: none;
   border-radius: 20px;
+  padding: 6px 16px;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
   display: flex;
   align-items: center;
-  font-weight: 500;
-}
-
-.logout-btn:before {
-  content: "🚪";
-  margin-right: 6px;
-  font-size: 14px;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.3s;
 }
 
 .logout-btn:hover {
-  background-color: #f8d7da;
-  border-color: #f5c6cb;
-  color: #721c24;
+  background-color: #e87f1e;
+}
+
+/* Logout confirmation dialog */
+.logout-confirm-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.logout-confirm-dialog {
+  background-color: white;
+  border-radius: 8px;
+  padding: 24px;
+  width: 350px;
+  max-width: 90%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.logout-confirm-dialog h3 {
+  margin-top: 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.logout-confirm-dialog p {
+  margin-bottom: 20px;
+  color: #666;
+}
+
+.logout-confirm-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.cancel-btn {
+  background-color: #f5f5f5;
+  color: #666;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.confirm-btn {
+  background-color: #f99233;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.cancel-btn:hover {
+  background-color: #e8e8e8;
+}
+
+.confirm-btn:hover {
+  background-color: #e87f1e;
 }
 
 /* Nội dung chính với margin và padding */

@@ -10,7 +10,10 @@ const { Op } = require('sequelize');
 const dotenv = require('dotenv');
 const adminRoutes = require('./routes/admin');
 const fs = require('fs');
-const { sendVerificationEmail } = require('./utils/emailService');
+const { sendVerificationEmail, sendPasswordResetEmail } = require('./utils/emailService');
+const session = require('express-session');
+const passport = require('./config/passport');
+const authRoutes = require('./routes/auth');
 
 // Đọc biến môi trường từ file .env
 dotenv.config();
@@ -35,6 +38,17 @@ app.use(cors({
 }));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+// Add session middleware
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'dinerchillsecretkey',
+  resave: false,
+  saveUninitialized: false
+}));
+
+// Initialize Passport
+app.use(passport.initialize());
+app.use(passport.session());
 
 // Middleware xác thực
 const authenticate = async (req, res, next) => {
@@ -87,25 +101,58 @@ const generateVerificationCode = () => {
 
 // Route đăng nhập
 app.post('/api/auth/login', async (req, res) => {
-  const { email, password } = req.body;
+  const { emailOrPhone, password } = req.body;
   
   try {
-    const user = await User.findOne({ where: { email } });
+    // Tìm người dùng theo email hoặc số điện thoại
+    const user = await User.findOne({ 
+      where: {
+        [Op.or]: [
+          { email: emailOrPhone },
+          { phone: emailOrPhone }
+        ]
+      } 
+    });
     
     if (!user) {
-      return res.status(401).json({ message: 'Email hoặc mật khẩu không đúng' });
+      return res.status(401).json({ message: 'Thông tin đăng nhập không đúng' });
+    }
+    
+    // Kiểm tra xem đây có phải tài khoản đăng nhập bằng Google không
+    if (user.googleId && !user.password) {
+      return res.status(401).json({ 
+        message: 'Thông tin đăng nhập không đúng'
+      });
     }
     
     const isMatch = await user.validatePassword(password);
     
     if (!isMatch) {
-      return res.status(401).json({ message: 'Email hoặc mật khẩu không đúng' });
+      // Tăng số lần đăng nhập thất bại
+      const failedAttempts = (user.failedLoginAttempts || 0) + 1;
+      await user.update({ failedLoginAttempts: failedAttempts });
+      
+      // Hiển thị thông báo khác nhau tùy theo số lần thất bại
+      if (failedAttempts >= 2) {
+        return res.status(401).json({ 
+          message: 'Tài khoản hoặc mật khẩu đăng nhập không chính xác. Vui lòng nhấn "Quên mật khẩu?" để đặt lại mật khẩu mới.'
+        });
+      } else {
+        return res.status(401).json({ 
+          message: 'Thông tin đăng nhập không đúng'
+        });
+      }
+    }
+    
+    // Reset failed login attempts on successful login
+    if (user.failedLoginAttempts > 0) {
+      await user.update({ failedLoginAttempts: 0 });
     }
     
     // Check if user is verified
     if (!user.isVerified) {
       return res.status(403).json({ 
-        message: 'Email chưa được xác thực. Vui lòng xác thực email của bạn trước khi đăng nhập.',
+        message: 'Tài khoản chưa được xác thực. Vui lòng xác thực email của bạn trước khi đăng nhập.',
         requiresVerification: true,
         email: user.email
       });
@@ -141,6 +188,14 @@ app.post('/api/auth/register', async (req, res) => {
     
     if (existingUser) {
       return res.status(400).json({ message: 'Email đã được sử dụng' });
+    }
+    
+    // Kiểm tra số điện thoại đã tồn tại chưa
+    const existingPhoneUser = await User.findOne({ where: { phone } });
+    const existingPhoneTempUser = await TempUser.findOne({ where: { phone } });
+    
+    if (existingPhoneUser || existingPhoneTempUser) {
+      return res.status(400).json({ message: 'Số điện thoại đã được sử dụng' });
     }
     
     // Nếu đã có trong bảng tạm, xóa record cũ để tạo mới
@@ -279,6 +334,22 @@ app.post('/api/auth/resend-verification', async (req, res) => {
   }
 });
 
+// Route kiểm tra email tồn tại
+app.post('/api/auth/check-email', async (req, res) => {
+  const { email } = req.body;
+  
+  try {
+    // Tìm người dùng với email trong bảng User
+    const user = await User.findOne({ where: { email } });
+    
+    // Trả về kết quả tồn tại hay không
+    res.json({ exists: !!user });
+  } catch (err) {
+    console.error('Error checking email:', err);
+    res.status(500).json({ message: 'Đã xảy ra lỗi server' });
+  }
+});
+
 // Route lấy thông tin user hiện tại
 app.get('/api/auth/me', authenticate, async (req, res) => {
   try {
@@ -307,6 +378,20 @@ app.put('/api/auth/profile', authenticate, async (req, res) => {
     }
     
     const { name, phone } = req.body;
+    
+    // Kiểm tra nếu số điện thoại thay đổi, xem đã tồn tại chưa
+    if (phone && phone !== user.phone) {
+      const existingPhoneUser = await User.findOne({ 
+        where: { 
+          phone,
+          id: { [Op.ne]: user.id } // Không phải là user hiện tại
+        } 
+      });
+      
+      if (existingPhoneUser) {
+        return res.status(400).json({ message: 'Số điện thoại đã được sử dụng bởi tài khoản khác' });
+      }
+    }
     
     // Cập nhật thông tin
     const updateData = {
@@ -451,13 +536,37 @@ app.post('/api/auth/forgot-password', async (req, res) => {
       resetExpires
     });
     
-    // Trong thực tế, gửi email chứa link reset password
-    console.log(`Reset code for ${email}: ${resetCode}`);
+    // Gửi email chứa link reset password
+    await sendPasswordResetEmail(email, resetCode);
     
     res.json({ message: 'Hướng dẫn đặt lại mật khẩu đã được gửi đến email của bạn' });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Đã xảy ra lỗi server' });
+  }
+});
+
+// Route kiểm tra mã reset có hợp lệ không
+app.post('/api/auth/verify-reset-code', async (req, res) => {
+  const { email, resetCode } = req.body;
+  
+  try {
+    // Tìm người dùng với email và mã reset hợp lệ
+    const user = await User.findOne({
+      where: {
+        email,
+        resetCode,
+        resetExpires: {
+          [Op.gt]: new Date() // resetExpires > current time
+        }
+      }
+    });
+    
+    // Trả về kết quả xác thực
+    res.json({ valid: !!user });
+  } catch (err) {
+    console.error('Error verifying reset code:', err);
+    res.status(500).json({ message: 'Đã xảy ra lỗi server', valid: false });
   }
 });
 
@@ -481,6 +590,14 @@ app.post('/api/auth/reset-password', async (req, res) => {
       return res.status(400).json({ message: 'Mã đặt lại mật khẩu không hợp lệ hoặc đã hết hạn' });
     }
     
+    // Kiểm tra xem mật khẩu mới có trùng với mật khẩu hiện tại không
+    if (user.password) {
+      const isMatch = await user.validatePassword(newPassword);
+      if (isMatch) {
+        return res.status(400).json({ message: 'Mật khẩu mới không được trùng với mật khẩu hiện tại của bạn' });
+      }
+    }
+    
     // Cập nhật mật khẩu và xóa thông tin reset
     // Ở đây ta cung cấp mật khẩu mới chưa hash nên cần giữ hooks để hash password
     await user.update({
@@ -495,6 +612,83 @@ app.post('/api/auth/reset-password', async (req, res) => {
     res.status(500).json({ message: 'Đã xảy ra lỗi server' });
   }
 });
+
+// Route thiết lập mật khẩu đầu tiên cho tài khoản Google
+app.post('/api/auth/set-password', authenticate, async (req, res) => {
+  const { newPassword } = req.body;
+  
+  try {
+    const user = await User.findByPk(req.user.id);
+    
+    if (!user) {
+      return res.status(404).json({ message: 'Không tìm thấy người dùng' });
+    }
+    
+    // Kiểm tra xem đây có phải tài khoản Google không có mật khẩu không
+    if (!user.googleId) {
+      return res.status(400).json({ 
+        message: 'Tài khoản này không phải tài khoản Google hoặc đã có mật khẩu. Vui lòng sử dụng chức năng đổi mật khẩu.' 
+      });
+    }
+    
+    // Cập nhật mật khẩu mới
+    await user.update({
+      password: newPassword
+    });
+    
+    // Tạo đối tượng user để trả về (loại bỏ thông tin nhạy cảm)
+    const userResponse = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      isAdmin: user.isAdmin,
+      googleId: user.googleId,
+      password: true // Đảm bảo client biết user đã có mật khẩu
+    };
+    
+    res.json({ 
+      message: 'Mật khẩu đã được thiết lập thành công',
+      user: userResponse
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Đã xảy ra lỗi server' });
+  }
+});
+
+// Route đổi mật khẩu
+app.post('/api/auth/change-password', authenticate, async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  
+  try {
+    const user = await User.findByPk(req.user.id);
+    
+    if (!user) {
+      return res.status(404).json({ message: 'Không tìm thấy người dùng' });
+    }
+    
+    // Kiểm tra mật khẩu hiện tại
+    const isMatch = await user.validatePassword(currentPassword);
+    
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Mật khẩu hiện tại không đúng' });
+    }
+    
+    // Cập nhật mật khẩu mới
+    await user.update({
+      password: newPassword
+    });
+    
+    res.json({ message: 'Mật khẩu đã được cập nhật thành công' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Đã xảy ra lỗi server' });
+  }
+});
+
+// Use auth routes
+app.use('/api/auth', authRoutes);
 
 // Thêm vào cuối file server.js trước app.listen
 app.use('/api/admin', adminRoutes);

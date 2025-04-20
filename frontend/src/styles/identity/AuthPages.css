@@ -732,4 +732,127 @@
 .input-with-icon input[type="password"],
 .input-with-icon input[type="text"] {
   padding-right: 40px;
+}
+
+/* Google auth button and divider */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  margin: 0 30px 20px;
+  color: #888;
+  font-size: 0.8rem;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background-color: #ddd;
+}
+
+.auth-divider span {
+  padding: 0 15px;
+}
+
+.social-login {
+  padding: 0 30px;
+  margin-bottom: 20px;
+}
+
+.google-login-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 12px 16px;
+  background-color: white;
+  color: #444;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.google-login-button:hover {
+  background-color: #f8f8f8;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.google-logo {
+  width: 18px;
+  height: 18px;
+  margin-right: 10px;
+}
+
+/* Add styling for required field markers */
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: #444;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+/* Style for the asterisk in required field labels */
+.form-group label > span.required {
+  color: #ff6b6b;
+  margin-left: 2px;
+}
+
+/* Success Confirmation Box Styles */
+.success-confirmation-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 30px 20px;
+}
+
+.email-icon {
+  margin-bottom: 20px;
+}
+
+.email-icon span, 
+.email-icon img {
+  font-size: 60px;
+  height: 60px;
+  width: auto;
+}
+
+.confirmation-text {
+  margin-bottom: 25px;
+}
+
+.confirmation-text p {
+  margin: 5px 0;
+  color: #333;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.confirmation-text .user-email {
+  font-weight: bold;
+  color: #ff4b4b;
+}
+
+.ok-button {
+  background-color: #ff4b4b;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 12px 50px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-top: 10px;
+  width: 80%;
+  max-width: 200px;
+}
+
+.ok-button:hover {
+  background-color: #ff3333;
 } 

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate, Link, useLocation } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import '../styles/admin_layout/admin.css';
+import '../styles/layout/logout-confirmation.css';
+import LogoutConfirmation from '../pages/identity/LogoutConfirmation';
 
 function AdminLayout() {
   const { user, logout } = useApp();
@@ -11,6 +13,7 @@ function AdminLayout() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   // For handling notifications
   useEffect(() => {
@@ -70,8 +73,17 @@ function AdminLayout() {
   };
 
   const handleLogout = () => {
+    setShowLogoutConfirm(true);
+  };
+  
+  const confirmLogout = () => {
     logout();
     navigate('/login');
+    setShowLogoutConfirm(false);
+  };
+
+  const cancelLogout = () => {
+    setShowLogoutConfirm(false);
   };
   
   // Lấy tiêu đề trang dựa trên đường dẫn hiện tại
@@ -241,6 +253,14 @@ function AdminLayout() {
           <Outlet />
         </div>
       </div>
+
+      {/* Logout Confirmation Dialog */}
+      {showLogoutConfirm && (
+        <LogoutConfirmation
+          onCancel={cancelLogout}
+          onConfirm={confirmLogout}
+        />
+      )}
     </div>
   );
 }
