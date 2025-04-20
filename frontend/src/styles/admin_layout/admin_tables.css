@@ -379,8 +379,10 @@
 
 /* Add these new styles */
 .restaurant-list {
+
   display: grid;
   grid-template-columns: repeat(2, 1fr);
+
   gap: 16px;
 }
 
@@ -390,6 +392,7 @@
   padding: 20px;
   display: flex;
   justify-content: space-between;
+
   align-items: flex-start;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
@@ -397,6 +400,7 @@
   height: 160px;
   position: relative;
   overflow: hidden;
+
 }
 
 .restaurant-item:hover {
@@ -408,6 +412,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+
   width: calc(100% - 50px);
   overflow: hidden;
   text-align: left;
@@ -422,12 +427,14 @@
   overflow: hidden;
   text-overflow: ellipsis;
   width: 100%;
+
 }
 
 .restaurant-name {
   font-size: 18px;
   font-weight: 600;
   color: #2c3e50;
+
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -443,11 +450,13 @@
 .restaurant-hours {
   color: #6c757d;
   font-size: 14px;
+
 }
 
 .table-count {
   color: #6c757d;
   font-size: 14px;
+
 }
 
 .table-count::before {
@@ -459,6 +468,7 @@
 .last-updated {
   color: #adb5bd;
   font-size: 12px;
+
 }
 
 .last-updated::before {
@@ -481,10 +491,12 @@
   justify-content: center;
   min-width: 40px;
   height: 40px;
+
   position: absolute;
   top: 50%;
   right: 20px;
   transform: translateY(-50%);
+
 }
 
 .view-tables-btn:hover {
@@ -506,6 +518,7 @@
 .view-tables-btn:active {
   transform: scale(0.95);
 }
+
 
 /* Restaurant header section with enhanced styling */
 .restaurant-header {
@@ -715,6 +728,7 @@
   background: #e8eaed;
   color: #202124;
   transform: scale(1.05);
+
 }
 
 /* Tables Grid */
@@ -844,6 +858,7 @@
 }
 
 .status-indicator {
+
   width: 12px;
   height: 12px;
   border-radius: 50%;
@@ -851,6 +866,7 @@
   margin-right: 8px;
   position: relative;
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8);
+
 }
 
 .status-indicator.open {
@@ -905,6 +921,7 @@
 .restaurant-status-controls {
   margin-top: 8px;
 }
+
 
 /* Add responsive behavior for smaller screens */
 @media (max-width: 992px) {
@@ -973,3 +990,4 @@
 .status-indicator.maintenance {
   background-color: #F44336;
 }
+

@@ -151,6 +151,7 @@ export async function fetchWithAuth(endpoint, options = {}, retryCount = 2) {
       delete headers['Content-Type'];
     } else if (!headers['Content-Type'] && !(options.body instanceof FormData)) {
       headers['Content-Type'] = 'application/json';
+
     }
     
     // Create fetch config
@@ -205,6 +206,7 @@ export async function fetchWithAuth(endpoint, options = {}, retryCount = 2) {
       
       throw fetchError;
     }
+
   } catch (error) {
     console.error(`Lỗi khi gọi API ${endpoint}:`, error);
     throw error;
@@ -359,10 +361,12 @@ export const adminAPI = {
   deleteReview: (id) => fetchWithAuth(`/admin/reviews/${id}`, {
     method: 'DELETE'
   }),
+
   updateReviewVerification: (id, isVerified) => fetchWithAuth(`/admin/reviews/${id}/verify`, {
     method: 'PATCH',
     body: JSON.stringify({ isVerified })
   }),
+
 
   // Tables
   getTables: async (filters = {}) => {

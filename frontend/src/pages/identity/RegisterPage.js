@@ -23,6 +23,7 @@ function RegisterPage() {
   const [success, setSuccess] = useState(null);
   const [loading, setLoading] = useState(false);
   const [phoneError, setPhoneError] = useState('');
+
   
   // State for verification section
   const [showVerification, setShowVerification] = useState(false);
@@ -51,6 +52,7 @@ function RegisterPage() {
       return () => clearTimeout(timer);
     }
   }, [countdown]);
+
   
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -139,6 +141,7 @@ function RegisterPage() {
     // Kiểm tra mật khẩu trùng khớp
     if (formData.password !== formData.confirmPassword) {
       setError('Mật khẩu nhập lại không khớp.');
+
       return;
     }
     
@@ -156,17 +159,21 @@ function RegisterPage() {
       return;
     }
     
+
     setLoading(true);
     setError(null);
     
     try {
+
       const response = await register({
+
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
         password: formData.password
       });
       
+
       if (response.requiresVerification) {
         // Show verification form instead of redirecting
         setShowVerification(true);
@@ -180,6 +187,7 @@ function RegisterPage() {
         // Direct login successful, navigate to home
         navigate('/');
       }
+
     } catch (err) {
       setError(err.message || 'Đăng ký không thành công. Vui lòng thử lại.');
     } finally {
@@ -248,6 +256,7 @@ function RegisterPage() {
     <div className="auth-page">
       <div className="auth-container">
         <div className="auth-card">
+
           {showSuccessModal && (
             <div className="success-modal-overlay">
               <div className="success-modal">
@@ -559,6 +568,7 @@ function RegisterPage() {
               </form>
             </>
           )}
+
         </div>
       </div>
     </div>

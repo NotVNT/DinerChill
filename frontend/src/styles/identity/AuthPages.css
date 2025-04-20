@@ -247,6 +247,7 @@
   .auth-button {
     padding: 12px 15px;
   }
+
 }
 
 /* Thêm styles cho Facebook-style verification page */
@@ -855,4 +856,5 @@
 
 .ok-button:hover {
   background-color: #ff3333;
+
 } 

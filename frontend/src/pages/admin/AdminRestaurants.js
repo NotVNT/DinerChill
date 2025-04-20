@@ -7,7 +7,9 @@ function AdminRestaurants() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+
   const [editingRestaurant, setEditingRestaurant] = useState(null);
   const [viewingRestaurant, setViewingRestaurant] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -144,6 +146,7 @@ function AdminRestaurants() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null); // Reset any previous error
+
     setIsSubmitting(true); // Set submitting state to true when form is submitted
     
     try {
@@ -225,20 +228,29 @@ function AdminRestaurants() {
         setRestaurants(prev => prev.map(restaurant => 
           restaurant.id === editingRestaurant.id ? updatedRestaurant : restaurant
         ));
+
         showToast(`Đã cập nhật nhà hàng "${updatedRestaurant.name}" thành công!`, 'warning');
         createNotification(`Đã cập nhật nhà hàng "${updatedRestaurant.name}"`);
+
       } else {
         // Thêm nhà hàng mới
         console.log('Creating new restaurant');
         updatedRestaurant = await adminAPI.createRestaurant(formDataToSend);
         console.log('Restaurant created successfully');
         setRestaurants(prev => [...prev, updatedRestaurant]);
+
         showToast(`Đã thêm nhà hàng "${updatedRestaurant.name}" thành công!`, 'success');
         createNotification(`Đã thêm nhà hàng mới "${updatedRestaurant.name}"`);
+
       }
       
       // Reset form
       resetForm();
+      
+      // Auto-hide success message after 5 seconds
+      setTimeout(() => {
+        setSuccess(null);
+      }, 5000);
     } catch (err) {
       console.error('Chi tiết lỗi khi lưu nhà hàng:', err);
       if (err.response && err.response.data && err.response.data.message) {
@@ -275,6 +287,7 @@ function AdminRestaurants() {
     if (window.confirm('Bạn có chắc muốn xóa nhà hàng này?')) {
       try {
         setError(null);
+
         
         // Find restaurant name before deleting
         const restaurantToDelete = restaurants.find(restaurant => restaurant.id === restaurantId);
@@ -282,8 +295,10 @@ function AdminRestaurants() {
         
         await adminAPI.deleteRestaurant(restaurantId);
         setRestaurants(prev => prev.filter(restaurant => restaurant.id !== restaurantId));
+
         showToast(`Đã xóa nhà hàng "${restaurantName}" thành công!`, 'danger');
         createNotification(`Đã xóa nhà hàng "${restaurantName}"`, 'danger');
+
       } catch (err) {
         console.error('Error deleting restaurant:', err);
         setError('Không thể xóa nhà hàng. Vui lòng thử lại.');
@@ -293,11 +308,13 @@ function AdminRestaurants() {
 
   const handleViewClick = (restaurant) => {
     setViewingRestaurant(restaurant);
+
   };
 
   const closeDetailView = () => {
     setViewingRestaurant(null);
   };
+
 
   const handleStatusToggleClick = (restaurant) => {
     setStatusChangeModal({
@@ -355,11 +372,13 @@ function AdminRestaurants() {
         r.id === restaurant.id ? updatedRestaurant : r
       ));
       
+
       showToast(`Đã cập nhật trạng thái nhà hàng "${restaurant.name}" thành ${newStatus === 'active' ? 'Đang hoạt động' : 'Tạm ngừng'}`, 'warning');
       createNotification(`Đã cập nhật trạng thái nhà hàng "${restaurant.name}" thành ${newStatus === 'active' ? 'Đang hoạt động' : 'Tạm ngừng'}`);
       
       // Close modal
       closeStatusModal();
+
     } catch (error) {
       console.error('Error updating restaurant status:', error);
       setError('Không thể cập nhật trạng thái nhà hàng');
@@ -403,6 +422,7 @@ function AdminRestaurants() {
     }
   });
 
+
   // Function to show toast message
   const showToast = (message, type = 'success') => {
     setToast({ show: true, message, type });
@@ -420,6 +440,7 @@ function AdminRestaurants() {
     window.dispatchEvent(notificationEvent);
   };
 
+
   return (
     <div className="admin-restaurants">
       <div className="page-header">
@@ -429,6 +450,7 @@ function AdminRestaurants() {
         </button>
       </div>
       
+
       {/* Toast Notification */}
       {toast.show && (
         <div className="toast-notification" style={{
@@ -487,12 +509,14 @@ function AdminRestaurants() {
         }
       `}</style>
       
+
       {error && (
         <div className="alert alert-danger">
           <i className="fa fa-exclamation-circle alert-icon"></i>
           {error}
         </div>
       )}
+
       
       {editingRestaurant !== null ? (
         <div className="card edit-form-card">
@@ -745,21 +769,25 @@ function AdminRestaurants() {
               <table className="table table-hover admin-table">
                 <thead className="thead-light">
                   <tr>
+
                     <th style={{ width: '15%' }}>Tên nhà hàng</th>
                     <th style={{ width: '4%' }}>Loại ẩm thực</th>
                     <th style={{ width: '10%' }}>Sức chứa</th>
                     <th style={{ width: '8%' }}>Trạng thái</th>
                     <th style={{ width: '20%' }}>Địa chỉ</th>
                     <th style={{ width: '10%' }}>Thao tác</th>
+
                   </tr>
                 </thead>
                 <tbody>
                   {filteredRestaurants && filteredRestaurants.length > 0 ? (
                     filteredRestaurants.map(restaurant => (
                       <tr key={restaurant.id}>
+
                         <td>{restaurant.name}</td>
                         <td>{restaurant.cuisine || restaurant.cuisineType}</td>
                         <td>{restaurant.capacity ? `${restaurant.capacity} người` : 'Chưa cập nhật'}</td>
+
                         <td>
                           <span 
                             className={`status-badge ${restaurant.status === 'active' ? 'active' : 'maintenance'}`}
@@ -806,7 +834,9 @@ function AdminRestaurants() {
                     ))
                   ) : (
                     <tr>
+
                       <td colSpan="6" className="text-center no-data">
+
                         <div className="empty-state">
                           {searchQuery ? (
                             <>

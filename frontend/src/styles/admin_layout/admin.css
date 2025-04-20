@@ -180,6 +180,7 @@
   color: #333;
 }
 
+
 /* Logout button styling */
 .logout-btn {
   background-color: #f99233;
@@ -266,6 +267,7 @@
 
 .confirm-btn:hover {
   background-color: #e87f1e;
+
 }
 
 /* Nội dung chính với margin và padding */
@@ -683,6 +685,7 @@
 /* Ẩn text trong nút Home khi sidebar bị thu gọn */
 .sidebar-collapsed .home-btn span {
   display: none;
+
 }
 
 /* Notification Styles */
@@ -823,4 +826,5 @@
   text-align: center;
   color: #888;
   font-size: 14px;
+
 } 

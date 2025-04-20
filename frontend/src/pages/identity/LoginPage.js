@@ -66,6 +66,7 @@ function LoginPage() {
           <div className="auth-header">
             <h1>Đăng nhập</h1>
             <p>Chào mừng trở lại! Đăng nhập để tiếp tục</p>
+
           </div>
           
           {error && (
@@ -145,6 +146,7 @@ function LoginPage() {
             </button>
           </div>
           
+
           <div className="auth-footer">
             <p>
               Chưa có tài khoản? <Link to="/register" className="register-link">Đăng ký ngay</Link>

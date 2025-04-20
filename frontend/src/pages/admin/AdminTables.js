@@ -21,9 +21,11 @@ function AdminTables() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [timeFilter, setTimeFilter] = useState('all');
+
   const [tableSearchQuery, setTableSearchQuery] = useState('');
   const [tableStatusFilter, setTableStatusFilter] = useState('all');
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+
   const [currentTable, setCurrentTable] = useState({
     restaurantId: '',
     tableNumber: '',
@@ -109,6 +111,7 @@ function AdminTables() {
     }
   }, [restaurants]);
 
+
   // Function to show toast message
   const showToast = (message, type = 'success') => {
     setToast({ show: true, message, type });
@@ -125,6 +128,7 @@ function AdminTables() {
     });
     window.dispatchEvent(notificationEvent);
   };
+
 
   // Handle selecting a restaurant
   const handleSelectRestaurant = (restaurant) => {
@@ -172,12 +176,15 @@ function AdminTables() {
     
     try {
       if (isEditing) {
+
         // Find the original table to compare changes
         const originalTable = tables.find(table => table.id === currentTable.id);
+
         const updatedTable = await adminAPI.updateTable(currentTable.id, currentTable);
         setTables(tables.map(table => 
           table.id === currentTable.id ? updatedTable : table
         ));
+
         
         // Create detailed message about what changed
         let changeDetails = [];
@@ -212,12 +219,15 @@ function AdminTables() {
         const detailMessage = `Đã thêm Bàn ${newTable.tableNumber} (Sức chứa: ${newTable.capacity} người, Trạng thái: ${getStatusLabel(newTable.status)})`;
         showToast(detailMessage, 'success');
         createNotification(detailMessage);
+
       }
       
       setShowModal(false);
     } catch (error) {
       console.error('Error saving table:', error);
+
       showToast(error.response?.data?.message || 'Có lỗi xảy ra khi lưu thông tin bàn.', 'danger');
+
     }
   };
 
@@ -225,6 +235,7 @@ function AdminTables() {
   const handleDeleteTable = async (id) => {
     if (window.confirm('Bạn có chắc chắn muốn xóa bàn này?')) {
       try {
+
         const tableToDelete = tables.find(table => table.id === id);
         await adminAPI.deleteTable(id);
         setTables(tables.filter(table => table.id !== id));
@@ -235,6 +246,7 @@ function AdminTables() {
       } catch (error) {
         console.error('Error deleting table:', error);
         showToast('Có lỗi xảy ra khi xóa bàn.', 'danger');
+
       }
     }
   };
@@ -328,6 +340,7 @@ function AdminTables() {
 
   // Filter restaurants based on search query and filters
   const filteredRestaurants = restaurants.filter(restaurant => {
+
     // Function to normalize Vietnamese text (remove diacritics)
     const normalizeVietnamese = (str) => {
       return str.normalize('NFD')
@@ -360,6 +373,7 @@ function AdminTables() {
       }
     }
     
+
     const status = getRestaurantStatus(restaurant);
     const matchesStatus = statusFilter === 'all' || status === statusFilter;
     
@@ -386,6 +400,7 @@ function AdminTables() {
     
     return matchesSearch && matchesStatus && matchesTime;
   });
+
 
   const filterTables = () => {
     // Function to normalize Vietnamese text (remove diacritics)
@@ -433,6 +448,7 @@ function AdminTables() {
     });
   };
 
+
   return (
     <div className="admin-tables-container">
       {!selectedRestaurant ? (
@@ -446,6 +462,7 @@ function AdminTables() {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="search-input"
             />
+
             <div className="custom-select-wrapper">
               <select 
                 value={statusFilter}
@@ -476,6 +493,7 @@ function AdminTables() {
                 <i className="bi bi-clock"></i>
               </div>
             </div>
+
           </div>
           <div className="restaurant-list">
             {filteredRestaurants.map(restaurant => {
@@ -486,7 +504,9 @@ function AdminTables() {
                   <div className="restaurant-info">
                     <div className="restaurant-name-wrapper">
                       <span className={`status-indicator ${status}`} title={getRestaurantStatusLabel(status)} style={getStatusDotStyle(status)}></span>
+
                       <span className="restaurant-name" title={restaurant.name}>Nhà hàng: {restaurant.name}</span>
+
                     </div>
                     <span className="restaurant-hours">
                       Giờ mở cửa: {restaurant.openingTime || '--'} - {restaurant.closingTime || '--'}
@@ -513,6 +533,7 @@ function AdminTables() {
       ) : (
         // Restaurant Detail View
         <div className="restaurant-tables">
+
           <button 
             className="back-btn-standalone"
             onClick={handleBackToRestaurants}
@@ -582,6 +603,7 @@ function AdminTables() {
 
           <div className="tables-grid">
             {filterTables().map(table => (
+
               <div key={table.id} className="table-card">
                 <div className="table-header">
                   <span>Bàn {table.tableNumber}</span>
@@ -606,11 +628,13 @@ function AdminTables() {
                   <div className={`table-status status-${table.status}`}>
                     {getStatusLabel(table.status)}
                   </div>
+
                   <div className="table-description">
                     <span className="description-text">
                       {table.description ? table.description : "Không có mô tả"}
                     </span>
                   </div>
+
                 </div>
               </div>
             ))}
@@ -694,6 +718,7 @@ function AdminTables() {
           </div>
         </div>
       )}
+
       
       {/* Toast Notification */}
       {toast.show && (
@@ -1141,6 +1166,7 @@ function AdminTables() {
           width: 100%;
         }
       `}</style>
+
     </div>
   );
 }
