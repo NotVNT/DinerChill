@@ -42,18 +42,24 @@ passport.use(new GoogleStrategy({
           user.googleId = profile.id;
           await user.save();
         } else {
-          // Create new user with Google profile info, không tạo password
-          user = await User.create({
-            name: profile.displayName || 'Google User',
-            email: email,
-            phone: '', // Default empty phone
-            password: null, // Không tạo password cho tài khoản Google
-            googleId: profile.id,
-            isVerified: true
-          }, { 
-            // Bỏ qua validation cho trường password
-            hooks: false
-          });
+          try {
+            // Create new user with Google profile info
+            user = await User.create({
+              name: profile.displayName || 'Google User',
+              email: email,
+              phone: null, // Changed from empty string to null
+              password: null, // Không tạo password cho tài khoản Google
+              googleId: profile.id,
+              isVerified: true
+            }, { 
+              // Bỏ qua validation cho trường password
+              hooks: false,
+              validate: false // Skip validation for all fields
+            });
+          } catch (createError) {
+            console.error('Error creating user:', createError);
+            return done(createError, null);
+          }
         }
       }
       
