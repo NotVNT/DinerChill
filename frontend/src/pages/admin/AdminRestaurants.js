@@ -249,7 +249,7 @@ function AdminRestaurants() {
       
       // Auto-hide success message after 5 seconds
       setTimeout(() => {
-        setSuccess(null);
+        setToast({ show: false, message: '', type: 'success' });
       }, 5000);
     } catch (err) {
       console.error('Chi tiết lỗi khi lưu nhà hàng:', err);
