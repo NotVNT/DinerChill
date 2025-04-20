@@ -1,247 +1,105 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
-import { restaurantAPI, reservationAPI, authAPI } from '../services/api';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import restaurantAPI from '../services/restaurantAPI'; // Giả lập API nhà hàng
 
-// Tạo context
 const AppContext = createContext();
 
-// Tạo provider component
 export function AppProvider({ children }) {
-  // Danh sách nhà hàng
   const [restaurants, setRestaurants] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  
-  // Danh sách đặt bàn
-  const [reservations, setReservations] = useState([]);
-  
-  // Thông tin xác thực người dùng
   const [user, setUser] = useState(null);
-  const [authLoading, setAuthLoading] = useState(true);
-  
-  // Kiểm tra xem người dùng đã đăng nhập chưa
+  const [recentlyViewed, setRecentlyViewed] = useState({}); // Lưu lịch sử xem theo danh mục
+
+  // Khôi phục lịch sử xem từ localStorage khi khởi động
   useEffect(() => {
-    const checkAuth = async () => {
-      setAuthLoading(true);
-      try {
-        // Lấy token từ localStorage
-        const token = localStorage.getItem('dinerchillToken');
-        
-        if (!token) {
-          setUser(null);
-          return;
-        }
-        
-        // Kiểm tra token với backend
-        const userData = await authAPI.getCurrentUser();
-        setUser(userData);
-      } catch (err) {
-        console.error('Auth check error:', err);
-        // Xóa token không hợp lệ
-        localStorage.removeItem('dinerchillToken');
-        setUser(null);
-      } finally {
-        setAuthLoading(false);
-      }
-    };
-    
-    checkAuth();
-  }, []);
-  
-  // Lấy danh sách nhà hàng khi component mount
-  useEffect(() => {
-    const fetchRestaurants = async () => {
-      try {
-        setLoading(true);
-        const data = await restaurantAPI.getAll();
-        setRestaurants(data);
-        setError(null);
-      } catch (err) {
-        console.error('Error fetching restaurants:', err);
-        setError('Không thể tải danh sách nhà hàng. Vui lòng thử lại sau.');
-        
-        // Dữ liệu mẫu nếu API bị lỗi
-        setRestaurants([
-          {
-            id: 1,
-            name: 'Nhà hàng Việt Phố',
-            cuisine: 'Việt Nam',
-            rating: 4.5,
-            image: 'https://via.placeholder.com/300x200',
-            description: 'Nhà hàng chuyên về ẩm thực Việt Nam truyền thống.'
-          },
-          {
-            id: 2,
-            name: 'Pizza Express',
-            cuisine: 'Ý',
-            rating: 4.3,
-            image: 'https://via.placeholder.com/300x200',
-            description: 'Các loại pizza và món Ý đích thực.'
-          },
-          {
-            id: 3,
-            name: 'Sushi World',
-            cuisine: 'Nhật Bản',
-            rating: 4.7,
-            image: 'https://via.placeholder.com/300x200',
-            description: 'Sushi và các món Nhật ngon tuyệt.'
-          }
-        ]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchRestaurants();
-  }, []);
-  
-  // Lấy chi tiết nhà hàng theo ID
-  const getRestaurantById = async (id) => {
-    try {
-      return await restaurantAPI.getById(id);
-    } catch (err) {
-      console.error(`Error fetching restaurant ${id}:`, err);
-      return restaurants.find(restaurant => restaurant.id === Number(id)) || null;
+    const savedRecentlyViewed = localStorage.getItem('recentlyViewed');
+    if (savedRecentlyViewed) {
+      setRecentlyViewed(JSON.parse(savedRecentlyViewed));
     }
-  };
-  
-  // Thêm đặt bàn mới
-  const addReservation = async (reservationData) => {
-    try {
-      const newReservation = await reservationAPI.create(reservationData);
-      setReservations(prevReservations => [...prevReservations, newReservation]);
-      return newReservation;
-    } catch (err) {
-      console.error('Error creating reservation:', err);
-      
-      // Fallback lưu vào localStorage nếu API bị lỗi
-      const fallbackReservation = {
-        id: Date.now(),
-        ...reservationData,
-        status: 'pending',
-        createdAt: new Date().toISOString()
+  }, []);
+
+  // Lưu lịch sử xem vào localStorage mỗi khi recentlyViewed thay đổi
+  useEffect(() => {
+    localStorage.setItem('recentlyViewed', JSON.stringify(recentlyViewed));
+  }, [recentlyViewed]);
+
+  // Hàm để thêm nhà hàng vào lịch sử xem
+  const addToRecentlyViewed = (restaurant) => {
+    if (!restaurant || !restaurant.id) return;
+
+    setRecentlyViewed((prev) => {
+      // Kiểm tra và đặt giá trị mặc định cho category
+      const category = restaurant.category ? restaurant.category.toLowerCase() : 'khác';
+      const updatedCategory = prev[category] ? [...prev[category]] : [];
+      // Kiểm tra xem nhà hàng đã tồn tại trong lịch sử chưa
+      const existingIndex = updatedCategory.findIndex(item => item.id === restaurant.id);
+      if (existingIndex !== -1) {
+        // Nếu đã tồn tại, xóa và thêm lại để đưa lên đầu
+        updatedCategory.splice(existingIndex, 1);
+      }
+      // Thêm nhà hàng mới vào đầu danh sách
+      updatedCategory.unshift(restaurant);
+      // Giới hạn số lượng nhà hàng trong lịch sử (tối đa 10 nhà hàng mỗi danh mục)
+      if (updatedCategory.length > 10) {
+        updatedCategory.pop();
+      }
+      return {
+        ...prev,
+        [category]: updatedCategory,
       };
-      
-      setReservations(prevReservations => [...prevReservations, fallbackReservation]);
-      
-      // Lưu vào localStorage
-      const savedReservations = JSON.parse(localStorage.getItem('reservations') || '[]');
-      localStorage.setItem('reservations', JSON.stringify([...savedReservations, fallbackReservation]));
-      
-      return fallbackReservation;
-    }
-  };
-  
-  // Hủy đặt bàn
-  const cancelReservation = async (id) => {
-    try {
-      await reservationAPI.delete(id);
-      setReservations(prevReservations => 
-        prevReservations.filter(reservation => reservation.id !== id)
-      );
-      return true;
-    } catch (err) {
-      console.error(`Error deleting reservation ${id}:`, err);
-      return false;
-    }
-  };
-  
-  // Thêm đánh giá nhà hàng
-  const addReview = async (restaurantId, reviewData) => {
-    try {
-      return await restaurantAPI.addReview(restaurantId, reviewData);
-    } catch (err) {
-      console.error(`Error adding review for restaurant ${restaurantId}:`, err);
-      throw err;
-    }
+    });
   };
 
-  // Đăng nhập người dùng
-  const login = async (credentials) => {
-    try {
-      const response = await authAPI.login(credentials);
-      setUser(response.user);
-      // Lưu token vào localStorage
-      localStorage.setItem('dinerchillToken', response.token);
-      return true;
-    } catch (error) {
-      console.error('Lỗi đăng nhập:', error);
-      throw error;
-    }
+  // Hàm để xóa toàn bộ lịch sử xem
+  const clearRecentlyViewed = () => {
+    setRecentlyViewed({});
+    localStorage.removeItem('recentlyViewed');
   };
-  
-  // Đăng ký người dùng mới
-  const register = async (userData) => {
-    try {
-      const { user, token } = await authAPI.register(userData);
-      localStorage.setItem('dinerchillToken', token);
-      setUser(user);
-      return user;
-    } catch (err) {
-      console.error('Register error:', err);
-      throw err;
-    }
+
+  // Lấy dữ liệu nhà hàng từ API và chuẩn hóa dữ liệu
+  useEffect(() => {
+    setLoading(true);
+    restaurantAPI.getAll()
+      .then(data => {
+        // Chuẩn hóa dữ liệu: đảm bảo tất cả nhà hàng đều có category
+        const normalizedData = data.map(restaurant => ({
+          ...restaurant,
+          category: restaurant.category || 'Khác',
+        }));
+        setRestaurants(normalizedData);
+        setLoading(false);
+      })
+      .catch(err => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, []);
+
+  const login = (userData) => {
+    setUser(userData);
   };
-  
-  // Đăng xuất
+
   const logout = () => {
-    localStorage.removeItem('dinerchillToken');
     setUser(null);
   };
 
-  const changePassword = async (currentPassword, newPassword) => {
-    try {
-      const response = await authAPI.changePassword({
-        currentPassword,
-        newPassword
-      });
-      
-      // Có thể thêm xử lý thành công ở đây nếu cần
-      return response;
-    } catch (error) {
-      console.error('Error changing password:', error);
-      throw error;
-    }
-  };
-
-  // Add updateProfile function
-  const updateProfile = async (userData) => {
-    try {
-      const updatedUser = await authAPI.updateProfile(userData);
-      setUser(updatedUser); // Update the user state with new data
-      return updatedUser;
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      throw error;
-    }
-  };
-
-  // Giá trị context
-  const contextValue = {
-    restaurants,
-    loading,
-    error,
-    reservations,
-    user,
-    authLoading,
-    login,
-    register,
-    logout,
-    updateProfile,
-    addReservation,
-    cancelReservation,
-    getRestaurantById,
-    addReview,
-    changePassword
-  };
-
   return (
-    <AppContext.Provider value={contextValue}>
+    <AppContext.Provider value={{ 
+      restaurants, 
+      loading, 
+      error, 
+      user, 
+      login, 
+      logout, 
+      recentlyViewed, 
+      addToRecentlyViewed,
+      clearRecentlyViewed // Thêm hàm mới vào context
+    }}>
       {children}
     </AppContext.Provider>
   );
 }
 
-// Hook để sử dụng context
 export function useApp() {
   return useContext(AppContext);
-} 
+}
