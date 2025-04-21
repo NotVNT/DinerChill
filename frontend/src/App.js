@@ -1,8 +1,6 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import './App.css';
-// Xóa import TopBar
-// import TopBar from './components/TopBar';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import HomePage from './pages/HomePage';
@@ -32,6 +30,17 @@ import WalletPaymentPage from './pages/profile_imformation/WalletPaymentPage';
 import AdminTables from './pages/admin/AdminTables';
 import TokenHandler from './components/TokenHandler';
 
+// Component để cuộn lên đầu trang khi chuyển route
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  return null;
+}
+
 function App() {
   return (
     <Router>
@@ -44,7 +53,6 @@ function App() {
               <AdminLayout />
             </AdminRoute>
           }>
-            {/* Thêm routes con cho admin */}
             <Route index element={<AdminDashboard />} />
             <Route path="restaurants" element={<AdminRestaurants />} />
             <Route path="categories" element={<AdminCategories />} />
@@ -60,10 +68,12 @@ function App() {
             <div className="App">
               <Header />
               <main className="main-content">
+                <ScrollToTop />
                 <Routes>
                   {/* Public Routes */}
                   <Route path="/" element={<HomePage />} />
                   <Route path="/restaurants" element={<RestaurantPage />} />
+                  <Route path="/cuisine/:cuisineName" element={<RestaurantPage />} /> {/* Thêm route mới */}
                   <Route path="/restaurant/:id" element={<RestaurantDetailPage />} />
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/register" element={<RegisterPage />} />
@@ -75,10 +85,11 @@ function App() {
                   <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
                   <Route path="/my-reservations" element={<ProtectedRoute><MyReservationsPage /></ProtectedRoute>} />
                   <Route path="/favorites" element={<ProtectedRoute><FavoritesPage /></ProtectedRoute>} />
-                  
-                  {/* Sửa routes cho trang đổi mật khẩu và trang ví tiền */}
                   <Route path="/change-password" element={<ProtectedRoute><ChangePasswordPage /></ProtectedRoute>} />
                   <Route path="/linked-accounts" element={<ProtectedRoute><WalletPaymentPage /></ProtectedRoute>} />
+                  
+                  {/* Route 404 */}
+                  <Route path="*" element={<div className="not-found">404 - Trang không tìm thấy</div>} />
                 </Routes>
               </main>
               <Footer />
