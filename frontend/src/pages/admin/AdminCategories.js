@@ -92,19 +92,20 @@ const FormGrid = styled.div`
 `;
 
 const FormGroup = styled.div`
-  margin-bottom: 15px;
+  margin-bottom: 12px;
 
   label {
     display: block;
-    margin-bottom: 5px;
+    margin-bottom: 4px;
     color: #555;
     font-weight: 500;
+    font-size: 14px;
   }
 
   input[type="text"],
   textarea {
     width: 100%;
-    padding: 8px 12px;
+    padding: 6px 10px;
     border: 1px solid #ddd;
     border-radius: 4px;
     font-size: 14px;
@@ -117,7 +118,7 @@ const FormGroup = styled.div`
   }
 
   textarea {
-    min-height: 100px;
+    min-height: 80px;
     resize: vertical;
   }
 `;
@@ -209,6 +210,7 @@ const Table = styled.table`
     background-color: #f8f9fa;
     font-weight: 600;
     color: #333;
+    white-space: nowrap;
   }
 
   td {
@@ -440,6 +442,7 @@ function AdminCategories() {
                     onChange={handleInputChange}
                     required
                     placeholder="Nhập tên danh mục"
+                    style={{ height: '32px' }}
                   />
                 </FormGroup>
                 <FormGroup>
@@ -450,6 +453,7 @@ function AdminCategories() {
                     value={formData.description}
                     onChange={handleInputChange}
                     placeholder="Nhập mô tả về danh mục"
+                    style={{ height: '80px' }}
                   />
                 </FormGroup>
               </div>
@@ -496,16 +500,6 @@ function AdminCategories() {
                   </>
                 )}
               </ActionButton>
-              {editingId && (
-                <ActionButton 
-                  type="button" 
-                  onClick={resetForm}
-                  variant="warning"
-                  marginLeft
-                >
-                  Hủy
-                </ActionButton>
-              )}
             </div>
           </form>
         </FormContainer>
@@ -526,17 +520,15 @@ function AdminCategories() {
           <Table>
             <thead>
               <tr>
-                <th>ID</th>
-                <th>Tên danh mục</th>
-                <th>Mô tả</th>
-                <th>Hình ảnh</th>
-                <th className="actions-cell">Thao tác</th>
+                <th style={{ width: '10%' }}>Tên danh mục</th>
+                <th style={{ width: '70%' }}>Mô tả</th>
+                <th style={{ width: '10%' }}>Hình ảnh</th>
+                <th className="actions-cell" style={{ width: '20%' }}>Thao tác</th>
               </tr>
             </thead>
             <tbody>
               {categories.map(category => (
                 <tr key={category.id}>
-                  <td>{category.id}</td>
                   <td>{category.name}</td>
                   <td>{category.description || 'Không có mô tả'}</td>
                   <td className="image-cell">

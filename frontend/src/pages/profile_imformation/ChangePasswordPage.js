@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
+import LogoutHandler from '../identity/LogoutHandler';
 import '../../styles/profile_imformation/ChangePasswordPage.css';
 
 function ChangePasswordPage() {
-  const { user, changePassword } = useApp();
+  const { user, changePassword, setPassword, setUser } = useApp();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     currentPassword: '',
@@ -13,6 +14,9 @@ function ChangePasswordPage() {
   });
   const [errors, setErrors] = useState({});
   const [toast, setToast] = useState({ show: false, message: '', type: '' });
+
+  // Kiểm tra xem có phải tài khoản Google không có mật khẩu không
+  const isGoogleAccountWithoutPassword = user?.googleId && !user?.password;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -33,7 +37,8 @@ function ChangePasswordPage() {
   const validateForm = () => {
     const newErrors = {};
     
-    if (!formData.currentPassword) {
+    // Nếu không phải tài khoản Google, yêu cầu mật khẩu hiện tại
+    if (!isGoogleAccountWithoutPassword && !formData.currentPassword) {
       newErrors.currentPassword = 'Vui lòng nhập mật khẩu hiện tại';
     }
     
@@ -41,6 +46,8 @@ function ChangePasswordPage() {
       newErrors.newPassword = 'Vui lòng nhập mật khẩu mới';
     } else if (formData.newPassword.length < 6) {
       newErrors.newPassword = 'Mật khẩu mới phải có ít nhất 6 ký tự';
+    } else if (!/[a-zA-Z]/.test(formData.newPassword) || !/[0-9]/.test(formData.newPassword)) {
+      newErrors.newPassword = 'Mật khẩu phải bao gồm cả chữ và số';
     }
     
     if (!formData.confirmPassword) {
@@ -63,7 +70,18 @@ function ChangePasswordPage() {
     setLoading(true);
     
     try {
-      await changePassword(formData.currentPassword, formData.newPassword);
+      // Sử dụng API khác nhau tùy thuộc vào loại tài khoản
+      if (isGoogleAccountWithoutPassword) {
+        const response = await setPassword(formData.newPassword);
+        
+        // Cập nhật thông tin người dùng trong state để biến đổi từ "Thiết lập mật khẩu" sang "Đổi mật khẩu"
+        if (user && response) {
+          const updatedUser = {...user, password: true};
+          setUser(updatedUser);
+        }
+      } else {
+        await changePassword(formData.currentPassword, formData.newPassword);
+      }
       
       // Reset form
       setFormData({
@@ -75,21 +93,23 @@ function ChangePasswordPage() {
       // Show success toast
       setToast({
         show: true,
-        message: 'Đổi mật khẩu thành công!',
+        message: isGoogleAccountWithoutPassword 
+          ? 'Mật khẩu đã được thiết lập thành công! Vui lòng đăng nhập lại.' 
+          : 'Đổi mật khẩu thành công! Vui lòng đăng nhập lại.',
         type: 'success'
       });
       
-      // Hide toast after 3 seconds
+      // Logout và chuyển hướng đến trang đăng nhập sau 2 giây
       setTimeout(() => {
-        setToast({ show: false, message: '', type: '' });
-      }, 3000);
+        window.location.href = '/login'; // Chuyển hướng đến trang đăng nhập
+      }, 2000);
     } catch (err) {
       console.error('Error changing password:', err);
       
       // Show error toast
       setToast({
         show: true,
-        message: err.message || 'Đổi mật khẩu thất bại. Vui lòng thử lại.',
+        message: err.message || 'Thao tác không thành công. Vui lòng thử lại.',
         type: 'error'
       });
       
@@ -193,16 +213,7 @@ function ChangePasswordPage() {
                 </Link>
               </li>
               <li>
-                <Link to="/logout" className="logout-btn">
-                  <span className="nav-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                      <polyline points="16 17 21 12 16 7"></polyline>
-                      <line x1="21" y1="12" x2="9" y2="12"></line>
-                    </svg>
-                  </span>
-                  Thoát
-                </Link>
+                <LogoutHandler />
               </li>
             </ul>
           </nav>
@@ -224,45 +235,51 @@ function ChangePasswordPage() {
           <div className="password-container">
             <div className="password-card">
               <div className="password-card-header">
-                <h2>Đổi mật khẩu</h2>
+                <h2>
+                  {isGoogleAccountWithoutPassword ? 'Thiết lập mật khẩu' : 'Đổi mật khẩu'}
+                </h2>
                 <p className="password-instructions">
-                  Để bảo mật tài khoản, vui lòng không chia sẻ mật khẩu với người khác
+                  {isGoogleAccountWithoutPassword 
+                    ? 'Bạn đang sử dụng tài khoản Google. Thiết lập mật khẩu để có thể đăng nhập bằng email và mật khẩu.'
+                    : 'Để bảo mật tài khoản, vui lòng không chia sẻ mật khẩu với người khác'}
                 </p>
               </div>
               
               <form className="password-form" onSubmit={handleSubmit}>
-                <div className="form-group">
-                  <label htmlFor="currentPassword">Mật khẩu hiện tại</label>
-                  <div className="password-input-container">
-                    <div className="input-with-icon">
-                      <span className="input-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                        </svg>
-                      </span>
-                      <input
-                        type="password"
-                        id="currentPassword"
-                        name="currentPassword"
-                        value={formData.currentPassword}
-                        onChange={handleChange}
-                        placeholder="Nhập mật khẩu hiện tại"
-                        className={errors.currentPassword ? 'error' : ''}
-                      />
-                    </div>
-                    {errors.currentPassword && (
-                      <div className="error-message">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <circle cx="12" cy="12" r="10"></circle>
-                          <line x1="12" y1="8" x2="12" y2="12"></line>
-                          <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                        </svg>
-                        {errors.currentPassword}
+                {!isGoogleAccountWithoutPassword && (
+                  <div className="form-group">
+                    <label htmlFor="currentPassword">Mật khẩu hiện tại</label>
+                    <div className="password-input-container">
+                      <div className="input-with-icon">
+                        <span className="input-icon">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                          </svg>
+                        </span>
+                        <input
+                          type="password"
+                          id="currentPassword"
+                          name="currentPassword"
+                          value={formData.currentPassword}
+                          onChange={handleChange}
+                          placeholder="Nhập mật khẩu hiện tại"
+                          className={errors.currentPassword ? 'error' : ''}
+                        />
                       </div>
-                    )}
+                      {errors.currentPassword && (
+                        <div className="error-message">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                          </svg>
+                          {errors.currentPassword}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
                 
                 <div className="form-group">
                   <label htmlFor="newPassword">Mật khẩu mới</label>
@@ -343,7 +360,7 @@ function ChangePasswordPage() {
                       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <polyline points="20 6 9 17 4 12"></polyline>
                       </svg>
-                      Nên kết hợp chữ cái, số và ký tự đặc biệt
+                      Phải kết hợp chữ và số
                     </li>
                     <li>
                       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -380,7 +397,7 @@ function ChangePasswordPage() {
                           <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                           <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                         </svg>
-                        Cập nhật mật khẩu
+                        {isGoogleAccountWithoutPassword ? 'Thiết lập mật khẩu' : 'Cập nhật mật khẩu'}
                       </>
                     )}
                   </button>
@@ -411,36 +428,51 @@ function ChangePasswordPage() {
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                     <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                   </svg>
-                  Không sử dụng cùng một mật khẩu cho nhiều tài khoản
+                  Sử dụng mật khẩu khác nhau cho các dịch vụ khác nhau
                 </li>
                 <li>
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                    <circle cx="12" cy="12" r="3"></circle>
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
                   </svg>
-                  Không chia sẻ mật khẩu của bạn với người khác
+                  Không sử dụng mật khẩu quá đơn giản (như 123456, password, ...)
                 </li>
                 <li>
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
                   </svg>
-                  Đăng xuất khỏi thiết bị công cộng sau khi sử dụng
+                  Không lưu mật khẩu trên thiết bị công cộng
                 </li>
                 <li>
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <line x1="12" y1="8" x2="12" y2="12"></line>
-                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="8.5" cy="7" r="4"></circle>
+                    <polyline points="17 11 19 13 23 9"></polyline>
                   </svg>
-                  Cảnh giác với các email lừa đảo yêu cầu thông tin đăng nhập
+                  Bật xác thực hai yếu tố nếu có thể
                 </li>
               </ul>
             </div>
           </div>
+          
+          {isGoogleAccountWithoutPassword && (
+            <div className="google-account-note">
+              <div className="google-account-note-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+              </div>
+              <div className="google-account-note-content">
+                <p>Tài khoản của bạn hiện đang liên kết với Google. Sau khi thiết lập mật khẩu, bạn có thể đăng nhập bằng 
+                email <strong>{user?.email}</strong> và mật khẩu hoặc tiếp tục sử dụng đăng nhập với Google.</p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
       
-      {/* Toast notification */}
       {toast.show && (
         <div className={`toast-notification ${toast.type}`}>
           <div className="toast-icon">

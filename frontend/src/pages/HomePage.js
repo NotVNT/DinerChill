@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import SearchBar from '../components/SearchBar';
 import FilterBox from '../components/FilterBox';
+import '../styles/HomePage.css';
 import RestaurantCard from '../components/RestaurantCard';
 
 // Danh sách nhà hàng ưu đãi Hot
@@ -1096,6 +1097,9 @@ const newsAndBlog = [
     description: 'Cách làm tôm rang thịt ba chỉ thơm ngon, đậm đà',
   },
 ];
+
+
+
 
 
 function HomePage() {
