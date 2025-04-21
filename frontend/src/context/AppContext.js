@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import restaurantAPI from '../services/restaurantAPI'; // Giả lập API nhà hàng
+import { authAPI } from '../services/api'; // API xác thực người dùng
 
 const AppContext = createContext();
 
@@ -10,11 +11,38 @@ export function AppProvider({ children }) {
   const [user, setUser] = useState(null);
   const [recentlyViewed, setRecentlyViewed] = useState({}); // Lưu lịch sử xem theo danh mục
 
-  // Khôi phục lịch sử xem từ localStorage khi khởi động
+  // Khôi phục lịch sử xem và thông tin người dùng từ localStorage khi khởi động
   useEffect(() => {
+    // Khôi phục lịch sử xem
     const savedRecentlyViewed = localStorage.getItem('recentlyViewed');
     if (savedRecentlyViewed) {
       setRecentlyViewed(JSON.parse(savedRecentlyViewed));
+    }
+    
+    // Khôi phục thông tin người dùng
+    const token = localStorage.getItem('dinerchillToken');
+    if (token) {
+      setLoading(true); // Đang tải khi kiểm tra người dùng
+      authAPI.getCurrentUser()
+        .then(userData => {
+          if (userData) {
+            setUser(userData);
+          }
+          setLoading(false);
+        })
+        .catch(error => {
+          console.error('Lỗi khi lấy thông tin người dùng:', error);
+          // Nếu token hết hạn hoặc không hợp lệ, xóa khỏi localStorage
+          if (error.message && (
+              error.message.includes('token') || 
+              error.message.includes('unauthorized') ||
+              error.message.includes('không hợp lệ') ||
+              error.message.includes('hết hạn')
+            )) {
+            localStorage.removeItem('dinerchillToken');
+          }
+          setLoading(false);
+        });
     }
   }, []);
 
@@ -50,11 +78,11 @@ export function AppProvider({ children }) {
     });
   };
 
-
   // Hàm để xóa toàn bộ lịch sử xem
   const clearRecentlyViewed = () => {
     setRecentlyViewed({});
     localStorage.removeItem('recentlyViewed');
+  };
 
   // Đăng nhập người dùng
   const login = async (credentials) => {
@@ -115,7 +143,6 @@ export function AppProvider({ children }) {
   const logout = () => {
     localStorage.removeItem('dinerchillToken');
     setUser(null);
-
   };
 
   // Lấy dữ liệu nhà hàng từ API và chuẩn hóa dữ liệu
@@ -137,18 +164,19 @@ export function AppProvider({ children }) {
       });
   }, []);
 
-  const login = (userData) => {
-    setUser(userData);
-  };
-
-
-  const logout = () => {
-    setUser(null);
-
   // Google Login
   const googleLogin = async (tokenId) => {
     try {
       const response = await authAPI.googleLogin(tokenId);
+      
+      // Nếu tên người dùng từ Google có ký tự đặc biệt (như trong hình), sửa lại
+      if (response.user && response.user.name) {
+        // Xử lý các trường hợp tên Google bị lỗi hiển thị (ví dụ: có ký tự UTF-8 không hiển thị được)
+        if (response.user.name.includes('\\')) {
+          response.user.name = response.user.displayName || response.user.email.split('@')[0] || 'Người dùng';
+        }
+      }
+      
       setUser(response.user);
       // Lưu token vào localStorage
       localStorage.setItem('dinerchillToken', response.token);
@@ -157,30 +185,6 @@ export function AppProvider({ children }) {
       console.error('Google login error:', error);
       throw error;
     }
-  };
-
-  // Giá trị context
-  const contextValue = {
-    restaurants,
-    loading,
-    error,
-    reservations,
-    user,
-    authLoading,
-    login,
-    register,
-    logout,
-    updateProfile,
-    addReservation,
-    cancelReservation,
-    getRestaurantById,
-    addReview,
-    changePassword,
-    verifyEmail,
-    resendVerification,
-    googleLogin,
-    setUser
-
   };
 
   return (
@@ -193,7 +197,11 @@ export function AppProvider({ children }) {
       logout, 
       recentlyViewed, 
       addToRecentlyViewed,
-      clearRecentlyViewed // Thêm hàm mới vào context
+      clearRecentlyViewed,
+      register,
+      verifyEmail,
+      resendVerification,
+      googleLogin
     }}>
       {children}
     </AppContext.Provider>
