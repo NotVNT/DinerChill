@@ -28,13 +28,46 @@ function LoginPage() {
     }));
   };
   
+  const validateForm = () => {
+    if (!formData.emailOrPhone.trim()) {
+      setError('Vui lòng nhập email hoặc số điện thoại');
+      return false;
+    }
+    
+    if (!formData.password) {
+      setError('Vui lòng nhập mật khẩu');
+      return false;
+    }
+    
+    return true;
+  };
+  
+  // Kiểm tra và chuẩn hóa thông tin đăng nhập
+  const normalizeCredentials = () => {
+    let credentials = { ...formData };
+    
+    // Chuẩn hóa email (xóa khoảng trắng)
+    if (credentials.emailOrPhone) {
+      credentials.emailOrPhone = credentials.emailOrPhone.trim();
+    }
+    
+    return credentials;
+  };
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
     
+    if (!validateForm()) {
+      return;
+    }
+    
+    setLoading(true);
+    
     try {
-      await login(formData);
+      // Chuẩn hóa thông tin đăng nhập trước khi gửi
+      const normalizedCredentials = normalizeCredentials();
+      await login(normalizedCredentials);
       // Chuyển hướng người dùng sau khi đăng nhập thành công
       navigate(from, { replace: true });
     } catch (err) {
@@ -57,6 +90,11 @@ function LoginPage() {
   // Hàm xử lý khi người dùng nhấn đăng nhập với Google
   const handleGoogleLogin = () => {
     window.location.href = `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/auth/google`;
+  };
+  
+  // Hàm xử lý khi người dùng nhấn đăng nhập với Zalo
+  const handleZaloLogin = () => {
+    window.location.href = `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/auth/zalo`;
   };
   
   return (
@@ -144,8 +182,20 @@ function LoginPage() {
               />
               <span>Đăng nhập với Google</span>
             </button>
+            
+            <button
+              type="button"
+              className="zalo-login-button"
+              onClick={handleZaloLogin}
+            >
+              <img 
+                src="https://stc-zaloprofile.zdn.vn/pc/v1/images/zalo_sharelogo.png" 
+                alt="Zalo logo" 
+                className="zalo-logo"
+              />
+              <span>Đăng nhập với Zalo</span>
+            </button>
           </div>
-          
 
           <div className="auth-footer">
             <p>

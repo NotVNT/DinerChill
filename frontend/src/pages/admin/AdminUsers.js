@@ -10,7 +10,7 @@ function AdminUsers() {
     name: '',
     email: '',
     phone: '',
-    isAdmin: false
+    role: 'user'
   });
 
   useEffect(() => {
@@ -37,15 +37,15 @@ function AdminUsers() {
       name: user.name,
       email: user.email,
       phone: user.phone,
-      isAdmin: user.isAdmin
+      role: user.role
     });
   };
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: value
     }));
   };
 
@@ -122,16 +122,18 @@ function AdminUsers() {
               />
             </div>
             
-            <div className="form-group checkbox">
-              <label>
-                <input
-                  type="checkbox"
-                  name="isAdmin"
-                  checked={formData.isAdmin}
-                  onChange={handleChange}
-                />
-                Quyền admin
-              </label>
+            <div className="form-group">
+              <label>Vai trò</label>
+              <select
+                name="role"
+                value={formData.role}
+                onChange={handleChange}
+                required
+              >
+                <option value="user">Người dùng</option>
+                <option value="restaurant_owner">Chủ nhà hàng</option>
+                <option value="admin">Quản trị viên</option>
+              </select>
             </div>
             
             <div className="form-buttons">
@@ -168,7 +170,10 @@ function AdminUsers() {
                 <td>{user.name}</td>
                 <td>{user.email}</td>
                 <td>{user.phone}</td>
-                <td>{user.isAdmin ? 'Admin' : 'Người dùng'}</td>
+                <td>
+                  {user.role === 'admin' ? 'Quản trị viên' : 
+                   user.role === 'restaurant_owner' ? 'Chủ nhà hàng' : 'Người dùng'}
+                </td>
                 <td>{new Date(user.createdAt).toLocaleDateString('vi-VN')}</td>
                 <td>
                   <button 

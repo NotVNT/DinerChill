@@ -8,7 +8,12 @@ function ProtectedRoute({ children }) {
   
   // Hiển thị loading nếu đang kiểm tra xác thực
   if (authLoading) {
-    return <div className="loading">Đang tải...</div>;
+    return (
+      <div className="auth-loading">
+        <div className="loading-spinner"></div>
+        <p>Đang tải thông tin tài khoản...</p>
+      </div>
+    );
   }
   
   // Chuyển hướng nếu chưa đăng nhập

@@ -9,6 +9,7 @@ export function AppProvider({ children }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true); // Thêm state để theo dõi trạng thái xác thực
   const [recentlyViewed, setRecentlyViewed] = useState({}); // Lưu lịch sử xem theo danh mục
 
   // Khôi phục lịch sử xem và thông tin người dùng từ localStorage khi khởi động
@@ -22,13 +23,13 @@ export function AppProvider({ children }) {
     // Khôi phục thông tin người dùng
     const token = localStorage.getItem('dinerchillToken');
     if (token) {
-      setLoading(true); // Đang tải khi kiểm tra người dùng
+      setAuthLoading(true); // Bắt đầu quá trình xác thực
       authAPI.getCurrentUser()
         .then(userData => {
           if (userData) {
             setUser(userData);
           }
-          setLoading(false);
+          setAuthLoading(false); // Kết thúc quá trình xác thực
         })
         .catch(error => {
           console.error('Lỗi khi lấy thông tin người dùng:', error);
@@ -41,8 +42,10 @@ export function AppProvider({ children }) {
             )) {
             localStorage.removeItem('dinerchillToken');
           }
-          setLoading(false);
+          setAuthLoading(false); // Kết thúc quá trình xác thực ngay cả khi có lỗi
         });
+    } else {
+      setAuthLoading(false); // Không có token, kết thúc quá trình xác thực ngay lập tức
     }
   }, []);
 
@@ -87,28 +90,60 @@ export function AppProvider({ children }) {
   // Đăng nhập người dùng
   const login = async (credentials) => {
     try {
+      setAuthLoading(true); // Bắt đầu quá trình xác thực
       const response = await authAPI.login(credentials);
       setUser(response.user);
       // Lưu token vào localStorage
       localStorage.setItem('dinerchillToken', response.token);
+      setAuthLoading(false); // Kết thúc quá trình xác thực
       return true;
     } catch (error) {
+      setAuthLoading(false); // Kết thúc quá trình xác thực khi có lỗi
       console.error('Lỗi đăng nhập:', error);
       throw error;
+    }
+  };
+  
+  // Cập nhật thông tin người dùng
+  const updateProfile = async (userData) => {
+    try {
+      // Kiểm tra xem userData có phải FormData hay không
+      const isFormData = userData instanceof FormData;
+      
+      // Log để debug
+      console.log('updateProfile - userData:', isFormData ? 'FormData object' : userData);
+      
+      const response = await authAPI.updateProfile(userData);
+      
+      // Log phản hồi
+      console.log('updateProfile - response:', response);
+      
+      // Cập nhật thông tin người dùng trên client
+      if (response && response.user) {
+        setUser(response.user);
+      }
+      
+      return response;
+    } catch (err) {
+      console.error('Update profile error:', err);
+      throw err;
     }
   };
   
   // Đăng ký người dùng mới
   const register = async (userData) => {
     try {
+      setAuthLoading(true); // Bắt đầu quá trình xác thực
       const response = await authAPI.register(userData);
       // Only set user and token if the response doesn't require verification
       if (!response.requiresVerification) {
         localStorage.setItem('dinerchillToken', response.token);
         setUser(response.user);
       }
+      setAuthLoading(false); // Kết thúc quá trình xác thực
       return response;
     } catch (err) {
+      setAuthLoading(false); // Kết thúc quá trình xác thực khi có lỗi
       console.error('Register error:', err);
       throw err;
     }
@@ -117,13 +152,16 @@ export function AppProvider({ children }) {
   // Xác thực email
   const verifyEmail = async (email, code) => {
     try {
+      setAuthLoading(true); // Bắt đầu quá trình xác thực
       const response = await authAPI.verifyEmail(email, code);
       if (response.token) {
         localStorage.setItem('dinerchillToken', response.token);
         setUser(response.user);
       }
+      setAuthLoading(false); // Kết thúc quá trình xác thực
       return response;
     } catch (err) {
+      setAuthLoading(false); // Kết thúc quá trình xác thực khi có lỗi
       console.error('Email verification error:', err);
       throw err;
     }
@@ -167,6 +205,7 @@ export function AppProvider({ children }) {
   // Google Login
   const googleLogin = async (tokenId) => {
     try {
+      setAuthLoading(true); // Bắt đầu quá trình xác thực
       const response = await authAPI.googleLogin(tokenId);
       
       // Nếu tên người dùng từ Google có ký tự đặc biệt (như trong hình), sửa lại
@@ -180,9 +219,36 @@ export function AppProvider({ children }) {
       setUser(response.user);
       // Lưu token vào localStorage
       localStorage.setItem('dinerchillToken', response.token);
+      setAuthLoading(false); // Kết thúc quá trình xác thực
       return true;
     } catch (error) {
+      setAuthLoading(false); // Kết thúc quá trình xác thực khi có lỗi
       console.error('Google login error:', error);
+      throw error;
+    }
+  };
+
+  // Zalo Login
+  const zaloLogin = async (tokenId) => {
+    try {
+      setAuthLoading(true); // Bắt đầu quá trình xác thực
+      const response = await authAPI.zaloLogin(tokenId);
+      
+      if (response.user && response.user.name) {
+        // Xử lý các trường hợp tên Zalo bị lỗi hiển thị
+        if (response.user.name.includes('\\')) {
+          response.user.name = response.user.displayName || response.user.email.split('@')[0] || 'Người dùng';
+        }
+      }
+      
+      setUser(response.user);
+      // Lưu token vào localStorage
+      localStorage.setItem('dinerchillToken', response.token);
+      setAuthLoading(false); // Kết thúc quá trình xác thực
+      return true;
+    } catch (error) {
+      setAuthLoading(false); // Kết thúc quá trình xác thực khi có lỗi
+      console.error('Zalo login error:', error);
       throw error;
     }
   };
@@ -193,6 +259,7 @@ export function AppProvider({ children }) {
       loading, 
       error, 
       user, 
+      authLoading, // Thêm authLoading vào context
       login, 
       logout, 
       recentlyViewed, 
@@ -201,7 +268,9 @@ export function AppProvider({ children }) {
       register,
       verifyEmail,
       resendVerification,
-      googleLogin
+      googleLogin,
+      zaloLogin,
+      updateProfile
     }}>
       {children}
     </AppContext.Provider>
