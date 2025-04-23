@@ -33,9 +33,6 @@ function SearchBar() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <button type="submit" className="search-button">
-            <span className="search-icon">🔍</span> Tìm kiếm
-          </button>
         </form>
         <div className="hotline">
           <span className="phone-icon">📞</span>

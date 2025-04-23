@@ -57,10 +57,24 @@ export const authAPI = {
   
   getCurrentUser: () => fetchAPI('/auth/me'),
   
-  updateProfile: (userData) => fetchAPI('/auth/profile', {
-    method: 'PUT',
-    body: JSON.stringify(userData)
-  }),
+  updateProfile: (userData) => {
+    // Xác định xem userData có phải FormData
+    const isFormData = userData instanceof FormData;
+    
+    if (isFormData) {
+      // Sử dụng fetchWithAuth cho FormData
+      return fetchWithAuth('/auth/profile', {
+        method: 'PUT',
+        body: userData
+      });
+    } else {
+      // Nếu là đối tượng JSON thông thường
+      return fetchAPI('/auth/profile', {
+        method: 'PUT',
+        body: JSON.stringify(userData)
+      });
+    }
+  },
   
   checkEmail: (email) => fetchAPI('/auth/check-email', {
     method: 'POST',
@@ -90,6 +104,16 @@ export const authAPI = {
   setPassword: (newPassword) => fetchAPI('/auth/set-password', {
     method: 'POST',
     body: JSON.stringify({ newPassword })
+  }),
+  
+  googleLogin: (tokenId) => fetchAPI('/auth/google-login', {
+    method: 'POST',
+    body: JSON.stringify({ tokenId })
+  }),
+  
+  zaloLogin: (tokenId) => fetchAPI('/auth/zalo-login', {
+    method: 'POST',
+    body: JSON.stringify({ tokenId })
   }),
 };
 

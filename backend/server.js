@@ -159,7 +159,7 @@ app.post('/api/auth/login', async (req, res) => {
     }
     
     const token = jwt.sign(
-      { id: user.id, name: user.name, isAdmin: user.isAdmin },
+      { id: user.id, name: user.name, role: user.role },
       JWT_SECRET,
       { expiresIn: '1d' }
     );
@@ -263,7 +263,7 @@ app.post('/api/auth/verify-email', async (req, res) => {
       email: tempUser.email,
       phone: tempUser.phone,
       password: tempUser.password, // Password đã được hash từ bảng tạm
-      isAdmin: false,
+      role: 'user',
       isVerified: true
     });
     
@@ -275,7 +275,7 @@ app.post('/api/auth/verify-email', async (req, res) => {
     
     // Generate token for automatic login
     const token = jwt.sign(
-      { id: newUser.id, name: newUser.name, isAdmin: newUser.isAdmin },
+      { id: newUser.id, name: newUser.name, role: newUser.role },
       JWT_SECRET,
       { expiresIn: '1d' }
     );
@@ -377,7 +377,7 @@ app.put('/api/auth/profile', authenticate, async (req, res) => {
       return res.status(404).json({ message: 'Không tìm thấy người dùng' });
     }
     
-    const { name, phone } = req.body;
+    const { name, phone, email } = req.body;
     
     // Kiểm tra nếu số điện thoại thay đổi, xem đã tồn tại chưa
     if (phone && phone !== user.phone) {
@@ -393,11 +393,32 @@ app.put('/api/auth/profile', authenticate, async (req, res) => {
       }
     }
     
+    // Kiểm tra nếu email thay đổi, xem đã tồn tại chưa
+    if (email && email !== user.email) {
+      const existingEmailUser = await User.findOne({ 
+        where: { 
+          email,
+          id: { [Op.ne]: user.id } // Không phải là user hiện tại
+        } 
+      });
+      
+      if (existingEmailUser) {
+        return res.status(400).json({ message: 'Email đã được sử dụng bởi tài khoản khác' });
+      }
+    }
+    
     // Cập nhật thông tin
     const updateData = {
       name: name || user.name,
       phone: phone || user.phone
     };
+    
+    // Thêm email vào dữ liệu cập nhật nếu có
+    if (email) {
+      updateData.email = email;
+    }
+    
+    console.log('Updating user profile:', updateData);
     
     await user.update(updateData);
     
@@ -406,10 +427,15 @@ app.put('/api/auth/profile', authenticate, async (req, res) => {
       attributes: { exclude: ['password', 'resetCode', 'resetExpires'] }
     });
     
-    res.json(updatedUser);
+    console.log('Updated user:', updatedUser.toJSON());
+    
+    res.json({
+      message: 'Cập nhật thông tin thành công',
+      user: updatedUser
+    });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Đã xảy ra lỗi server' });
+    console.error('Error updating profile:', err);
+    res.status(500).json({ message: 'Đã xảy ra lỗi server: ' + err.message });
   }
 });
 

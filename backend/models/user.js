@@ -37,6 +37,19 @@ module.exports = (sequelize, DataTypes) => {
       }
       return await bcrypt.compare(password, this.password);
     }
+
+    // Helper methods to check user role
+    isAdmin() {
+      return this.role === 'admin';
+    }
+
+    isRestaurantOwner() {
+      return this.role === 'restaurant_owner';
+    }
+
+    isRegularUser() {
+      return this.role === 'user';
+    }
   }
   
   User.init({
@@ -51,10 +64,18 @@ module.exports = (sequelize, DataTypes) => {
     },
     email: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true, // Allow null for Zalo users
       unique: true,
       validate: {
-        isEmail: true
+        isEmail: function() {
+          // Only validate email format if email is provided
+          if (this.email !== null) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(this.email)) {
+              throw new Error('Email format is invalid');
+            }
+          }
+        }
       }
     },
     phone: {
@@ -66,9 +87,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: true // Cho phép null cho tài khoản Google
     },
-    isAdmin: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false
+    role: {
+      type: DataTypes.ENUM('admin', 'restaurant_owner', 'user'),
+      defaultValue: 'user',
+      allowNull: false
     },
     isVerified: {
       type: DataTypes.BOOLEAN,
@@ -95,6 +117,10 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false
     },
     googleId: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    zaloId: {
       type: DataTypes.STRING,
       allowNull: true
     }

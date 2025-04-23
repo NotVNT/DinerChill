@@ -24,7 +24,7 @@ function TokenHandler() {
         const userData = {
           id: decodedData.id,
           name: decodedData.name,
-          isAdmin: decodedData.isAdmin
+          role: decodedData.role
         };
         
         setUser(userData);

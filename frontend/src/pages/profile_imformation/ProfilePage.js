@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import '../../styles/profile_imformation/ProfilePage.css';
 import LogoutHandler from '../identity/LogoutHandler';
+import { authAPI } from '../../services/api';
 
 function ProfilePage() {
   const { user, updateProfile } = useApp();
@@ -16,6 +17,9 @@ function ProfilePage() {
     email: '',
     phone: ''
   });
+  
+  // Lưu email ban đầu để khôi phục nếu cần
+  const [originalEmail, setOriginalEmail] = useState('');
   
   // Avatar state
   const [avatar, setAvatar] = useState(null);
@@ -34,6 +38,7 @@ function ProfilePage() {
         email: user.email || '',
         phone: user.phone || '',
       }));
+      setOriginalEmail(user.email || '');
     }
   }, [user]);
   
@@ -62,6 +67,17 @@ function ProfilePage() {
     fileInputRef.current.click();
   };
   
+  // Kiểm tra email đã tồn tại chưa
+  const checkEmailExists = async (email) => {
+    try {
+      const response = await authAPI.checkEmail(email);
+      return response.exists;
+    } catch (error) {
+      console.error('Lỗi kiểm tra email:', error);
+      throw error;
+    }
+  };
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -69,40 +85,101 @@ function ProfilePage() {
     setSuccess(false);
     
     try {
+      // Kiểm tra nếu email đã thay đổi
+      if (formData.email !== originalEmail) {
+        try {
+          const emailExists = await checkEmailExists(formData.email);
+          if (emailExists) {
+            // Email đã tồn tại, khôi phục email ban đầu
+            setFormData(prev => ({
+              ...prev,
+              email: originalEmail
+            }));
+            setError('Gmail này đã tồn tại trong hệ thống');
+            setToast({
+              show: true,
+              message: 'Gmail này đã tồn tại trong hệ thống',
+              type: 'error'
+            });
+            setLoading(false);
+            
+            // Ẩn toast sau 3 giây
+            setTimeout(() => {
+              setToast({ show: false, message: '', type: '' });
+            }, 3000);
+            
+            return;
+          }
+        } catch (checkError) {
+          console.error('Lỗi khi kiểm tra email:', checkError);
+          setError('Không thể kiểm tra email. Vui lòng thử lại sau.');
+          setLoading(false);
+          return;
+        }
+      }
+      
       // Tạo FormData nếu có file ảnh
       let updateData;
       if (avatar) {
-        const formData = new FormData();
-        formData.append('name', formData.name);
-        formData.append('phone', formData.phone);
-        formData.append('avatar', avatar);
-        updateData = formData;
+        const formDataObj = new FormData();
+        formDataObj.append('name', formData.name);
+        formDataObj.append('email', formData.email);
+        formDataObj.append('avatar', avatar);
+        
+        console.log('Sending FormData with avatar');
+        updateData = formDataObj;
       } else {
+        // Nếu không có avatar, gửi dữ liệu JSON bình thường
         updateData = {
           name: formData.name,
-          phone: formData.phone,
+          email: formData.email,
         };
+        console.log('Sending JSON data:', updateData);
       }
       
-      await updateProfile(updateData);
-      setSuccess(true);
+      const response = await updateProfile(updateData);
+      console.log('Update profile response:', response);
       
-      // Hiện toast thông báo
-      setToast({
-        show: true,
-        message: 'Cập nhật thông tin thành công!',
-        type: 'success'
-      });
+      // Nếu update thành công
+      if (response && response.user) {
+        setSuccess(true);
+        
+        // Cập nhật email gốc nếu thành công
+        if (formData.email !== originalEmail) {
+          setOriginalEmail(formData.email);
+        }
+        
+        // Hiện toast thông báo
+        setToast({
+          show: true,
+          message: formData.email !== originalEmail 
+            ? 'Cập nhật thông tin và email thành công!' 
+            : 'Cập nhật thông tin thành công!',
+          type: 'success'
+        });
+      } else {
+        throw new Error('Không nhận được phản hồi từ server');
+      }
       
       // Ẩn toast sau 3 giây
       setTimeout(() => {
         setToast({ show: false, message: '', type: '' });
       }, 3000);
     } catch (err) {
-      setError(err.message || 'Có lỗi xảy ra khi cập nhật thông tin. Vui lòng thử lại.');
+      console.error('Lỗi cập nhật:', err);
+      let errorMessage = 'Có lỗi xảy ra khi cập nhật thông tin.';
+      
+      // Kiểm tra chi tiết lỗi
+      if (err.response && err.response.data) {
+        errorMessage = err.response.data.message || errorMessage;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
       setToast({
         show: true,
-        message: 'Có lỗi xảy ra khi cập nhật thông tin.',
+        message: errorMessage,
         type: 'error'
       });
       
@@ -371,7 +448,7 @@ function ProfilePage() {
                       name="email"
                       value={formData.email}
                       onChange={handleChange}
-                      disabled
+                      required
                     />
                   </div>
                 </div>
@@ -392,7 +469,7 @@ function ProfilePage() {
                       name="phone"
                       value={formData.phone}
                       onChange={handleChange}
-                      required
+                      disabled
                     />
                   </div>
                 </div>
