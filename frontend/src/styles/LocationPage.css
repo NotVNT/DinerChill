@@ -98,10 +98,12 @@
   background-color: #c91532;
 }
 
+/* Leaflet map container */
 .map-container {
   position: relative;
   width: 100%;
   margin-bottom: 30px;
+  z-index: 0; /* Ensure map has lower z-index than search components */
 }
 
 .leaflet-map {
@@ -177,19 +179,20 @@
   margin: 0;
 }
 
-/* Search Input Styling */
+/* MAP SEARCH STYLING - Different from Restaurant Search in Header */
 .search-input-wrapper {
   position: relative;
   display: flex;
   align-items: center;
   background-color: white;
   border: 1px solid #ddd;
-  border-radius: 30px;
+  border-radius: 30px; /* More rounded than restaurant search */
   height: 44px;
   width: 100%;
   max-width: 600px;
   margin: 0 auto 30px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  z-index: 1001; /* Higher than the map */
 }
 
 .location-pin-icon {
@@ -205,6 +208,7 @@
   font-size: 20px;
 }
 
+/* Map location search input - different from restaurant search */
 .location-search-input {
   flex: 1;
   padding: 12px 5px;
@@ -214,6 +218,7 @@
   background: transparent;
 }
 
+/* Map search button - different from restaurant search button */
 .search-button-icon {
   background: none;
   border: none;
@@ -239,19 +244,19 @@
   cursor: not-allowed;
 }
 
-/* Suggestions Dropdown Styling */
+/* Map search suggestions - different from restaurant search */
 .suggestions-dropdown {
   position: absolute;
-  top: 100%;
+  top: 46px; /* Just below the search input, accounting for borders */
   left: 0;
   right: 0;
   max-height: 350px;
   overflow-y: auto;
   background-color: white;
-  border-radius: 5px;
-  margin-top: 5px;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
-  z-index: 1000;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 9999; /* Extremely high to guarantee visibility */
 }
 
 .suggestions-list {
@@ -430,4 +435,21 @@
   .google-map, .leaflet-map {
     height: 300px;
   }
+}
+
+/* Override Leaflet z-index rules */
+.leaflet-pane,
+.leaflet-control,
+.leaflet-top,
+.leaflet-bottom {
+  z-index: 900 !important; /* Ensure these are below our search components */
+}
+
+/* Ensure suggestions appear above map */
+.search-input-wrapper .suggestions-dropdown {
+  position: absolute;
+  top: 44px; /* Height of input */
+  left: 0;
+  right: 0;
+  z-index: 1002; /* Above everything */
 } 

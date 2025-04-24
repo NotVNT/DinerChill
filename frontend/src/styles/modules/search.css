@@ -1,4 +1,4 @@
-/* Search container */
+/* RESTAURANT SEARCH BAR - in Header (Different from Map Location Search) */
 .search-container {
   display: flex;
   align-items: center;
@@ -8,18 +8,18 @@
   padding: 10px 15px;
 }
 
-/* Search form */
+/* Restaurant search form (Header) - different from map search */
 .search-form {
   display: flex;
   align-items: center;
   flex: 1;
   background: #fff;
   border: 1px solid #ddd;
-  border-radius: 4px;
+  border-radius: 4px; /* More square than the map search */
   overflow: hidden;
 }
 
-/* Location select */
+/* City dropdown - only in restaurant search, not in map search */
 .location-select {
   width: 150px;
   padding: 12px 15px;
@@ -41,7 +41,7 @@
   outline: none;
 }
 
-/* Search input */
+/* Restaurant search input - different from map search input */
 .search-input {
   flex: 1;
   padding: 12px 15px;
@@ -58,7 +58,7 @@
   outline: none;
 }
 
-/* Search button */
+/* Restaurant search button - different from map search button */
 .search-button {
   padding: 12px 24px;
   background: #e71a0f;
@@ -82,7 +82,7 @@
   height: 16px;
 }
 
-/* Hotline */
+/* Hotline - part of the header, not in map search */
 .hotline {
   display: flex;
   align-items: center;
@@ -97,7 +97,7 @@
   font-size: 1.2rem;
 }
 
-/* Responsive styles */
+/* Responsive styles for restaurant search */
 @media (max-width: 768px) {
   .search-container {
     flex-direction: column;
