@@ -29,6 +29,8 @@ import ChangePasswordPage from './pages/profile_imformation/ChangePasswordPage';
 import WalletPaymentPage from './pages/profile_imformation/WalletPaymentPage';
 import AdminTables from './pages/admin/AdminTables';
 import TokenHandler from './components/TokenHandler';
+import LocationPage from './components/LocationPage';
+
 
 // Component để cuộn lên đầu trang khi chuyển route
 function ScrollToTop() {
@@ -79,6 +81,7 @@ function App() {
                   <Route path="/register" element={<RegisterPage />} />
                   <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                   <Route path="/reset-password" element={<ResetPasswordPage />} />
+                  <Route path="/vi-tri" element={<LocationPage />} />
                   
                   {/* Protected Routes */}
                   <Route path="/reservation" element={<ProtectedRoute><ReservationPage /></ProtectedRoute>} />
