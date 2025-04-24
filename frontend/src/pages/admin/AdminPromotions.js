@@ -262,7 +262,7 @@ function AdminPromotions() {
         <h2>Quản lý khuyến mãi</h2>
         {!showForm && (
           <button 
-            className="btn btn-primary"
+            className="btn btn-primary btn-add-promotion"
             onClick={() => {
               setShowForm(true);
             }}
