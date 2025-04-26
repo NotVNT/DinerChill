@@ -1,42 +1,29 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useApp } from '../context/AppContext';
 import '../styles/modules/filterBox.css';
 import '../styles/modules/booth_categories.css';
 
 function FilterBox() {
-  const [selectedFilters, setSelectedFilters] = useState({});
-  const [visibleFilterStart, setVisibleFilterStart] = useState(0); // Bắt đầu từ filter đầu tiên
-  const [visibleCategoryStart, setVisibleCategoryStart] = useState(0); // Bắt đầu từ category đầu tiên
-  const [isTransitioning, setIsTransitioning] = useState(false); // State mới để kiểm soát trạng thái chuyển đổi
-  const [isCategoryTransitioning, setIsCategoryTransitioning] = useState(false); // State cho categories
+  const { filters = { location: '', distance: '', rating: '', cuisine: '' }, setFilters } = useApp();
+  const [visibleFilterStart, setVisibleFilterStart] = useState(0);
+  const [visibleCategoryStart, setVisibleCategoryStart] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isCategoryTransitioning, setIsCategoryTransitioning] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isAtEnd, setIsAtEnd] = useState(false);
   const navigate = useNavigate();
   const filtersSliderRef = useRef(null);
   const categoriesSliderRef = useRef(null);
-  
-  // Danh sách các bộ lọc
+
+  // Danh sách các bộ lọc (chỉ giữ 3 bộ lọc chính)
   const filterOptions = [
-    // 5 mục lọc mặc định hiển thị đầu tiên
-    { id: 'area', name: 'Khu vực' },
-    { id: 'restaurant', name: 'Nhà hàng' },
-    { id: 'price', name: 'Giá trung bình' },
-    { id: 'food', name: 'Đồ ăn chính' },
-    { id: 'suitable', name: 'Phù hợp' },
-    { id: 'deal', name: 'Ưu đãi' },
-    
-    // Các mục lọc khác sẽ hiển thị khi người dùng kéo
-    { id: 'private_room', name: 'Phòng riêng' },
-    { id: 'daily_meal', name: 'Bữa ăn hằng ngày' },
-    { id: 'company_party', name: 'Đặt tiệc công ty' },
-    { id: 'private_area', name: 'Khu riêng' },
-    { id: 'family_party', name: 'Đặt tiệc gia đình' },
-    { id: 'business_type', name: 'Loại hình kinh doanh' },
-    { id: 'service_style', name: 'Kiểu phục vụ' },
-    { id: 'cuisine_style', name: 'Phong cách ẩm thực' },
+    { id: 'location', name: 'Khu vực' },
+    { id: 'distance', name: 'Khoảng cách' },
+    { id: 'rating', name: 'Đánh giá' },
   ];
-  
-  // Danh sách các loại món ăn (booth categories)
+
+  // Danh sách các loại món ăn (booth categories) - đại diện cho bộ lọc "Loại hình nhà hàng"
   const cuisineTypes = [
     { id: 'buffet', name: 'Buffet', icon: '🍱' },
     { id: 'hotpot', name: 'Lẩu', icon: '🍲' },
@@ -50,141 +37,120 @@ function FilterBox() {
     { id: 'asian', name: 'Món Châu Á', icon: '🥢' },
     { id: 'european', name: 'Món Châu Âu', icon: '🍕' },
     { id: 'thai', name: 'Món Thái', icon: '🍸' },
-    { id: 'chinese', name: 'Món Trung Hoa', icon: '🥟' }
+    { id: 'chinese', name: 'Món Trung Hoa', icon: '🥟' },
   ];
-  
+
   // Số lượng filter hiển thị cùng lúc
-  const visibleFiltersCount = 5;
-  
+  const visibleFiltersCount = 3; // Vì chỉ có 3 bộ lọc, không cần cuộn ngang nữa
+
   // Số lượng categories hiển thị cùng lúc
   const visibleCategoriesCount = 8;
-  
+
   // Tính toán các filter hiện đang hiển thị
-  const visibleFilters = filterOptions.slice(visibleFilterStart, visibleFilterStart + visibleFiltersCount);
-  
+  const visibleFilters = filterOptions.slice(
+    visibleFilterStart,
+    visibleFilterStart + visibleFiltersCount
+  );
+
   // Tính toán các categories hiện đang hiển thị
-  const visibleCategories = cuisineTypes.slice(visibleCategoryStart, visibleCategoryStart + visibleCategoriesCount);
-  
-  // Hàm cuộn đến filter tiếp theo với khoảng trễ
+  const visibleCategories = cuisineTypes.slice(
+    visibleCategoryStart,
+    visibleCategoryStart + visibleCategoriesCount
+  );
+
   const showNextFilter = () => {
-    // Nếu đang trong quá trình chuyển đổi hoặc đã ở cuối danh sách thì không làm gì
     if (isTransitioning || visibleFilterStart + visibleFiltersCount >= filterOptions.length) {
       return;
     }
-    
-    // Đánh dấu đang trong quá trình chuyển đổi
     setIsTransitioning(true);
-    
-    // Cuộn filtersSliderRef để tạo hiệu ứng trượt
     if (filtersSliderRef.current) {
       filtersSliderRef.current.scrollBy({
-        left: 160, // Khoảng cách của một filter
-        behavior: 'smooth'
+        left: 160,
+        behavior: 'smooth',
       });
     }
-    
-    // Chờ một khoảng thời gian trước khi thực sự cập nhật state
     setTimeout(() => {
       setVisibleFilterStart(visibleFilterStart + 1);
       setIsTransitioning(false);
-    }, 300); // Khoảng trễ 300ms
+    }, 300);
   };
-  
-  // Hàm cuộn về filter trước đó với khoảng trễ
+
   const showPreviousFilter = () => {
-    // Nếu đang trong quá trình chuyển đổi hoặc đã ở đầu danh sách thì không làm gì
     if (isTransitioning || visibleFilterStart <= 0) {
       return;
     }
-    
-    // Đánh dấu đang trong quá trình chuyển đổi
     setIsTransitioning(true);
-    
-    // Cuộn filtersSliderRef để tạo hiệu ứng trượt
     if (filtersSliderRef.current) {
       filtersSliderRef.current.scrollBy({
-        left: -160, // Khoảng cách của một filter
-        behavior: 'smooth'
+        left: -160,
+        behavior: 'smooth',
       });
     }
-    
-    // Chờ một khoảng thời gian trước khi thực sự cập nhật state
     setTimeout(() => {
       setVisibleFilterStart(visibleFilterStart - 1);
       setIsTransitioning(false);
-    }, 300); // Khoảng trễ 300ms - có thể điều chỉnh
+    }, 300);
   };
 
-  // Hàm kiểm tra có thể cuộn về filter trước không
   const canScrollLeft = visibleFilterStart > 0 && !isTransitioning;
-  
-  // Hàm kiểm tra có thể cuộn đến filter tiếp theo không
-  const canScrollRight = visibleFilterStart + visibleFiltersCount < filterOptions.length && !isTransitioning;
+  const canScrollRight =
+    visibleFilterStart + visibleFiltersCount < filterOptions.length && !isTransitioning;
 
   const handleFilterChange = (filterId, value) => {
-    setSelectedFilters({
-      ...selectedFilters,
-      [filterId]: value
+    if (!setFilters) return;
+    setFilters({
+      ...filters,
+      [filterId]: value,
     });
   };
 
-  const handleFilterClick = () => {
-    const params = new URLSearchParams();
-    Object.entries(selectedFilters).forEach(([key, value]) => {
-      if (value) params.append(key, value);
-    });
-
-    navigate(`/search?${params.toString()}`);
-  };
-
-  // Hàm xử lý khi người dùng chọn loại món ăn
   const handleCuisineSelect = (cuisineId) => {
+    if (!setFilters) return;
+    setFilters({
+      ...filters,
+      cuisine: cuisineId,
+    });
     navigate({
       pathname: '/restaurants',
-      search: `?cuisine=${cuisineId}`
+      search: `?cuisine=${cuisineId}`,
     });
   };
-  
-  // Hàm scroll categories left/right
+
   const scrollCategories = (direction) => {
-    if (isCategoryTransitioning) return;
-    
+    if (isCategoryTransitioning) return; // Sửa từ ifSummon thành if và thêm dấu chấm phẩy
+
     setIsCategoryTransitioning(true);
-    
+
     if (direction === 'left' && visibleCategoryStart > 0) {
       if (categoriesSliderRef.current) {
         categoriesSliderRef.current.scrollBy({
           left: -200,
-          behavior: 'smooth'
+          behavior: 'smooth',
         });
       }
-      
       setTimeout(() => {
         setVisibleCategoryStart(visibleCategoryStart - 1);
         setIsCategoryTransitioning(false);
-        // Check if we've scrolled all the way to the start
         if (visibleCategoryStart <= 1) {
           setIsScrolled(false);
         }
-        // Always set isAtEnd to false when scrolling left
         setIsAtEnd(false);
       }, 300);
-    } else if (direction === 'right' && visibleCategoryStart + visibleCategoriesCount < cuisineTypes.length) {
+    } else if (
+      direction === 'right' &&
+      visibleCategoryStart + visibleCategoriesCount < cuisineTypes.length
+    ) {
       if (categoriesSliderRef.current) {
         categoriesSliderRef.current.scrollBy({
           left: 200,
-          behavior: 'smooth'
+          behavior: 'smooth',
         });
       }
-      
       setTimeout(() => {
         const newPosition = visibleCategoryStart + 1;
         setVisibleCategoryStart(newPosition);
         setIsCategoryTransitioning(false);
-        // Explicitly set isScrolled to true when scrolling right
         setIsScrolled(true);
-        
-        // Check if we've reached the end of the categories
         if (newPosition + visibleCategoriesCount >= cuisineTypes.length) {
           setIsAtEnd(true);
         }
@@ -194,15 +160,12 @@ function FilterBox() {
     }
   };
 
-  // Function to handle scroll events on the categories slider
   const handleCategoriesScroll = () => {
     if (categoriesSliderRef.current) {
-      // Check if scrolled at all (scrollLeft > 0)
       setIsScrolled(categoriesSliderRef.current.scrollLeft > 0);
     }
   };
 
-  // Add event listener when component mounts
   useEffect(() => {
     const slider = categoriesSliderRef.current;
     if (slider) {
@@ -213,9 +176,7 @@ function FilterBox() {
     }
   }, []);
 
-  // Also check for the end when component mounts or categories update
   useEffect(() => {
-    // Check if we're at the end of the list on initial load
     if (visibleCategoryStart + visibleCategoriesCount >= cuisineTypes.length) {
       setIsAtEnd(true);
     } else {
@@ -223,67 +184,83 @@ function FilterBox() {
     }
   }, [visibleCategoryStart, visibleCategoriesCount, cuisineTypes.length]);
 
+  // Nếu filters hoặc setFilters không tồn tại, hiển thị thông báo lỗi
+  if (!filters || !setFilters) {
+    return <div>Lỗi: Không thể truy cập AppContext. Vui lòng kiểm tra AppProvider.</div>;
+  }
+
   return (
     <div className="filter-box">
       <div className="filters-container">
-        <button 
+        <button
           className={`filter-nav prev ${canScrollLeft ? '' : 'hidden'}`}
           onClick={showPreviousFilter}
           disabled={isTransitioning}
         >
           <span>←</span>
         </button>
-        
+
         <div className="filter-section" ref={filtersSliderRef}>
           {visibleFilters.map((filter) => (
             <div key={filter.id} className="filter-dropdown">
               <select
                 className="filter-select"
-                value={selectedFilters[filter.id] || ''}
+                value={filters[filter.id] || ''}
                 onChange={(e) => handleFilterChange(filter.id, e.target.value)}
               >
-                <option value="">{filter.name}</option>
-                <option value="option1">Tùy chọn 1</option>
-                <option value="option2">Tùy chọn 2</option>
-                <option value="option3">Tùy chọn 3</option>
+                {filter.id === 'location' && (
+                  <>
+                    <option value="">{filter.name}</option>
+                    <option value="Hồ Chí Minh">Hồ Chí Minh</option>
+                    <option value="Hà Nội">Hà Nội</option>
+                    <option value="Đà Nẵng">Đà Nẵng</option>
+                  </>
+                )}
+                {filter.id === 'distance' && (
+                  <>
+                    <option value="">{filter.name}</option>
+                    <option value="all">Tất cả</option>
+                    <option value="near">Gần nhất</option>
+                    <option value="under5km">Dưới 5km</option>
+                    <option value="under10km">Dưới 10km</option>
+                  </>
+                )}
+                {filter.id === 'rating' && (
+                  <>
+                    <option value="">{filter.name}</option>
+                    <option value="all">Tất cả</option>
+                    <option value="above4">Trên 4 sao</option>
+                    <option value="above3">Trên 3 sao</option>
+                  </>
+                )}
               </select>
               <span className="dropdown-icon">▼</span>
             </div>
           ))}
-          
-          <button 
+
+          <button
             className={`filter-nav next custom-position ${canScrollRight ? '' : 'hidden'}`}
             onClick={showNextFilter}
             disabled={isTransitioning}
           >
             <span>→</span>
           </button>
-          
-          <div className="filter-button">
-            <button 
-              className="filter-btn"
-              onClick={handleFilterClick}
-            >
-              <span className="filter-icon">⚙️</span> Lọc
-            </button>
-          </div>
         </div>
       </div>
-      
-      {/* Phần booth categories product */}
+
       <div className="booth-categories">
-        <button 
+        <button
           className={`category-nav prev ${!isScrolled ? 'hidden' : ''}`}
           onClick={() => scrollCategories('left')}
         >
           <span>←</span>
         </button>
-        
+
         <div className="categories-slider" ref={categoriesSliderRef}>
           {visibleCategories.map((cuisine) => (
-            <div 
-              key={cuisine.id} 
-              className="category-item" 
+            <div
+              key={cuisine.id}
+              className="category-item"
               onClick={() => handleCuisineSelect(cuisine.id)}
             >
               <div className="category-icon-wrapper">
@@ -293,8 +270,8 @@ function FilterBox() {
             </div>
           ))}
         </div>
-        
-        <button 
+
+        <button
           className={`category-nav next ${isAtEnd ? 'hidden' : ''}`}
           onClick={() => scrollCategories('right')}
         >
@@ -305,4 +282,4 @@ function FilterBox() {
   );
 }
 
-export default FilterBox; 
+export default FilterBox;

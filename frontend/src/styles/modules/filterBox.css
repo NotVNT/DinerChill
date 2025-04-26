@@ -4,26 +4,26 @@
   width: 100%;
 }
 
+.filters-container {
+  display: flex;
+  align-items: center;
+  position: relative;
+  width: 100%;
+  padding: 0 5px;
+}
+
 .filter-section {
   display: flex;
   align-items: center;
-  gap: 10px;
-  overflow-x: auto;
+  gap: 15px; /* Tăng khoảng cách giữa các dropdown để trông thoáng hơn */
   padding: 5px 0;
-  padding-left: 40px;
-  scrollbar-width: none; /* Firefox */
   width: 100%;
-  scroll-behavior: smooth;
-  transition: scroll-behavior 0.3s ease;
-}
-
-.filter-section::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
+  justify-content: center; /* Căn giữa các dropdown */
 }
 
 .filter-dropdown {
   position: relative;
-  min-width: 150px;
+  min-width: 200px; /* Tăng min-width để dropdown trông cân đối hơn */
 }
 
 .filter-select {
@@ -56,144 +56,7 @@
   box-shadow: 0 0 0 2px rgba(216, 31, 38, 0.1);
 }
 
-.more-filters {
-  display: flex;
-  align-items: center;
-}
-
-.more-btn {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  background: #fff;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
-  padding: 8px 12px;
-  font-size: 14px;
-  color: #666;
-  cursor: pointer;
-}
-
-.more-icon {
-  font-size: 14px;
-  font-weight: bold;
-}
-
-.filter-button {
-  margin-left: auto;
-}
-
-.filter-btn {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  background: #d81f26;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 8px 16px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.filter-btn:hover {
-  background: #c01c22;
-}
-
-.filter-icon {
-  font-size: 14px;
-}
-
-/* Cuisine Categories Styling */
-.cuisine-categories {
-  display: flex;
-  align-items: center;
-  margin-top: 15px;
-  position: relative;
-}
-
-.categories-slider {
-  display: flex;
-  gap: 15px;
-  overflow-x: auto;
-  padding: 10px 0;
-  scrollbar-width: none;
-  scroll-behavior: smooth;
-}
-
-.categories-slider::-webkit-scrollbar {
-  display: none;
-}
-
-.category-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  cursor: pointer;
-  min-width: 70px;
-}
-
-.category-icon {
-  font-size: 24px;
-  margin-bottom: 5px;
-}
-
-.category-name {
-  font-size: 13px;
-  text-align: center;
-}
-
-.category-nav {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: white;
-  border: 1px solid #ddd;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 5;
-}
-
-.category-nav.prev {
-  left: -5px;
-}
-
-.category-nav.next {
-  right: -5px;
-}
-
-/* Responsive styles */
-@media (max-width: 768px) {
-  .filter-section {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-  }
-  
-  .filter-dropdown {
-    min-width: 120px;
-  }
-  
-  .filter-button {
-    margin-left: 0;
-  }
-}
-
-/* Add these new styles for the filter navigation */
-.filters-container {
-  display: flex;
-  align-items: center;
-  position: relative;
-  width: 100%;
-  padding: 0 5px;
-}
-
+/* Style cho nút điều hướng (giờ không cần nữa nhưng giữ lại để tương lai mở rộng) */
 .filter-nav {
   position: absolute;
   top: 50%;
@@ -211,49 +74,43 @@
 }
 
 .filter-nav.prev {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
   left: 0;
-  z-index: 5;
 }
 
 .filter-nav.next {
   right: -5px;
 }
 
-/* Add this style for the custom-positioned next button */
 .filter-nav.next.custom-position {
-  position: static; /* Override the absolute positioning */
-  margin: 0 5px; /* Add some spacing around the button */
-  transform: none; /* Remove the vertical centering transform */
+  position: static;
+  margin: 0 5px;
+  transform: none;
 }
 
-/* General navigation button styling */
-.filter-nav {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: white;
-  border: 1px solid #ddd;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
-/* Add this class to hide elements */
-.hidden {
+.filter-nav.hidden {
   display: none;
 }
 
-/* Thêm style cho nút disabled */
 .filter-nav:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-/* Thêm class để hiển thị trạng thái đang chuyển đổi */
-.filter-section.transitioning {
-  pointer-events: none;
-} 
+/* Responsive styles */
+@media (max-width: 768px) {
+  .filter-section {
+    flex-wrap: wrap; /* Cho phép wrap nếu màn hình nhỏ */
+    justify-content: flex-start;
+  }
+
+  .filter-dropdown {
+    min-width: 150px; /* Giảm min-width trên màn hình nhỏ */
+    flex: 1 1 calc(33.33% - 10px); /* Chia đều 3 dropdown trên 1 hàng */
+  }
+}
+
+@media (max-width: 480px) {
+  .filter-dropdown {
+    min-width: 100%; /* Dropdown chiếm toàn bộ chiều rộng trên màn hình rất nhỏ */
+  }
+}
