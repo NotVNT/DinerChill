@@ -34,18 +34,6 @@ import PromoPage from './pages/PromoPage';
 import ReservationGuidePage from './pages/ReservationGuidePage';
 
 
-
-// Component để cuộn lên đầu trang khi chuyển route
-function ScrollToTop() {
-  const { pathname } = useLocation();
-
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [pathname]);
-
-  return null;
-}
-
 // Component để cuộn lên đầu trang khi chuyển route
 function ScrollToTop() {
   const { pathname } = useLocation();

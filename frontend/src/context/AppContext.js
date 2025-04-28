@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { getAll, getHotRestaurants, getHotProducts, getRecommendedRestaurants, getPartyRestaurants, getFamousLocations, getSeafoodRestaurants, getChineseRestaurants, getPopularCuisines, getMonthlyFavorites, getAmenitiesRestaurants, getLuxuryRestaurants, getTrustedRestaurants, getTouristRestaurants, getLunchSuggestions, getNewOnDinerChill, getNewsAndBlog } from '../services/restaurantAPI';
-import restaurantAPI from '../services/restaurantAPI'; // Giả lập API nhà hàng
 import { authAPI } from '../services/api'; // API xác thực người dùng
 
 const AppContext = createContext();
@@ -327,7 +326,7 @@ export function AppProvider({ children }) {
   // Lấy dữ liệu nhà hàng từ API và chuẩn hóa dữ liệu (từ nhánh develop)
   useEffect(() => {
     setLoading(true);
-    restaurantAPI.getAll()
+    getAll()
       .then(data => {
         // Chuẩn hóa dữ liệu: đảm bảo tất cả nhà hàng đều có category
         const normalizedData = data.map(restaurant => ({
