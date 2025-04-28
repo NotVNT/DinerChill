@@ -34,6 +34,7 @@ import PromoPage from './pages/PromoPage';
 import ReservationGuidePage from './pages/ReservationGuidePage';
 
 
+
 // Component để cuộn lên đầu trang khi chuyển route
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -86,6 +87,7 @@ function App() {
                   <Route path="/vi-tri" element={<LocationPage />} />
                   <Route path="/khuyen-mai" element={<PromoPage />} />
                   <Route path="/huong-dan-dat-ban" element={<ReservationGuidePage />} />
+
                   
                   {/* Protected Routes */}
                   <Route path="/reservation" element={<ProtectedRoute><ReservationPage /></ProtectedRoute>} />
