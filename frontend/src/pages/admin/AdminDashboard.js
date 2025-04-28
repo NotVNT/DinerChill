@@ -12,7 +12,7 @@ function AdminDashboard() {
 
   useEffect(() => {
     // Kiểm tra nếu không phải admin thì chuyển hướng
-    if (user && !user.isAdmin) {
+    if (user && user.role !== 'admin') {
       navigate('/');
       return;
     }

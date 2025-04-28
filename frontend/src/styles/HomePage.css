@@ -1,33 +1,101 @@
+/* Password Notification Banner (từ nhánh develop) */
+.password-notification-banner {
+  margin-bottom: 20px;
+  border-radius: 8px;
+  overflow: hidden;
+  max-width: 1200px;
+  margin: 0 auto 20px;
+  padding: 0 20px;
+}
+
+.password-notification-content {
+  display: flex;
+  align-items: center;
+  background-color: #e3f2fd;
+  padding: 16px;
+  border-left: 4px solid #2196f3;
+  position: relative;
+  border-radius: 8px;
+}
+
+.password-notification-icon {
+  margin-right: 16px;
+  color: #2196f3;
+  flex-shrink: 0;
+}
+
+.password-notification-text {
+  flex: 1;
+}
+
+.password-notification-text p {
+  margin: 0;
+  color: #333;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.password-notification-text a {
+  color: #2196f3;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.password-notification-text a:hover {
+  color: #0d47a1;
+  text-decoration: underline;
+}
+
+.password-notification-dismiss {
+  background: none;
+  border: none;
+  color: #607d8b;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.password-notification-dismiss:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: #455a64;
+}
+
+/* Existing HomePage.css styles (từ nhánh User) */
 .home-page {
     padding: 20px;
     max-width: 1200px;
     margin: 0 auto;
-  }
-  
-  .container {
+}
+
+.container {
     margin-bottom: 20px;
-  }
-  
-  .hero-section {
+}
+
+.hero-section {
     text-align: center;
     padding: 40px 20px;
     background: #f5f5f5;
     border-radius: 8px;
     margin-bottom: 20px;
-  }
-  
-  .hero-section h1 {
+}
+
+.hero-section h1 {
     font-size: 32px;
     margin-bottom: 10px;
-  }
-  
-  .hero-section p {
+}
+
+.hero-section p {
     font-size: 18px;
     color: #666;
     margin-bottom: 20px;
-  }
-  
-  .btn-primary {
+}
+
+.btn-primary {
     display: inline-block;
     padding: 10px 20px;
     background-color: #007bff;
@@ -35,73 +103,73 @@
     text-decoration: none;
     border-radius: 4px;
     transition: background-color 0.3s ease;
-  }
-  
-  .btn-primary:hover {
+}
+
+.btn-primary:hover {
     background-color: #0056b3;
-  }
-  
-  .features-section {
+}
+
+.features-section {
     margin-bottom: 40px;
-  }
-  
-  .features-section h2 {
+}
+
+.features-section h2 {
     font-size: 24px;
     text-align: center;
     margin-bottom: 20px;
-  }
-  
-  .features-grid {
+}
+
+.features-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 20px;
     text-align: center;
-  }
-  
-  .feature h3 {
+}
+
+.feature h3 {
     font-size: 20px;
     margin-bottom: 10px;
-  }
-  
-  .feature p {
+}
+
+.feature p {
     font-size: 16px;
     color: #666;
-  }
-  
-  .section-wrapper {
+}
+
+.section-wrapper {
     margin-bottom: 40px;
     padding: 0;
-  }
-  
-  .section-header {
+}
+
+.section-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 15px;
     position: relative;
     padding: 0 10px;
-  }
-  
-  .section-title {
+}
+
+.section-title {
     text-align: left;
     flex-shrink: 0;
     max-width: 80%;
-  }
-  
-  .section-header h2 {
+}
+
+.section-header h2 {
     font-size: 24px;
     font-weight: bold;
     color: #333;
     margin-bottom: 5px;
-  }
-  
-  .section-header p {
+}
+
+.section-header p {
     font-size: 16px;
     color: #666;
     margin: 0;
-  }
-  
-  .view-all {
+}
+
+.view-all {
     font-size: 16px;
     color: #007bff;
     text-decoration: none;
@@ -109,22 +177,22 @@
     flex-shrink: 0;
     margin-left: auto;
     margin-right: 0;
-  }
-  
-  .view-all:hover {
+}
+
+.view-all:hover {
     color: #0056b3;
     text-decoration: underline;
-  }
-  
-  .restaurant-grid {
+}
+
+.restaurant-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 20px;
     padding: 0 10px;
     min-height: 100px;
-  }
-  
-  .restaurant-grid p {
+}
+
+.restaurant-grid p {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -134,15 +202,15 @@
     color: #666;
     font-size: 16px;
     text-align: center;
-  }
-  
-  .recently-viewed-section {
+}
+
+.recently-viewed-section {
     background-color: #fafafa;
     border-radius: 8px;
     padding: 20px 0;
-  }
-  
-  .clear-all-btn {
+}
+
+.clear-all-btn {
     background-color: #ff4d4f;
     color: white;
     border: none;
@@ -153,13 +221,13 @@
     transition: background-color 0.3s ease;
     margin-left: auto;
     margin-right: 0;
-  }
-  
-  .clear-all-btn:hover {
+}
+
+.clear-all-btn:hover {
     background-color: #d9363e;
-  }
-  
-  .load-more-btn {
+}
+
+.load-more-btn {
     display: block;
     margin: 20px auto;
     background-color: #1890ff;
@@ -170,96 +238,117 @@
     cursor: pointer;
     font-size: 16px;
     transition: background-color 0.3s ease;
-  }
-  
-  .load-more-btn:hover {
+}
+
+.load-more-btn:hover {
     background-color: #40a9ff;
-  }
-  
-  .load-more-btn:disabled {
+}
+
+.load-more-btn:disabled {
     background-color: #d9d9d9;
     cursor: not-allowed;
-  }
-  
-  @media (max-width: 768px) {
+}
+
+/* Responsive adjustments (kết hợp từ cả hai nhánh) */
+@media (max-width: 768px) {
+    /* Từ nhánh develop */
+    .password-notification-content {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 12px;
+    }
+    
+    .password-notification-icon {
+        margin-right: 0;
+        margin-bottom: 10px;
+    }
+    
+    .password-notification-dismiss {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+    }
+
+    /* Từ nhánh User */
     .hero-section h1 {
-      font-size: 24px;
+        font-size: 24px;
     }
-  
+
     .hero-section p {
-      font-size: 16px;
+        font-size: 16px;
     }
-  
+
     .features-grid {
-      grid-template-columns: 1fr;
-      gap: 15px;
+        grid-template-columns: 1fr;
+        gap: 15px;
     }
-  
+
     .feature h3 {
-      font-size: 18px;
+        font-size: 18px;
     }
-  
+
     .feature p {
-      font-size: 14px;
+        font-size: 14px;
     }
-  
+
     .section-header h2 {
-      font-size: 20px;
+        font-size: 20px;
     }
-  
+
     .section-header p {
-      font-size: 14px;
+        font-size: 14px;
     }
-  
+
     .view-all {
-      font-size: 14px;
+        font-size: 14px;
     }
-  
+
     .restaurant-grid {
-      grid-template-columns: 1fr;
+        grid-template-columns: 1fr;
     }
-  
+
     .load-more-btn {
-      font-size: 14px;
-      padding: 8px 16px;
+        font-size: 14px;
+        padding: 8px 16px;
     }
-  
+
     .section-title {
-      max-width: 70%;
+        max-width: 70%;
     }
-  }
-  
-  @media (max-width: 480px) {
+}
+
+@media (max-width: 480px) {
+    /* Từ nhánh User */
     .home-page {
-      padding: 10px;
+        padding: 10px;
     }
-  
+
     .hero-section {
-      padding: 20px 10px;
+        padding: 20px 10px;
     }
-  
+
     .hero-section h1 {
-      font-size: 20px;
+        font-size: 20px;
     }
-  
+
     .hero-section p {
-      font-size: 14px;
+        font-size: 14px;
     }
-  
+
     .btn-primary {
-      padding: 8px 16px;
-      font-size: 14px;
+        padding: 8px 16px;
+        font-size: 14px;
     }
-  
+
     .section-header {
-      padding: 0 5px;
+        padding: 0 5px;
     }
-  
+
     .restaurant-grid {
-      padding: 0 5px;
+        padding: 0 5px;
     }
-  
+
     .section-title {
-      max-width: 60%;
+        max-width: 60%;
     }
-  }
+}

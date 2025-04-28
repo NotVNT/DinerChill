@@ -36,7 +36,20 @@ function AdminReviews() {
     }
   };
 
+  const handleVerifyClick = async (reviewId, currentStatus) => {
+    try {
+      await adminAPI.updateReviewVerification(reviewId, !currentStatus);
+      setReviews(prev => prev.map(review => 
+        review.id === reviewId ? {...review, isVerified: !currentStatus} : review
+      ));
+    } catch (err) {
+      console.error('Error updating verification status:', err);
+      setError('Không thể cập nhật trạng thái xác minh. Vui lòng thử lại.');
+    }
+  };
+
   const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
     const date = new Date(dateString);
     return new Intl.DateTimeFormat('vi-VN', {
       year: 'numeric',
@@ -65,10 +78,14 @@ function AdminReviews() {
             <tr>
               <th>ID</th>
               <th>Nhà hàng</th>
-              <th>Người đánh giá</th>
+              <th>Người dùng</th>
               <th>Đánh giá</th>
               <th>Nội dung</th>
+              <th>Ngày ghé</th>
+              <th>Hình ảnh</th>
+              <th>Xác minh</th>
               <th>Ngày tạo</th>
+              <th>Cập nhật</th>
               <th>Thao tác</th>
             </tr>
           </thead>
@@ -77,7 +94,7 @@ function AdminReviews() {
               <tr key={review.id}>
                 <td>{review.id}</td>
                 <td>{review.restaurantId}</td>
-                <td>{review.userName}</td>
+                <td>{review.userId}</td>
                 <td>
                   <div className="star-rating">
                     {review.rating} ⭐
@@ -85,10 +102,27 @@ function AdminReviews() {
                 </td>
                 <td>
                   <div className="review-content">
-                    {review.content}
+                    {review.comment}
                   </div>
                 </td>
+                <td>{formatDate(review.visitDate)}</td>
+                <td>
+                  {review.photos && (
+                    <div className="review-photos">
+                      {review.photos ? 'Có' : 'Không'}
+                    </div>
+                  )}
+                </td>
+                <td>
+                  <button 
+                    className={`btn btn-sm ${review.isVerified ? 'btn-verified' : 'btn-unverified'}`}
+                    onClick={() => handleVerifyClick(review.id, review.isVerified)}
+                  >
+                    {review.isVerified ? 'Đã xác minh' : 'Chưa xác minh'}
+                  </button>
+                </td>
                 <td>{formatDate(review.createdAt)}</td>
+                <td>{formatDate(review.updatedAt)}</td>
                 <td>
                   <button 
                     className="btn btn-sm btn-delete"

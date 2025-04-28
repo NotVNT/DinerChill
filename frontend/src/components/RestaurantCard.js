@@ -7,6 +7,7 @@ function RestaurantCard({ restaurant }) {
   const navigate = useNavigate();
   const { addToRecentlyViewed } = useApp();
 
+
   const [imageSrc, setImageSrc] = useState(restaurant?.image || 'https://via.placeholder.com/300x200');
 
   const handleCardClick = () => {
@@ -14,6 +15,7 @@ function RestaurantCard({ restaurant }) {
     addToRecentlyViewed(restaurant);
     if (restaurant.type === 'product') {
       navigate(`/promotions/${restaurant.id}`);
+
     } else if (restaurant.type === 'blog') {
       navigate(`/blog/${restaurant.id}`);
     } else if (restaurant.type === 'amenity') {
@@ -23,10 +25,12 @@ function RestaurantCard({ restaurant }) {
     }
   };
 
+
   const handleBooking = () => {
     if (!restaurant?.id) return;
     navigate(`/reservation?restaurant=${restaurant.id}`);
   };
+
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -35,11 +39,13 @@ function RestaurantCard({ restaurant }) {
     }
   };
 
+
   const handleImageError = () => {
     setImageSrc('/assets/placeholder-300x200.jpg');
   };
 
   const renderStars = (rating) => {
+
     const numericRating = typeof rating === 'string' ? parseFloat(rating) : rating;
     if (isNaN(numericRating) || numericRating == null) return null;
 
@@ -54,6 +60,7 @@ function RestaurantCard({ restaurant }) {
     );
   };
 
+
   if (!restaurant) return null;
 
   return (
@@ -66,17 +73,20 @@ function RestaurantCard({ restaurant }) {
       aria-label={`Xem chi tiết ${restaurant.name}`}
     >
       <div className="card-image">
+
         <img src={imageSrc} alt={restaurant.name} onError={handleImageError} />
         <div className="logo-overlay">DinerChill</div>
         {(restaurant.discount || restaurant.discountPrice) && (
           <span className="discount-badge">
             {restaurant.discount || (restaurant.discountPrice && `Giảm ${restaurant.price - restaurant.discountPrice}K`)}
           </span>
+
         )}
       </div>
       <div className="card-content">
         <h3>{restaurant.name}</h3>
         <div className="rating-price">
+
           {typeof restaurant.rating !== 'undefined' && renderStars(restaurant.rating)}
           {(restaurant.price || restaurant.discountPrice) && (
             <span className="price">
@@ -98,6 +108,7 @@ function RestaurantCard({ restaurant }) {
         {restaurant.description && <p className="description">{restaurant.description}</p>}
         {restaurant.date && <p className="date">{restaurant.date}</p>}
         {restaurant.type !== 'product' && restaurant.type !== 'blog' && restaurant.type !== 'amenity' && (
+
           <button
             className="book-now-btn"
             onClick={(e) => {

@@ -12,7 +12,7 @@ function AdminRoute({ children }) {
   }
   
   // Chuyển hướng nếu chưa đăng nhập hoặc không phải admin
-  if (!user || !user.isAdmin) {
+  if (!user || user.role !== 'admin') {
     return <Navigate to="/" replace state={{ from: location }} />;
   }
   

@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import '../../styles/profile_imformation/ProfilePage.css';
+import LogoutHandler from '../identity/LogoutHandler';
+import { authAPI } from '../../services/api';
 
 function ProfilePage() {
   const { user, updateProfile } = useApp();
@@ -13,12 +15,11 @@ function ProfilePage() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    phone: '',
-    birthDay: '01',
-    birthMonth: '01',
-    birthYear: '1990',
-    gender: 'Nam'
+    phone: ''
   });
+  
+  // Lưu email ban đầu để khôi phục nếu cần
+  const [originalEmail, setOriginalEmail] = useState('');
   
   // Avatar state
   const [avatar, setAvatar] = useState(null);
@@ -36,8 +37,8 @@ function ProfilePage() {
         name: user.name || '',
         email: user.email || '',
         phone: user.phone || '',
-        // Add other fields if they exist in your user object
       }));
+      setOriginalEmail(user.email || '');
     }
   }, [user]);
   
@@ -66,6 +67,17 @@ function ProfilePage() {
     fileInputRef.current.click();
   };
   
+  // Kiểm tra email đã tồn tại chưa
+  const checkEmailExists = async (email) => {
+    try {
+      const response = await authAPI.checkEmail(email);
+      return response.exists;
+    } catch (error) {
+      console.error('Lỗi kiểm tra email:', error);
+      throw error;
+    }
+  };
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -73,40 +85,101 @@ function ProfilePage() {
     setSuccess(false);
     
     try {
+      // Kiểm tra nếu email đã thay đổi
+      if (formData.email !== originalEmail) {
+        try {
+          const emailExists = await checkEmailExists(formData.email);
+          if (emailExists) {
+            // Email đã tồn tại, khôi phục email ban đầu
+            setFormData(prev => ({
+              ...prev,
+              email: originalEmail
+            }));
+            setError('Gmail này đã tồn tại trong hệ thống');
+            setToast({
+              show: true,
+              message: 'Gmail này đã tồn tại trong hệ thống',
+              type: 'error'
+            });
+            setLoading(false);
+            
+            // Ẩn toast sau 3 giây
+            setTimeout(() => {
+              setToast({ show: false, message: '', type: '' });
+            }, 3000);
+            
+            return;
+          }
+        } catch (checkError) {
+          console.error('Lỗi khi kiểm tra email:', checkError);
+          setError('Không thể kiểm tra email. Vui lòng thử lại sau.');
+          setLoading(false);
+          return;
+        }
+      }
+      
       // Tạo FormData nếu có file ảnh
       let updateData;
       if (avatar) {
-        const formData = new FormData();
-        formData.append('name', formData.name);
-        formData.append('phone', formData.phone);
-        formData.append('avatar', avatar);
-        updateData = formData;
+        const formDataObj = new FormData();
+        formDataObj.append('name', formData.name);
+        formDataObj.append('email', formData.email);
+        formDataObj.append('avatar', avatar);
+        
+        console.log('Sending FormData with avatar');
+        updateData = formDataObj;
       } else {
+        // Nếu không có avatar, gửi dữ liệu JSON bình thường
         updateData = {
           name: formData.name,
-          phone: formData.phone,
+          email: formData.email,
         };
+        console.log('Sending JSON data:', updateData);
       }
       
-      await updateProfile(updateData);
-      setSuccess(true);
+      const response = await updateProfile(updateData);
+      console.log('Update profile response:', response);
       
-      // Hiện toast thông báo
-      setToast({
-        show: true,
-        message: 'Cập nhật thông tin thành công!',
-        type: 'success'
-      });
+      // Nếu update thành công
+      if (response && response.user) {
+        setSuccess(true);
+        
+        // Cập nhật email gốc nếu thành công
+        if (formData.email !== originalEmail) {
+          setOriginalEmail(formData.email);
+        }
+        
+        // Hiện toast thông báo
+        setToast({
+          show: true,
+          message: formData.email !== originalEmail 
+            ? 'Cập nhật thông tin và email thành công!' 
+            : 'Cập nhật thông tin thành công!',
+          type: 'success'
+        });
+      } else {
+        throw new Error('Không nhận được phản hồi từ server');
+      }
       
       // Ẩn toast sau 3 giây
       setTimeout(() => {
         setToast({ show: false, message: '', type: '' });
       }, 3000);
     } catch (err) {
-      setError(err.message || 'Có lỗi xảy ra khi cập nhật thông tin. Vui lòng thử lại.');
+      console.error('Lỗi cập nhật:', err);
+      let errorMessage = 'Có lỗi xảy ra khi cập nhật thông tin.';
+      
+      // Kiểm tra chi tiết lỗi
+      if (err.response && err.response.data) {
+        errorMessage = err.response.data.message || errorMessage;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
       setToast({
         show: true,
-        message: 'Có lỗi xảy ra khi cập nhật thông tin.',
+        message: errorMessage,
         type: 'error'
       });
       
@@ -224,16 +297,7 @@ function ProfilePage() {
                 </Link>
               </li>
               <li>
-                <Link to="/logout" className="logout-btn">
-                  <span className="nav-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                      <polyline points="16 17 21 12 16 7"></polyline>
-                      <line x1="21" y1="12" x2="9" y2="12"></line>
-                    </svg>
-                  </span>
-                  Thoát
-                </Link>
+                <LogoutHandler />
               </li>
             </ul>
           </nav>
@@ -384,7 +448,7 @@ function ProfilePage() {
                       name="email"
                       value={formData.email}
                       onChange={handleChange}
-                      disabled
+                      required
                     />
                   </div>
                 </div>
@@ -405,92 +469,9 @@ function ProfilePage() {
                       name="phone"
                       value={formData.phone}
                       onChange={handleChange}
-                      required
+                      disabled
                     />
                   </div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="profile-card">
-              <div className="profile-card-header">
-                <h2>
-                  <span className="section-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                      <line x1="16" y1="2" x2="16" y2="6"></line>
-                      <line x1="8" y1="2" x2="8" y2="6"></line>
-                      <line x1="3" y1="10" x2="21" y2="10"></line>
-                    </svg>
-                  </span>
-                  Thông tin cá nhân bổ sung
-                </h2>
-              </div>
-              
-              <div className="form-group">
-                <label>Ngày sinh</label>
-                <div className="date-selectors">
-                  <select 
-                    name="birthDay" 
-                    value={formData.birthDay}
-                    onChange={handleChange}
-                  >
-                    {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
-                      <option key={day} value={day < 10 ? `0${day}` : day}>
-                        {day}
-                      </option>
-                    ))}
-                  </select>
-                  
-                  <select 
-                    name="birthMonth" 
-                    value={formData.birthMonth}
-                    onChange={handleChange}
-                  >
-                    {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
-                      <option key={month} value={month < 10 ? `0${month}` : month}>
-                        Tháng {month}
-                      </option>
-                    ))}
-                  </select>
-                  
-                  <select 
-                    name="birthYear" 
-                    value={formData.birthYear}
-                    onChange={handleChange}
-                  >
-                    {Array.from({ length: 100 }, (_, i) => new Date().getFullYear() - i).map(year => (
-                      <option key={year} value={year}>
-                        {year}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              
-              <div className="form-group">
-                <label>Giới tính</label>
-                <div className="gender-options">
-                  <label className="gender-option">
-                    <input
-                      type="radio"
-                      name="gender"
-                      value="Nam"
-                      checked={formData.gender === 'Nam'}
-                      onChange={handleChange}
-                    />
-                    Nam
-                  </label>
-                  <label className="gender-option">
-                    <input
-                      type="radio"
-                      name="gender"
-                      value="Nữ"
-                      checked={formData.gender === 'Nữ'}
-                      onChange={handleChange}
-                    />
-                    Nữ
-                  </label>
                 </div>
               </div>
             </div>

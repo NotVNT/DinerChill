@@ -5,7 +5,7 @@
   padding: 8px 0;
   position: sticky;
   top: 0;
-  z-index: 1000;
+  z-index: 9999;
   width: 100%;
 }
 
@@ -30,7 +30,7 @@
 }
 
 .logo {
-  font-family: 'Poppins', sans-serif;
+  font-family: "Poppins", sans-serif;
   font-weight: 700;
   font-size: 1.3rem;
   margin-right: 20px;
@@ -63,11 +63,11 @@
   margin: 0;
 }
 
-.nav-item a, 
+.nav-item a,
 .nav-link,
 .location-btn,
 .account-btn {
-  font-family: 'Poppins', sans-serif;
+  font-family: "Poppins", sans-serif;
   font-weight: 600;
   display: flex;
   align-items: center;
@@ -80,7 +80,7 @@
   white-space: nowrap;
 }
 
-.nav-item a:hover, 
+.nav-item a:hover,
 .nav-link:hover,
 .location-btn:hover,
 .account-btn:hover {
@@ -113,18 +113,19 @@
   position: absolute;
   background: white;
   border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   min-width: 200px;
   z-index: 1000;
 }
 
 /* Media queries cho header responsive */
 @media (max-width: 1400px) {
-  .nav-item a, .nav-item-dropdown {
+  .nav-item a,
+  .nav-item-dropdown {
     padding: 8px 6px;
     font-size: 0.85rem;
   }
-  
+
   .nav-icon {
     margin-right: 3px;
     font-size: 0.85rem;
@@ -135,20 +136,21 @@
   .container {
     padding: 0 10px;
   }
-  
+
   .logo {
     font-size: 1.3rem;
   }
-  
-  .nav-item a, .nav-item-dropdown {
+
+  .nav-item a,
+  .nav-item-dropdown {
     padding: 8px 5px;
     font-size: 0.8rem;
   }
-  
+
   .nav-icon {
     margin-right: 2px;
   }
-  
+
   .main-nav ul {
     gap: 2px;
   }
@@ -159,22 +161,22 @@
     flex-wrap: wrap;
     justify-content: center;
   }
-  
+
   .logo-link {
     margin-right: 0;
     margin-bottom: 5px;
   }
-  
+
   .main-nav {
     width: 100%;
     order: 2;
   }
-  
+
   .main-nav ul {
     justify-content: center;
     flex-wrap: wrap;
   }
-  
+
   .user-nav {
     margin-left: 0;
     order: 1;
@@ -186,20 +188,20 @@
   .menu-toggle {
     display: block;
   }
-  
+
   .main-nav {
     display: none;
   }
-  
+
   .main-nav.open {
     display: flex;
   }
-  
+
   .main-nav ul {
     flex-direction: column;
     width: 100%;
   }
-  
+
   .nav-item {
     width: 100%;
     text-align: center;
@@ -247,7 +249,7 @@
 
 /* Tạo vùng đệm vô hình bên trên dropdown menu để giữ kết nối hover */
 .dropdown-menu::before {
-  content: '';
+  content: "";
   position: absolute;
   top: -10px;
   left: 0;
@@ -277,7 +279,7 @@
 /* Style cho dropdown menu items */
 .dropdown-menu a,
 .dropdown-menu button {
-  font-family: 'Poppins', sans-serif;
+  font-family: "Poppins", sans-serif;
   font-weight: 500;
   display: flex;
   align-items: center;
@@ -366,7 +368,7 @@
     min-width: 300px;
     left: -100px;
   }
-  
+
   .food-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -413,7 +415,7 @@
     min-width: 300px;
     left: -100px;
   }
-  
+
   .blog-grid {
     grid-template-columns: repeat(1, 1fr); /* Single column on mobile */
   }
@@ -557,7 +559,7 @@
 
 .dropdown-menu a,
 .dropdown-menu button {
-  font-family: 'Poppins', sans-serif;
+  font-family: "Poppins", sans-serif;
   font-weight: 500;
   display: flex;
   align-items: center;
@@ -633,7 +635,7 @@
     flex-direction: column;
     width: 100%;
   }
-  
+
   .nav-item {
     margin: 5px 0;
   }
@@ -681,7 +683,7 @@
   margin: 0;
 }
 
-.nav-item a, 
+.nav-item a,
 .nav-link,
 .location-btn,
 .account-btn {
@@ -696,7 +698,7 @@
   white-space: nowrap;
 }
 
-.nav-item a:hover, 
+.nav-item a:hover,
 .nav-link:hover,
 .location-btn:hover,
 .account-btn:hover {
@@ -704,7 +706,7 @@
 }
 
 /* Đảm bảo tất cả các icon có kích thước giống nhau */
-.nav-icon, 
+.nav-icon,
 .location-icon,
 .account-icon {
   display: inline-flex;
@@ -766,4 +768,4 @@
 }
 
 /* Thêm font Poppins cho nav-link */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap");

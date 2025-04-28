@@ -7,7 +7,9 @@ function AdminRestaurants() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(null);
+
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+
   const [editingRestaurant, setEditingRestaurant] = useState(null);
   const [viewingRestaurant, setViewingRestaurant] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -144,7 +146,7 @@ function AdminRestaurants() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null); // Reset any previous error
-    setSuccess(null); // Reset any previous success message
+
     setIsSubmitting(true); // Set submitting state to true when form is submitted
     
     try {
@@ -226,14 +228,20 @@ function AdminRestaurants() {
         setRestaurants(prev => prev.map(restaurant => 
           restaurant.id === editingRestaurant.id ? updatedRestaurant : restaurant
         ));
-        setSuccess(`Đã cập nhật nhà hàng "${updatedRestaurant.name}" thành công!`);
+
+        showToast(`Đã cập nhật nhà hàng "${updatedRestaurant.name}" thành công!`, 'warning');
+        createNotification(`Đã cập nhật nhà hàng "${updatedRestaurant.name}"`);
+
       } else {
         // Thêm nhà hàng mới
         console.log('Creating new restaurant');
         updatedRestaurant = await adminAPI.createRestaurant(formDataToSend);
         console.log('Restaurant created successfully');
         setRestaurants(prev => [...prev, updatedRestaurant]);
-        setSuccess(`Đã thêm nhà hàng "${updatedRestaurant.name}" thành công!`);
+
+        showToast(`Đã thêm nhà hàng "${updatedRestaurant.name}" thành công!`, 'success');
+        createNotification(`Đã thêm nhà hàng mới "${updatedRestaurant.name}"`);
+
       }
       
       // Reset form
@@ -241,7 +249,7 @@ function AdminRestaurants() {
       
       // Auto-hide success message after 5 seconds
       setTimeout(() => {
-        setSuccess(null);
+        setToast({ show: false, message: '', type: 'success' });
       }, 5000);
     } catch (err) {
       console.error('Chi tiết lỗi khi lưu nhà hàng:', err);
@@ -279,7 +287,7 @@ function AdminRestaurants() {
     if (window.confirm('Bạn có chắc muốn xóa nhà hàng này?')) {
       try {
         setError(null);
-        setSuccess(null);
+
         
         // Find restaurant name before deleting
         const restaurantToDelete = restaurants.find(restaurant => restaurant.id === restaurantId);
@@ -287,12 +295,10 @@ function AdminRestaurants() {
         
         await adminAPI.deleteRestaurant(restaurantId);
         setRestaurants(prev => prev.filter(restaurant => restaurant.id !== restaurantId));
-        setSuccess(`Đã xóa nhà hàng "${restaurantName}" thành công!`);
-        
-        // Auto-hide success message after 5 seconds
-        setTimeout(() => {
-          setSuccess(null);
-        }, 5000);
+
+        showToast(`Đã xóa nhà hàng "${restaurantName}" thành công!`, 'danger');
+        createNotification(`Đã xóa nhà hàng "${restaurantName}"`, 'danger');
+
       } catch (err) {
         console.error('Error deleting restaurant:', err);
         setError('Không thể xóa nhà hàng. Vui lòng thử lại.');
@@ -302,11 +308,13 @@ function AdminRestaurants() {
 
   const handleViewClick = (restaurant) => {
     setViewingRestaurant(restaurant);
+
   };
 
   const closeDetailView = () => {
     setViewingRestaurant(null);
   };
+
 
   const handleStatusToggleClick = (restaurant) => {
     setStatusChangeModal({
@@ -364,15 +372,13 @@ function AdminRestaurants() {
         r.id === restaurant.id ? updatedRestaurant : r
       ));
       
-      setSuccess(`Đã cập nhật trạng thái nhà hàng "${restaurant.name}" thành ${newStatus === 'active' ? 'Đang hoạt động' : 'Tạm ngừng'}`);
+
+      showToast(`Đã cập nhật trạng thái nhà hàng "${restaurant.name}" thành ${newStatus === 'active' ? 'Đang hoạt động' : 'Tạm ngừng'}`, 'warning');
+      createNotification(`Đã cập nhật trạng thái nhà hàng "${restaurant.name}" thành ${newStatus === 'active' ? 'Đang hoạt động' : 'Tạm ngừng'}`);
       
       // Close modal
       closeStatusModal();
-      
-      // Auto-hide success message after 5 seconds
-      setTimeout(() => {
-        setSuccess(null);
-      }, 5000);
+
     } catch (error) {
       console.error('Error updating restaurant status:', error);
       setError('Không thể cập nhật trạng thái nhà hàng');
@@ -416,6 +422,25 @@ function AdminRestaurants() {
     }
   });
 
+
+  // Function to show toast message
+  const showToast = (message, type = 'success') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => {
+      setToast({ show: false, message: '', type: 'success' });
+    }, 5000);
+  };
+  
+  // Function to create notification
+  const createNotification = (message, type = 'success') => {
+    // Create and dispatch a custom event
+    const notificationEvent = new CustomEvent('newAdminNotification', {
+      detail: { message, type }
+    });
+    window.dispatchEvent(notificationEvent);
+  };
+
+
   return (
     <div className="admin-restaurants">
       <div className="page-header">
@@ -425,18 +450,73 @@ function AdminRestaurants() {
         </button>
       </div>
       
+
+      {/* Toast Notification */}
+      {toast.show && (
+        <div className="toast-notification" style={{
+          position: 'fixed',
+          bottom: '20px',
+          right: '20px',
+          transform: 'none',
+          backgroundColor: toast.type === 'success' ? '#28a745' : 
+                           toast.type === 'warning' ? '#ffc107' : 
+                           toast.type === 'danger' ? '#dc3545' : '#28a745',
+          color: toast.type === 'warning' ? '#212529' : 'white',
+          padding: '15px 20px',
+          borderRadius: '4px',
+          boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+          zIndex: 9999,
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: '12px',
+          minWidth: '300px',
+          maxWidth: '400px',
+          animation: 'slideInUp 0.3s ease-out'
+        }}>
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            flexShrink: 0,
+            marginTop: '3px'
+          }}>
+            {toast.type === 'success' && <i className="fa fa-check-circle" style={{ fontSize: '20px' }}></i>}
+            {toast.type === 'warning' && <i className="fa fa-exclamation-circle" style={{ fontSize: '20px' }}></i>}
+            {toast.type === 'danger' && <i className="fa fa-times-circle" style={{ fontSize: '20px' }}></i>}
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 'bold', fontSize: '14px', marginBottom: '2px' }}>Thông báo</div>
+            <div style={{ fontSize: '14px' }}>{toast.message}</div>
+          </div>
+          <div style={{
+            alignSelf: 'flex-start',
+            fontSize: '14px',
+            fontWeight: '500',
+            marginLeft: 'auto',
+            cursor: 'pointer'
+          }} onClick={() => setToast({ show: false, message: '', type: 'success' })}>
+            Xong
+          </div>
+        </div>
+      )}
+      <style jsx="true">{`
+        @keyframes slideInUp {
+          from { transform: translateY(20px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+        .toast-notification {
+          animation: slideInUp 0.3s ease-out;
+        }
+      `}</style>
+      
+
       {error && (
         <div className="alert alert-danger">
           <i className="fa fa-exclamation-circle alert-icon"></i>
           {error}
         </div>
       )}
-      {success && (
-        <div className="alert alert-success">
-          <i className="fa fa-check-circle alert-icon"></i>
-          {success}
-        </div>
-      )}
+
       
       {editingRestaurant !== null ? (
         <div className="card edit-form-card">
@@ -689,37 +769,25 @@ function AdminRestaurants() {
               <table className="table table-hover admin-table">
                 <thead className="thead-light">
                   <tr>
-                    <th>ID</th>
-                    <th>Hình ảnh</th>
-                    <th>Tên nhà hàng</th>
-                    <th>Loại ẩm thực</th>
-                    <th>Trạng thái</th>
-                    <th>Địa chỉ</th>
-                    <th>Thao tác</th>
+
+                    <th style={{ width: '15%' }}>Tên nhà hàng</th>
+                    <th style={{ width: '4%' }}>Loại ẩm thực</th>
+                    <th style={{ width: '10%' }}>Sức chứa</th>
+                    <th style={{ width: '8%' }}>Trạng thái</th>
+                    <th style={{ width: '20%' }}>Địa chỉ</th>
+                    <th style={{ width: '10%' }}>Thao tác</th>
+
                   </tr>
                 </thead>
                 <tbody>
                   {filteredRestaurants && filteredRestaurants.length > 0 ? (
                     filteredRestaurants.map(restaurant => (
                       <tr key={restaurant.id}>
-                        <td>{restaurant.id}</td>
-                        <td>
-                          {restaurant.images && restaurant.images.length > 0 ? (
-                            <img 
-                              src={restaurant.images[0].image_url} 
-                              alt={restaurant.name} 
-                              className="restaurant-thumbnail" 
-                              width="50"
-                              height="50"
-                            />
-                          ) : (
-                            <div className="no-image-placeholder-small">
-                              <i className="fa fa-image"></i>
-                            </div>
-                          )}
-                        </td>
+
                         <td>{restaurant.name}</td>
                         <td>{restaurant.cuisine || restaurant.cuisineType}</td>
+                        <td>{restaurant.capacity ? `${restaurant.capacity} người` : 'Chưa cập nhật'}</td>
+
                         <td>
                           <span 
                             className={`status-badge ${restaurant.status === 'active' ? 'active' : 'maintenance'}`}
@@ -742,31 +810,39 @@ function AdminRestaurants() {
                             onClick={() => handleViewClick(restaurant)}
                             title="Xem chi tiết"
                           >
-                            <i className="fa fa-eye"></i>
-                            <span>Xem</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-eye" viewBox="0 0 16 16">
+                              <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
+                              <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
+                            </svg>
                           </button>
                           <button 
                             className="btn-action btn-edit"
                             onClick={() => handleEditClick(restaurant)}
                             title="Chỉnh sửa"
                           >
-                            <i className="fa fa-edit"></i>
-                            <span>Sửa</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-pencil-square" viewBox="0 0 16 16">
+                              <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
+                              <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/>
+                            </svg>
                           </button>
                           <button 
                             className="btn-action btn-delete"
                             onClick={() => handleDeleteClick(restaurant.id)}
                             title="Xóa"
                           >
-                            <i className="fa fa-trash"></i>
-                            <span>Xóa</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-trash" viewBox="0 0 16 16">
+                              <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6Z"/>
+                              <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1ZM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118ZM2.5 3h11V2h-11v1Z"/>
+                            </svg>
                           </button>
                         </td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="7" className="text-center no-data">
+
+                      <td colSpan="6" className="text-center no-data">
+
                         <div className="empty-state">
                           {searchQuery ? (
                             <>

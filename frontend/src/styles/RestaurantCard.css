@@ -1,68 +1,111 @@
+/* Đảm bảo restaurant-card không phá vỡ bố cục ngang */
 .restaurant-card {
-  border: 1px solid #ddd;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid #e0e0e0;
   border-radius: 8px;
   overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
   cursor: pointer;
-  transition: transform 0.2s;
 }
 
+/* Hiệu ứng hover */
 .restaurant-card:hover {
-  transform: scale(1.02);
+  transform: scale(1.02) translateY(-5px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
+/* Hình ảnh */
 .card-image {
   position: relative;
   width: 100%;
-  height: 150px;
+  padding-top: 66.67%; /* Tỷ lệ 3:2 */
 }
 
 .card-image img {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: cover; /* Giữ tỷ lệ hình ảnh, không bóp méo */
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
 }
 
+/* Logo "DinerChill" trên hình ảnh */
 .logo-overlay {
   position: absolute;
   top: 10px;
   left: 10px;
-  background: rgba(0, 0, 0, 0.5);
-  color: white;
+  background-color: rgba(255, 255, 255, 0.8);
   padding: 5px 10px;
   border-radius: 4px;
   font-size: 12px;
+  font-weight: bold;
+  color: #e31837;
 }
 
+/* Badge "Được đề xuất" hoặc "Bán chạy" */
 .discount-badge {
   position: absolute;
   top: 10px;
   right: 10px;
-  background: #ff4500;
-  color: white;
+  background: #e31837;
+  color: #fff;
   padding: 5px 10px;
   border-radius: 4px;
   font-size: 12px;
+  font-weight: bold;
 }
 
+.recommended-badge {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  background: #e31837;
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+/* Nội dung card */
 .card-content {
   padding: 15px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .card-content h3 {
   font-size: 18px;
-  margin: 0 0 10px;
+  font-weight: 600;
   color: #333;
+  margin: 0;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
+/* Container cho rating và giá */
 .rating-price {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .stars {
-  color: #ffd700;
+  color: #f4c542;
 }
 
 .rating-value {
@@ -73,7 +116,7 @@
 
 .price {
   font-size: 14px;
-  color: #ff4500;
+  color: #e31837;
   font-weight: bold;
 }
 
@@ -84,12 +127,58 @@
 }
 
 .discounted-price {
-  color: #ff4500;
+  color: #e31837;
 }
 
-.cuisine,
-.location,
-.description,
+/* Đánh giá với sao vàng */
+.rating {
+  font-size: 14px;
+  color: #f4c430;
+  margin: 0;
+}
+
+/* Giảm giá */
+.discount {
+  font-size: 14px;
+  font-weight: bold;
+  color: #e31837;
+  margin: 0 0 5px;
+}
+
+/* Danh mục */
+.cuisine {
+  font-size: 14px;
+  color: #777;
+  margin: 5px 0;
+}
+
+/* Địa điểm */
+.location {
+  font-size: 13px;
+  color: #999;
+  margin: 5px 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Mô tả */
+.description {
+  font-size: 14px;
+  color: #555;
+  margin: 5px 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Các thông tin khác */
 .offer,
 .valid-until,
 .date {
@@ -98,26 +187,78 @@
   margin: 5px 0;
 }
 
-.discount {
+/* Nút đặt bàn */
+.card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.btn {
+  background: #e31837;
+  border: none;
+  padding: 10px;
+  border-radius: 4px;
   font-size: 14px;
-  color: #ff4500;
-  font-weight: bold;
-  margin: 5px 0;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+  color: white;
+  flex: 1;
+}
+
+.btn:hover {
+  background: #c31530;
 }
 
 .book-now-btn {
-  display: block;
-  width: 100%;
-  padding: 10px;
-  background-color: #007bff;
-  color: white;
+  background: #e31837;
   border: none;
+  padding: 10px;
   border-radius: 4px;
-  cursor: pointer;
   font-size: 14px;
-  margin-top: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+  color: white;
+  width: 100%;
 }
 
 .book-now-btn:hover {
-  background-color: #0056b3;
+  background: #c31530;
+}
+
+/* Responsive cho mobile (từ nhánh develop) */
+@media (max-width: 768px) {
+  .restaurant-card {
+    border-radius: 6px;
+  }
+
+  .card-content {
+    padding: 10px;
+    gap: 6px;
+  }
+
+  .card-content h3 {
+    font-size: 16px;
+  }
+
+  .rating,
+  .rating-value,
+  .discount,
+  .cuisine,
+  .location,
+  .description {
+    font-size: 12px;
+  }
+
+  .price {
+    font-size: 12px;
+  }
+
+  .btn,
+  .book-now-btn {
+    padding: 8px;
+    font-size: 13px;
+  }
 }

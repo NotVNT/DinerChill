@@ -12,12 +12,13 @@ function LoginPage() {
   const from = location.state?.from?.pathname || '/';
   
   const [formData, setFormData] = useState({
-    email: '',
+    emailOrPhone: '',
     password: ''
   });
   
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [loginAttempts, setLoginAttempts] = useState(0);
   
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -27,20 +28,73 @@ function LoginPage() {
     }));
   };
   
+  const validateForm = () => {
+    if (!formData.emailOrPhone.trim()) {
+      setError('Vui lòng nhập email hoặc số điện thoại');
+      return false;
+    }
+    
+    if (!formData.password) {
+      setError('Vui lòng nhập mật khẩu');
+      return false;
+    }
+    
+    return true;
+  };
+  
+  // Kiểm tra và chuẩn hóa thông tin đăng nhập
+  const normalizeCredentials = () => {
+    let credentials = { ...formData };
+    
+    // Chuẩn hóa email (xóa khoảng trắng)
+    if (credentials.emailOrPhone) {
+      credentials.emailOrPhone = credentials.emailOrPhone.trim();
+    }
+    
+    return credentials;
+  };
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
     
+    if (!validateForm()) {
+      return;
+    }
+    
+    setLoading(true);
+    
     try {
-      await login(formData);
+      // Chuẩn hóa thông tin đăng nhập trước khi gửi
+      const normalizedCredentials = normalizeCredentials();
+      await login(normalizedCredentials);
       // Chuyển hướng người dùng sau khi đăng nhập thành công
       navigate(from, { replace: true });
     } catch (err) {
-      setError(err.message || 'Đăng nhập không thành công. Vui lòng kiểm tra lại thông tin.');
+      // Tăng số lần thử đăng nhập
+      setLoginAttempts(prevAttempts => prevAttempts + 1);
+      
+      // Xử lý lỗi tùy thuộc vào số lần thử đăng nhập
+      if (err.message && err.message.includes('đăng nhập bằng Google')) {
+        setError('Tài khoản hoặc mật khẩu đăng nhập không chính xác');
+      } else if (loginAttempts >= 1) { // Đã thử 1 lần trước đó, đây là lần thứ 2+
+        setError('Tài khoản hoặc mật khẩu đăng nhập không chính xác. Vui lòng nhấn "Quên mật khẩu?" để đặt lại mật khẩu mới.');
+      } else {
+        setError('Tài khoản hoặc mật khẩu đăng nhập không chính xác');
+      }
     } finally {
       setLoading(false);
     }
+  };
+  
+  // Hàm xử lý khi người dùng nhấn đăng nhập với Google
+  const handleGoogleLogin = () => {
+    window.location.href = `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/auth/google`;
+  };
+  
+  // Hàm xử lý khi người dùng nhấn đăng nhập với Zalo
+  const handleZaloLogin = () => {
+    window.location.href = `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/auth/zalo`;
   };
   
   return (
@@ -50,6 +104,7 @@ function LoginPage() {
           <div className="auth-header">
             <h1>Đăng nhập</h1>
             <p>Chào mừng trở lại! Đăng nhập để tiếp tục</p>
+
           </div>
           
           {error && (
@@ -61,18 +116,18 @@ function LoginPage() {
           
           <form onSubmit={handleSubmit} className="auth-form">
             <div className="form-group">
-              <label htmlFor="email">Email</label>
+              <label htmlFor="emailOrPhone">Tài khoản</label>
               <div className="input-with-icon">
                 <span className="input-icon">✉️</span>
                 <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
+                  type="text"
+                  id="emailOrPhone"
+                  name="emailOrPhone"
+                  value={formData.emailOrPhone}
                   onChange={handleChange}
-                  placeholder="Nhập địa chỉ email"
+                  placeholder="Nhập email hoặc số điện thoại"
                   required
-                  autoComplete="email"
+                  autoComplete="username"
                 />
               </div>
             </div>
@@ -110,6 +165,38 @@ function LoginPage() {
             </button>
           </form>
           
+          <div className="auth-divider">
+            <span>HOẶC</span>
+          </div>
+          
+          <div className="social-login">
+            <button 
+              type="button"
+              className="google-login-button"
+              onClick={handleGoogleLogin}
+            >
+              <img 
+                src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
+                alt="Google logo" 
+                className="google-logo"
+              />
+              <span>Đăng nhập với Google</span>
+            </button>
+            
+            <button
+              type="button"
+              className="zalo-login-button"
+              onClick={handleZaloLogin}
+            >
+              <img 
+                src="https://stc-zaloprofile.zdn.vn/pc/v1/images/zalo_sharelogo.png" 
+                alt="Zalo logo" 
+                className="zalo-logo"
+              />
+              <span>Đăng nhập với Zalo</span>
+            </button>
+          </div>
+
           <div className="auth-footer">
             <p>
               Chưa có tài khoản? <Link to="/register" className="register-link">Đăng ký ngay</Link>

@@ -28,6 +28,23 @@ import FavoritesPage from './pages/profile_imformation/FavoritesPage';
 import ChangePasswordPage from './pages/profile_imformation/ChangePasswordPage';
 import WalletPaymentPage from './pages/profile_imformation/WalletPaymentPage';
 import AdminTables from './pages/admin/AdminTables';
+import TokenHandler from './components/TokenHandler';
+import LocationPage from './components/LocationPage';
+import PromoPage from './pages/PromoPage';
+import ReservationGuidePage from './pages/ReservationGuidePage';
+
+
+
+// Component để cuộn lên đầu trang khi chuyển route
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  return null;
+}
 
 // Component để cuộn lên đầu trang khi chuyển route
 function ScrollToTop() {
@@ -44,6 +61,7 @@ function App() {
   return (
     <Router>
       <AppProvider>
+        <TokenHandler />
         <Routes>
           {/* Admin Routes - không có Header/Footer */}
           <Route path="/admin/*" element={
@@ -71,6 +89,7 @@ function App() {
                   {/* Public Routes */}
                   <Route path="/" element={<HomePage />} />
                   <Route path="/restaurants" element={<RestaurantPage />} />
+
                   <Route path="/nha-hang" element={<RestaurantPage />} />
                   <Route path="/lau" element={<RestaurantPage />} />
                   <Route path="/buffet" element={<RestaurantPage />} />
@@ -86,11 +105,16 @@ function App() {
                   <Route path="/mon-trung-hoa" element={<RestaurantPage />} />
                   <Route path="/tiec-cuoi" element={<RestaurantPage />} />
                   <Route path="/do-uong" element={<RestaurantPage />} />
+
                   <Route path="/restaurant/:id" element={<RestaurantDetailPage />} />
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/register" element={<RegisterPage />} />
                   <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                   <Route path="/reset-password" element={<ResetPasswordPage />} />
+                  <Route path="/vi-tri" element={<LocationPage />} />
+                  <Route path="/khuyen-mai" element={<PromoPage />} />
+                  <Route path="/huong-dan-dat-ban" element={<ReservationGuidePage />} />
+
                   
                   {/* Protected Routes */}
                   <Route path="/reservation" element={<ProtectedRoute><ReservationPage /></ProtectedRoute>} />

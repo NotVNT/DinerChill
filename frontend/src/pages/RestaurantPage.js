@@ -1,8 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import RestaurantCard from '../components/RestaurantCard';
 import { useApp } from '../context/AppContext';
 import '../styles/RestaurantPage.css';
+
+// Dữ liệu tĩnh cuisines (kết hợp từ cả hai nhánh, ưu tiên nhánh develop và bổ sung từ nhánh User)
+const cuisines = [
+  'Tất cả', // Đổi "Nhà hàng" thành "Tất cả" để nhất quán với logic lọc của nhánh User
+  'Lẩu',
+  'Buffet',
+  'Hải sản',
+  'Nướng', // Đổi "Lẩu & Nướng" thành "Nướng" để phù hợp với logic lọc của nhánh User
+  'Quán Nhậu',
+  'Chay', // Từ nhánh User (Món chay)
+  'Đồ tiệc',
+  'Hàn Quốc',
+  'Nhật Bản',
+  'Món Âu', // Từ nhánh develop
+  'Việt Nam', // Đổi "Món Việt" thành "Việt Nam" để nhất quán
+  'Món Thái',
+  'Trung Hoa', // Đổi "Món Trung Hoa" thành "Trung Hoa" để nhất quán
+  'Tiệc cưới',
+  'Đồ uống', // Bổ sung từ nhánh User
+];
 
 function RestaurantPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -19,33 +39,23 @@ function RestaurantPage() {
   const [filteredRestaurants, setFilteredRestaurants] = useState([]);
   const [filter, setFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
-  const restaurantsPerPage = 12;
+  const restaurantsPerPage = 12; // Giữ từ nhánh User
   const navigate = useNavigate();
   const location = useLocation();
+  const { cuisineName } = useParams(); // Từ nhánh develop
   const {
     hotRestaurants,
     recommendedRestaurants,
     locations,
     restaurants: nearbyRestaurants,
+    recentlyViewed,
+    loading,
+    error,
   } = useApp();
 
-  const cuisines = [
-    'Tất cả',
-    'Lẩu',
-    'Buffet',
-    'Hải sản',
-    'Nướng',
-    'Quán Nhậu',
-    'Chay',
-    'Đồ tiệc',
-    'Hàn Quốc',
-    'Nhật Bản',
-    'Việt Nam',
-    'Món Thái',
-    'Trung Hoa',
-    'Tiệc cưới',
-    'Đồ uống',
-  ];
+  // Xử lý cuisine từ URL (tích hợp từ nhánh develop)
+  const query = new URLSearchParams(location.search);
+  const cuisineFromQuery = query.get('cuisine') || cuisineName || 'Lẩu';
 
   useEffect(() => {
     const fetchData = async () => {
@@ -54,46 +64,47 @@ function RestaurantPage() {
         let cuisineFilter = '';
         let restaurantList = [];
 
-        if (location.pathname.includes('/lau')) {
+        // Logic lọc theo URL (kết hợp từ cả hai nhánh)
+        if (location.pathname.includes('/lau') || cuisineFromQuery.toLowerCase() === 'lẩu') {
           cuisineFilter = 'Lẩu';
           restaurantList = hotRestaurants;
-        } else if (location.pathname.includes('/buffet')) {
+        } else if (location.pathname.includes('/buffet') || cuisineFromQuery.toLowerCase() === 'buffet') {
           cuisineFilter = 'Buffet';
           restaurantList = hotRestaurants;
-        } else if (location.pathname.includes('/hai-san')) {
+        } else if (location.pathname.includes('/hai-san') || cuisineFromQuery.toLowerCase() === 'hải sản') {
           cuisineFilter = 'Hải sản';
           restaurantList = hotRestaurants;
-        } else if (location.pathname.includes('/lau-nuong')) {
+        } else if (location.pathname.includes('/lau-nuong') || cuisineFromQuery.toLowerCase() === 'nướng') {
           cuisineFilter = 'Nướng';
           restaurantList = hotRestaurants;
-        } else if (location.pathname.includes('/quan-nhau')) {
+        } else if (location.pathname.includes('/quan-nhau') || cuisineFromQuery.toLowerCase() === 'quán nhậu') {
           cuisineFilter = 'Quán Nhậu';
           restaurantList = hotRestaurants;
-        } else if (location.pathname.includes('/mon-chay')) {
+        } else if (location.pathname.includes('/mon-chay') || cuisineFromQuery.toLowerCase() === 'chay') {
           cuisineFilter = 'Chay';
           restaurantList = hotRestaurants;
-        } else if (location.pathname.includes('/do-tiec')) {
+        } else if (location.pathname.includes('/do-tiec') || cuisineFromQuery.toLowerCase() === 'đồ tiệc') {
           cuisineFilter = 'Đồ tiệc';
           restaurantList = hotRestaurants;
-        } else if (location.pathname.includes('/han-quoc')) {
+        } else if (location.pathname.includes('/han-quoc') || cuisineFromQuery.toLowerCase() === 'hàn quốc') {
           cuisineFilter = 'Hàn Quốc';
           restaurantList = hotRestaurants;
-        } else if (location.pathname.includes('/nhat-ban')) {
+        } else if (location.pathname.includes('/nhat-ban') || cuisineFromQuery.toLowerCase() === 'nhật bản') {
           cuisineFilter = 'Nhật Bản';
           restaurantList = hotRestaurants;
-        } else if (location.pathname.includes('/mon-viet')) {
+        } else if (location.pathname.includes('/mon-viet') || cuisineFromQuery.toLowerCase() === 'việt nam') {
           cuisineFilter = 'Việt Nam';
           restaurantList = hotRestaurants;
-        } else if (location.pathname.includes('/mon-thai')) {
+        } else if (location.pathname.includes('/mon-thai') || cuisineFromQuery.toLowerCase() === 'món thái') {
           cuisineFilter = 'Món Thái';
           restaurantList = hotRestaurants;
-        } else if (location.pathname.includes('/mon-trung-hoa')) {
+        } else if (location.pathname.includes('/mon-trung-hoa') || cuisineFromQuery.toLowerCase() === 'trung hoa') {
           cuisineFilter = 'Trung Hoa';
           restaurantList = hotRestaurants;
-        } else if (location.pathname.includes('/tiec-cuoi')) {
+        } else if (location.pathname.includes('/tiec-cuoi') || cuisineFromQuery.toLowerCase() === 'tiệc cưới') {
           cuisineFilter = 'Tiệc cưới';
           restaurantList = hotRestaurants;
-        } else if (location.pathname.includes('/do-uong')) {
+        } else if (location.pathname.includes('/do-uong') || cuisineFromQuery.toLowerCase() === 'đồ uống') {
           cuisineFilter = 'Đồ uống';
           restaurantList = hotRestaurants;
         } else if (path === 'hot') {
@@ -119,6 +130,7 @@ function RestaurantPage() {
         setSelectedFilters(prev => ({
           ...prev,
           location: loc,
+          cuisine: cuisineFilter || 'Tất cả', // Đồng bộ với cuisineFilter từ URL
         }));
       } catch (err) {
         console.error(err.message);
@@ -126,7 +138,7 @@ function RestaurantPage() {
     };
 
     fetchData();
-  }, [location, hotRestaurants, recommendedRestaurants, nearbyRestaurants]);
+  }, [location, hotRestaurants, recommendedRestaurants, nearbyRestaurants, cuisineFromQuery]);
 
   useEffect(() => {
     let filtered = [...restaurants];
@@ -182,7 +194,10 @@ function RestaurantPage() {
       .filter(item => item.name.toLowerCase().includes(searchTerm.toLowerCase()))
       .map(item => item.name);
 
-    const allSuggestions = [...new Set(itemNameSuggestions)].slice(0, 5);
+    const cuisineSuggestions = cuisines
+      .filter(cuisine => cuisine.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    const allSuggestions = [...new Set([...cuisineSuggestions, ...itemNameSuggestions])].slice(0, 5);
 
     const matchingItems = restaurants
       .filter(item =>
@@ -216,7 +231,7 @@ function RestaurantPage() {
   const handleResetFilters = () => {
     setSelectedFilters({
       location: 'Hồ Chí Minh',
-      cuisine: 'all',
+      cuisine: 'Tất cả',
       distance: 'all',
       rating: 'all',
     });
@@ -230,6 +245,17 @@ function RestaurantPage() {
     navigate(`/nha-hang?search=${encodeURIComponent(term)}&location=${encodeURIComponent(selectedFilters.location)}`);
   };
 
+  // Tích hợp từ nhánh develop: Chọn loại ẩm thực từ danh sách
+  const handleCuisineSelect = (cuisine) => {
+    const cuisineValue = cuisine === 'Tất cả' ? 'all' : cuisine;
+    setSelectedFilters(prev => ({
+      ...prev,
+      cuisine: cuisineValue,
+    }));
+    setCurrentPage(1);
+    navigate(`/cuisine/${cuisine.toLowerCase()}`);
+  };
+
   const indexOfLastRestaurant = currentPage * restaurantsPerPage;
   const indexOfFirstRestaurant = indexOfLastRestaurant - restaurantsPerPage;
   const currentRestaurants = filteredRestaurants.slice(indexOfFirstRestaurant, indexOfLastRestaurant);
@@ -240,7 +266,7 @@ function RestaurantPage() {
 
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
-    window.scrollTo(0, 0);
+    window.scrollTo({ top: 0, behavior: 'smooth' }); // Kết hợp từ nhánh develop
   };
 
   const getPageTitle = () => {
@@ -248,21 +274,21 @@ function RestaurantPage() {
     if (path === 'hot') return 'Top nhà hàng ưu đãi Hot';
     if (path === 'nearby') return 'Nhà hàng gần bạn';
     if (path === 'recommended') return 'Nhà hàng nổi bật';
-    if (location.pathname.includes('/lau')) return 'Nhà hàng Lẩu';
-    if (location.pathname.includes('/buffet')) return 'Nhà hàng Buffet';
-    if (location.pathname.includes('/hai-san')) return 'Nhà hàng Hải sản';
-    if (location.pathname.includes('/lau-nuong')) return 'Nhà hàng Lẩu Nướng';
-    if (location.pathname.includes('/quan-nhau')) return 'Quán Nhậu';
-    if (location.pathname.includes('/mon-chay')) return 'Nhà hàng Món Chay';
-    if (location.pathname.includes('/do-tiec')) return 'Nhà hàng Đồ Tiệc';
-    if (location.pathname.includes('/han-quoc')) return 'Nhà hàng Hàn Quốc';
-    if (location.pathname.includes('/nhat-ban')) return 'Nhà hàng Nhật Bản';
-    if (location.pathname.includes('/mon-viet')) return 'Nhà hàng Món Việt';
-    if (location.pathname.includes('/mon-thai')) return 'Nhà hàng Món Thái';
-    if (location.pathname.includes('/mon-trung-hoa')) return 'Nhà hàng Trung Hoa';
-    if (location.pathname.includes('/tiec-cuoi')) return 'Nhà hàng Tiệc Cưới';
-    if (location.pathname.includes('/do-uong')) return 'Nhà hàng Đồ Uống';
-    return 'Nhà hàng';
+    if (location.pathname.includes('/lau') || selectedFilters.cuisine === 'Lẩu') return 'Nhà hàng Lẩu';
+    if (location.pathname.includes('/buffet') || selectedFilters.cuisine === 'Buffet') return 'Nhà hàng Buffet';
+    if (location.pathname.includes('/hai-san') || selectedFilters.cuisine === 'Hải sản') return 'Nhà hàng Hải sản';
+    if (location.pathname.includes('/lau-nuong') || selectedFilters.cuisine === 'Nướng') return 'Nhà hàng Nướng';
+    if (location.pathname.includes('/quan-nhau') || selectedFilters.cuisine === 'Quán Nhậu') return 'Quán Nhậu';
+    if (location.pathname.includes('/mon-chay') || selectedFilters.cuisine === 'Chay') return 'Nhà hàng Món Chay';
+    if (location.pathname.includes('/do-tiec') || selectedFilters.cuisine === 'Đồ tiệc') return 'Nhà hàng Đồ Tiệc';
+    if (location.pathname.includes('/han-quoc') || selectedFilters.cuisine === 'Hàn Quốc') return 'Nhà hàng Hàn Quốc';
+    if (location.pathname.includes('/nhat-ban') || selectedFilters.cuisine === 'Nhật Bản') return 'Nhà hàng Nhật Bản';
+    if (location.pathname.includes('/mon-viet') || selectedFilters.cuisine === 'Việt Nam') return 'Nhà hàng Món Việt';
+    if (location.pathname.includes('/mon-thai') || selectedFilters.cuisine === 'Món Thái') return 'Nhà hàng Món Thái';
+    if (location.pathname.includes('/mon-trung-hoa') || selectedFilters.cuisine === 'Trung Hoa') return 'Nhà hàng Trung Hoa';
+    if (location.pathname.includes('/tiec-cuoi') || selectedFilters.cuisine === 'Tiệc cưới') return 'Nhà hàng Tiệc Cưới';
+    if (location.pathname.includes('/do-uong') || selectedFilters.cuisine === 'Đồ uống') return 'Nhà hàng Đồ Uống';
+    return `Ẩm thực "${selectedFilters.cuisine}" - ${selectedFilters.location}`; // Kết hợp từ nhánh develop
   };
 
   const getFilterSummary = () => {
@@ -284,6 +310,42 @@ function RestaurantPage() {
       if (filter === 'latest') filters.push('Mới nhất');
     }
     return filters.length > 0 ? `Đang lọc: ${filters.join(', ')}` : '';
+  };
+
+  // Tích hợp từ nhánh develop: Hiển thị danh sách loại ẩm thực
+  const renderCuisineFilters = () => {
+    return (
+      <div className="category-section">
+        <div className="categories">
+          {cuisines.map(cuisine => (
+            <button
+              key={cuisine}
+              className={`category ${selectedFilters.cuisine.toLowerCase() === cuisine.toLowerCase() ? 'active' : ''}`}
+              onClick={() => handleCuisineSelect(cuisine)}
+            >
+              <span className="category-label">{cuisine}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  // Tích hợp từ nhánh develop: Hiển thị nhà hàng đã xem gần đây
+  const renderRecentlyViewedRestaurants = () => {
+    const allViewedRestaurants = Object.values(recentlyViewed).flat();
+
+    if (allViewedRestaurants.length === 0) {
+      return <div className="no-results">Bạn chưa xem nhà hàng nào.</div>;
+    }
+
+    return (
+      <div className="restaurants-grid">
+        {allViewedRestaurants.map(restaurant => (
+          <RestaurantCard key={restaurant.id} restaurant={restaurant} />
+        ))}
+      </div>
+    );
   };
 
   return (
@@ -548,6 +610,33 @@ function RestaurantPage() {
           background-color: #e31837;
           color: white;
         }
+        .category-section {
+          margin-bottom: 20px;
+        }
+        .categories {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px;
+          justify-content: center;
+        }
+        .category {
+          padding: 8px 16px;
+          font-size: 14px;
+          cursor: pointer;
+          background-color: #f5f5f5;
+          border-radius: 20px;
+          transition: background-color 0.2s;
+        }
+        .category:hover {
+          background-color: #e0e0e0;
+        }
+        .category.active {
+          background-color: #e31837;
+          color: white;
+        }
+        .category-label {
+          font-size: 14px;
+        }
         .results-info {
           font-size: 14px;
           color: #666;
@@ -560,7 +649,7 @@ function RestaurantPage() {
           margin-bottom: 20px;
           text-align: center;
         }
-        .restaurant-list {
+        .restaurant-list, .restaurants-grid {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
           gap: 25px;
@@ -598,6 +687,21 @@ function RestaurantPage() {
           background-color: #f5f5f5;
           cursor: not-allowed;
           color: #999;
+        }
+        .recently-viewed {
+          margin-top: 40px;
+        }
+        .recently-viewed h2 {
+          font-size: 24px;
+          font-weight: 700;
+          color: #333;
+          margin-bottom: 20px;
+          text-align: center;
+        }
+        .no-results {
+          text-align: center;
+          font-size: 16px;
+          color: #666;
         }
       `}</style>
 
@@ -742,6 +846,8 @@ function RestaurantPage() {
           </div>
         </div>
 
+        {renderCuisineFilters()}
+
         <div className="filter-box">
           <button
             className={`filter-tab ${filter === 'all' ? 'active' : ''}`}
@@ -778,18 +884,22 @@ function RestaurantPage() {
           </div>
         )}
 
-        <div className="restaurant-list">
-          {currentRestaurants.length > 0 ? (
-            currentRestaurants.map((restaurant) => (
-              <RestaurantCard
-                key={restaurant.id}
-                restaurant={restaurant}
-              />
-            ))
-          ) : (
-            <p>Không tìm thấy nhà hàng nào.</p>
-          )}
-        </div>
+        {loading && <div className="loading">Đang tải danh sách nhà hàng...</div>}
+        {error && <div className="error-message">{error}</div>}
+        {!loading && !error && (
+          <div className="restaurant-list">
+            {currentRestaurants.length > 0 ? (
+              currentRestaurants.map((restaurant) => (
+                <RestaurantCard
+                  key={restaurant.id}
+                  restaurant={restaurant}
+                />
+              ))
+            ) : (
+              <p>Không tìm thấy nhà hàng nào.</p>
+            )}
+          </div>
+        )}
 
         {totalPages > 1 && (
           <div className="pagination">
@@ -818,6 +928,11 @@ function RestaurantPage() {
             </button>
           </div>
         )}
+
+        <div className="recently-viewed">
+          <h2>Đã xem gần đây</h2>
+          {renderRecentlyViewedRestaurants()}
+        </div>
       </div>
     </>
   );
