@@ -595,3 +595,27 @@
     margin-bottom: 20px;
   }
 }
+
+/* Nút quay về vị trí hiện tại */
+.current-location-button a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  font-size: 18px;
+  background-color: white;
+  border-radius: 4px;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  color: #e31837;
+  text-decoration: none;
+}
+
+.current-location-button a:hover {
+  background-color: #f5f5f5;
+}
+
+.current-location-button span {
+  margin-top: 1px;
+}

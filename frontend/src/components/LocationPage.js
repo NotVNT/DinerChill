@@ -186,7 +186,8 @@ function LocationPage() {
 
           // Loại bỏ các kết quả trùng lặp hoặc quá giống nhau
           const normalizeVietnamese = (text) => {
-            return text.toLowerCase()
+            return text
+              .toLowerCase()
               .normalize("NFD")
               .replace(/[\u0300-\u036f]/g, "");
           };
@@ -196,23 +197,27 @@ function LocationPage() {
 
           for (const result of processedResults) {
             // Chuẩn hóa các thành phần địa chỉ để so sánh
-            const addressParts = result.display_name.split(",").map(part => normalizeVietnamese(part.trim()));
-            
+            const addressParts = result.display_name
+              .split(",")
+              .map((part) => normalizeVietnamese(part.trim()));
+
             // Trích xuất các thành phần quan trọng như phường, quận, thành phố
             const importantParts = [];
             for (const part of addressParts) {
-              if (part.includes("phuong") || 
-                  part.includes("quan") || 
-                  part.includes("thanh pho") ||
-                  part.includes("duong") ||
-                  part.includes("pho")) {
+              if (
+                part.includes("phuong") ||
+                part.includes("quan") ||
+                part.includes("thanh pho") ||
+                part.includes("duong") ||
+                part.includes("pho")
+              ) {
                 importantParts.push(part);
               }
             }
-            
+
             // Tạo khóa duy nhất dựa trên các phần quan trọng
             const addressKey = importantParts.join("|");
-            
+
             if (!seenAddresses.has(addressKey)) {
               seenAddresses.add(addressKey);
               uniqueResults.push(result);
@@ -220,28 +225,33 @@ function LocationPage() {
           }
 
           // Nếu đang tìm kiếm địa chỉ cụ thể và chỉ có một kết quả cùng phường quận
-          const specificSearch = searchValue.toLowerCase().includes("phường") && 
-                                searchValue.toLowerCase().includes("quận");
-          
+          const specificSearch =
+            searchValue.toLowerCase().includes("phường") &&
+            searchValue.toLowerCase().includes("quận");
+
           if (specificSearch && uniqueResults.length > 1) {
             // Phân tích chuỗi tìm kiếm
             const searchNormalized = normalizeVietnamese(searchValue);
-            
+
             // Phát hiện phường, quận trong tìm kiếm
             const wardMatch = searchNormalized.match(/phuong\s+(\d+|[^,]+)/i);
-            const districtMatch = searchNormalized.match(/quan\s+(\d+|[^,]+)|binh\s+thanh|thu\s+duc/i);
-            
+            const districtMatch = searchNormalized.match(
+              /quan\s+(\d+|[^,]+)|binh\s+thanh|thu\s+duc/i
+            );
+
             if (wardMatch && districtMatch) {
               const wardSearch = wardMatch[0];
               const districtSearch = districtMatch[0];
-              
+
               // Tìm kết quả phù hợp nhất với phường và quận
-              const exactMatches = uniqueResults.filter(item => {
+              const exactMatches = uniqueResults.filter((item) => {
                 const itemNormalized = normalizeVietnamese(item.display_name);
-                return itemNormalized.includes(wardSearch) && 
-                       itemNormalized.includes(districtSearch);
+                return (
+                  itemNormalized.includes(wardSearch) &&
+                  itemNormalized.includes(districtSearch)
+                );
               });
-              
+
               if (exactMatches.length > 0) {
                 setSuggestions(exactMatches.slice(0, 1)); // Chỉ lấy kết quả đầu tiên
                 setIsLoadingSuggestions(false);
@@ -249,7 +259,7 @@ function LocationPage() {
               }
             }
           }
-          
+
           setSuggestions(uniqueResults.slice(0, 5));
         } catch (error) {
           console.error("Error fetching suggestions:", error);
@@ -309,7 +319,7 @@ function LocationPage() {
       // Thêm viewbox để giới hạn khu vực tìm kiếm trong Việt Nam
       // Tọa độ Việt Nam: khoảng từ 8.0-24.0 vĩ độ N, 102.0-110.0 kinh độ E
       const vietnamViewbox = "102.0,8.0,110.0,24.0";
-      
+
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
           searchValue
@@ -334,23 +344,41 @@ function LocationPage() {
       } else {
         // Phân tích chuỗi tìm kiếm để lấy thông tin thành phố, quận, phường
         const normalizeVietnamese = (text) => {
-          return text.toLowerCase()
+          return text
+            .toLowerCase()
             .normalize("NFD")
             .replace(/[\u0300-\u036f]/g, "");
         };
-        
+
         const searchNormalized = normalizeVietnamese(searchValue);
-        const searchTerms = searchValue.toLowerCase().split(/,\s*/);
-        
+
         // Phát hiện thành phố
         const cityPatterns = [
-          { pattern: /h[oố]\s*ch[ií]\s*minh|hcm|tp\.?\s*hcm|tp\.?\s*h[oố]\s*ch[ií]\s*minh|s[aà]i\s*g[oò]n/i, city: "ho chi minh" },
-          { pattern: /h[aà]\s*n[oộ]i|hn|tp\.?\s*hn|tp\.?\s*h[aà]\s*n[oộ]i/i, city: "ha noi" },
-          { pattern: /[dđ][aà]\s*n[ăẵ]ng|[dđ]n|tp\.?\s*[dđ]n|tp\.?\s*[dđ][aà]\s*n[ăẵ]ng/i, city: "da nang" },
-          { pattern: /c[aầ]n\s*th[oơ]|ct|tp\.?\s*ct|tp\.?\s*c[aầ]n\s*th[oơ]/i, city: "can tho" },
-          { pattern: /h[aả]i\s*ph[oò]ng|hp|tp\.?\s*hp|tp\.?\s*h[aả]i\s*ph[oò]ng/i, city: "hai phong" }
+          {
+            pattern:
+              /h[oố]\s*ch[ií]\s*minh|hcm|tp\.?\s*hcm|tp\.?\s*h[oố]\s*ch[ií]\s*minh|s[aà]i\s*g[oò]n/i,
+            city: "ho chi minh",
+          },
+          {
+            pattern: /h[aà]\s*n[oộ]i|hn|tp\.?\s*hn|tp\.?\s*h[aà]\s*n[oộ]i/i,
+            city: "ha noi",
+          },
+          {
+            pattern:
+              /[dđ][aà]\s*n[ăẵ]ng|[dđ]n|tp\.?\s*[dđ]n|tp\.?\s*[dđ][aà]\s*n[ăẵ]ng/i,
+            city: "da nang",
+          },
+          {
+            pattern: /c[aầ]n\s*th[oơ]|ct|tp\.?\s*ct|tp\.?\s*c[aầ]n\s*th[oơ]/i,
+            city: "can tho",
+          },
+          {
+            pattern:
+              /h[aả]i\s*ph[oò]ng|hp|tp\.?\s*hp|tp\.?\s*h[aả]i\s*ph[oò]ng/i,
+            city: "hai phong",
+          },
         ];
-        
+
         let detectedCity = null;
         for (const { pattern, city } of cityPatterns) {
           if (pattern.test(searchNormalized)) {
@@ -358,88 +386,126 @@ function LocationPage() {
             break;
           }
         }
-        
+
         // Phát hiện quận
-        const districtMatch = searchNormalized.match(/qu[aậ]n\s+(\d+|[^,]+)|huy[eệ]n\s+([^,]+)|b[ìi]nh\s+th[aạ]nh|g[oò]\s+v[aấ]p|t[aâ]n\s+b[ìi]nh|ph[uú]\s+nhu[aậ]n|th[uủ]\s+[dđ][uứ]c/i);
+        const districtMatch = searchNormalized.match(
+          /qu[aậ]n\s+(\d+|[^,]+)|huy[eệ]n\s+([^,]+)|b[ìi]nh\s+th[aạ]nh|g[oò]\s+v[aấ]p|t[aâ]n\s+b[ìi]nh|ph[uú]\s+nhu[aậ]n|th[uủ]\s+[dđ][uứ]c/i
+        );
         const detectedDistrict = districtMatch ? districtMatch[0] : null;
-        
+
         // Phát hiện phường/xã
-        const wardMatch = searchNormalized.match(/ph[uư][oờ]ng\s+(\d+|[^,]+)|x[aã]\s+([^,]+)/i);
+        const wardMatch = searchNormalized.match(
+          /ph[uư][oờ]ng\s+(\d+|[^,]+)|x[aã]\s+([^,]+)/i
+        );
         const detectedWard = wardMatch ? wardMatch[0] : null;
-        
+
         // Phát hiện tên đường
-        const streetMatch = searchNormalized.match(/([^,]+)(\s+street|\s+[dđ][uư][oờ]ng|\s+qu[oố]c\s+l[oộ])/i);
+        const streetMatch = searchNormalized.match(
+          /([^,]+)(\s+street|\s+[dđ][uư][oờ]ng|\s+qu[oố]c\s+l[oộ])/i
+        );
         const detectedStreet = streetMatch ? streetMatch[1] : null;
 
         // Lọc và xếp hạng kết quả
-        const scoredResults = data.map(result => {
+        const scoredResults = data.map((result) => {
           let score = 0;
-          const displayNameNormalized = normalizeVietnamese(result.display_name);
-          
+          const displayNameNormalized = normalizeVietnamese(
+            result.display_name
+          );
+
           // Ưu tiên kết quả có đúng thành phố
           if (detectedCity) {
             if (displayNameNormalized.includes(detectedCity)) {
               score += 150;
-            } else if (detectedCity === "ho chi minh" && displayNameNormalized.includes("sai gon")) {
+            } else if (
+              detectedCity === "ho chi minh" &&
+              displayNameNormalized.includes("sai gon")
+            ) {
               score += 150;
             }
           }
-          
+
           // Ưu tiên kết quả có đúng quận/huyện
-          if (detectedDistrict && displayNameNormalized.includes(normalizeVietnamese(detectedDistrict))) {
+          if (
+            detectedDistrict &&
+            displayNameNormalized.includes(
+              normalizeVietnamese(detectedDistrict)
+            )
+          ) {
             score += 100;
           }
-          
+
           // Ưu tiên kết quả có đúng phường/xã
-          if (detectedWard && displayNameNormalized.includes(normalizeVietnamese(detectedWard))) {
+          if (
+            detectedWard &&
+            displayNameNormalized.includes(normalizeVietnamese(detectedWard))
+          ) {
             score += 80;
           }
-          
+
           // Ưu tiên kết quả có đúng tên đường
-          if (detectedStreet && displayNameNormalized.includes(normalizeVietnamese(detectedStreet))) {
+          if (
+            detectedStreet &&
+            displayNameNormalized.includes(normalizeVietnamese(detectedStreet))
+          ) {
             score += 60;
           }
-          
+
           // Một số trường hợp đặc biệt
-          if (displayNameNormalized.includes("ha noi") && !searchNormalized.includes("ha noi")) {
+          if (
+            displayNameNormalized.includes("ha noi") &&
+            !searchNormalized.includes("ha noi")
+          ) {
             score -= 100; // Giảm điểm cho kết quả ở Hà Nội nếu không phải chủ ý tìm
           }
-          
+
           if (normalizeVietnamese(searchValue).includes("pham van dong")) {
             // Đường Phạm Văn Đồng xuất hiện ở nhiều thành phố
-            if (detectedCity === "ho chi minh" && displayNameNormalized.includes("ho chi minh")) {
+            if (
+              detectedCity === "ho chi minh" &&
+              displayNameNormalized.includes("ho chi minh")
+            ) {
               score += 120; // Tăng điểm cho Phạm Văn Đồng ở TP.HCM
             }
-            if (detectedDistrict === "binh thanh" && displayNameNormalized.includes("binh thanh")) {
+            if (
+              detectedDistrict === "binh thanh" &&
+              displayNameNormalized.includes("binh thanh")
+            ) {
               score += 100; // Tăng điểm cho Phạm Văn Đồng ở Bình Thạnh
             }
           }
-          
+
           // Ưu tiên loại kết quả thích hợp
-          if (result.type === "street" || result.type === "road" || result.type === "residential") {
+          if (
+            result.type === "street" ||
+            result.type === "road" ||
+            result.type === "residential"
+          ) {
             score += 30;
           }
-          
+
           // Độ chính xác của vĩ độ, kinh độ (chứng tỏ kết quả chính xác hơn)
           if (result.lat && result.lon) {
             score += 10;
           }
-          
+
           return {
             ...result,
-            score
+            score,
           };
         });
-        
+
         // Sắp xếp theo điểm cao nhất
         const sortedResults = scoredResults.sort((a, b) => b.score - a.score);
-        
+
         // Log ra kết quả đã xếp hạng để debug
-        console.log("Kết quả tìm kiếm được xếp hạng:", sortedResults.map(r => ({
-          name: r.display_name,
-          score: r.score
-        })));
-        
+        console.log(
+          "Kết quả tìm kiếm được xếp hạng:",
+          sortedResults.map((r) => ({
+            name: r.display_name,
+            score: r.score,
+          }))
+        );
+
         // Sử dụng kết quả đầu tiên sau khi đã lọc và sắp xếp
         addSearchResultsToMap([sortedResults[0]]);
       }
@@ -543,6 +609,23 @@ function LocationPage() {
             .addTo(map)
             .bindPopup("Vị trí của bạn")
             .openPopup();
+            
+            // Thêm nút "Quay về vị trí của bạn"
+            const locationButton = L.control({ position: 'bottomright' });
+            
+            locationButton.onAdd = function() {
+              const div = L.DomUtil.create('div', 'leaflet-bar leaflet-control current-location-button');
+              div.innerHTML = '<a href="#" title="Quay về vị trí của bạn"><span>📍</span></a>';
+              
+              L.DomEvent.on(div, 'click', function(e) {
+                L.DomEvent.preventDefault(e);
+                map.setView([currentLocation.lat, currentLocation.lng], 15);
+              });
+              
+              return div;
+            };
+            
+            locationButton.addTo(map);
 
           const restaurantsData = [
             {
@@ -765,7 +848,8 @@ function LocationPage() {
                     <p className="restaurant-address">{restaurant.address}</p>
                     <div className="restaurant-info">
                       <span className="restaurant-distance">
-                        <i className="distance-icon">📍</i> {restaurant.distance}
+                        <i className="distance-icon">📍</i>{" "}
+                        {restaurant.distance}
                       </span>
                     </div>
                     <p className="restaurant-type">{restaurant.type}</p>
