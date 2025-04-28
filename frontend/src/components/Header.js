@@ -240,11 +240,11 @@ function Header() {
             </li>
             <li className="nav-item">
               <Link to="/khuyen-mai">
-                <i className="nav-icon">🎁</i> Khuyến mãi
+                <i className="nav-icon">🎁</i> Ưu Đãi Hot
               </Link>
             </li>
             <li className="nav-item">
-              <Link to="/bo-suu-tap">
+              <Link to="/huong-dan-dat-ban">
                 <i className="nav-icon">🌟</i> Gợi ý
               </Link>
             </li>
