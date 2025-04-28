@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import '../styles/RestaurantCard.css';
@@ -7,24 +7,31 @@ function RestaurantCard({ restaurant }) {
   const navigate = useNavigate();
   const { addToRecentlyViewed } = useApp();
 
-  // Xử lý click vào card (đi đến trang chi tiết và lưu vào lịch sử xem)
+
+  const [imageSrc, setImageSrc] = useState(restaurant?.image || 'https://via.placeholder.com/300x200');
+
   const handleCardClick = () => {
     if (!restaurant?.id) return;
     addToRecentlyViewed(restaurant);
     if (restaurant.type === 'product') {
       navigate(`/promotions/${restaurant.id}`);
+
+    } else if (restaurant.type === 'blog') {
+      navigate(`/blog/${restaurant.id}`);
+    } else if (restaurant.type === 'amenity') {
+      navigate(`/amenities/${restaurant.id}`);
     } else {
       navigate(`/restaurants/${restaurant.id}`);
     }
   };
 
-  // Xử lý click nút đặt bàn (chỉ cho nhà hàng)
+
   const handleBooking = () => {
     if (!restaurant?.id) return;
     navigate(`/reservation?restaurant=${restaurant.id}`);
   };
 
-  // Xử lý sự kiện bàn phím cho accessibility
+
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
@@ -32,9 +39,13 @@ function RestaurantCard({ restaurant }) {
     }
   };
 
-  // Hiển thị đánh giá dạng ngôi sao
+
+  const handleImageError = () => {
+    setImageSrc('/assets/placeholder-300x200.jpg');
+  };
+
   const renderStars = (rating) => {
-    // Chuyển rating thành số và kiểm tra hợp lệ
+
     const numericRating = typeof rating === 'string' ? parseFloat(rating) : rating;
     if (isNaN(numericRating) || numericRating == null) return null;
 
@@ -49,7 +60,7 @@ function RestaurantCard({ restaurant }) {
     );
   };
 
-  // Kiểm tra dữ liệu restaurant để tránh lỗi
+
   if (!restaurant) return null;
 
   return (
@@ -62,27 +73,42 @@ function RestaurantCard({ restaurant }) {
       aria-label={`Xem chi tiết ${restaurant.name}`}
     >
       <div className="card-image">
-        <img
-          src={restaurant.image || 'https://via.placeholder.com/300x200'}
-          alt={restaurant.name}
-          onError={(e) => (e.target.src = 'https://via.placeholder.com/300x200')}
-        />
+
+        <img src={imageSrc} alt={restaurant.name} onError={handleImageError} />
         <div className="logo-overlay">DinerChill</div>
-        {restaurant.discount && (
-          <span className="discount-badge">{restaurant.discount}</span>
+        {(restaurant.discount || restaurant.discountPrice) && (
+          <span className="discount-badge">
+            {restaurant.discount || (restaurant.discountPrice && `Giảm ${restaurant.price - restaurant.discountPrice}K`)}
+          </span>
+
         )}
       </div>
       <div className="card-content">
         <h3>{restaurant.name}</h3>
         <div className="rating-price">
-          {typeof restaurant.rating !== 'undefined' && !isNaN(parseFloat(restaurant.rating)) && renderStars(restaurant.rating)}
-          <span className="price">$$$</span>
+
+          {typeof restaurant.rating !== 'undefined' && renderStars(restaurant.rating)}
+          {(restaurant.price || restaurant.discountPrice) && (
+            <span className="price">
+              {restaurant.discountPrice ? (
+                <>
+                  <span className="original-price">{restaurant.price}K</span>
+                  <span className="discounted-price">{restaurant.discountPrice}K</span>
+                </>
+              ) : (
+                `${restaurant.price}K`
+              )}
+            </span>
+          )}
         </div>
         {restaurant.cuisine && <p className="cuisine">{restaurant.cuisine}</p>}
-        {restaurant.discount && <p className="discount">{restaurant.discount}</p>}
+        {restaurant.offer && <p className="offer">{restaurant.offer}</p>}
+        {restaurant.validUntil && <p className="valid-until">{restaurant.validUntil}</p>}
         {restaurant.location && <p className="location">{restaurant.location}</p>}
         {restaurant.description && <p className="description">{restaurant.description}</p>}
-        {restaurant.type !== 'product' && (
+        {restaurant.date && <p className="date">{restaurant.date}</p>}
+        {restaurant.type !== 'product' && restaurant.type !== 'blog' && restaurant.type !== 'amenity' && (
+
           <button
             className="book-now-btn"
             onClick={(e) => {

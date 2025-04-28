@@ -5,6 +5,7 @@
   background: #fff;
   border: 1px solid #e0e0e0;
   border-radius: 8px;
+  overflow: hidden;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   transition: transform 0.2s, box-shadow 0.2s;
   cursor: pointer;
@@ -12,7 +13,7 @@
 
 /* Hiệu ứng hover */
 .restaurant-card:hover {
-  transform: translateY(-5px);
+  transform: scale(1.02) translateY(-5px);
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
@@ -40,7 +41,7 @@
   top: 10px;
   left: 10px;
   background-color: rgba(255, 255, 255, 0.8);
-  padding: 4px 8px;
+  padding: 5px 10px;
   border-radius: 4px;
   font-size: 12px;
   font-weight: bold;
@@ -48,8 +49,19 @@
 }
 
 /* Badge "Được đề xuất" hoặc "Bán chạy" */
-.recommended-badge,
 .discount-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #e31837;
+  color: #fff;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.recommended-badge {
   position: absolute;
   bottom: 10px;
   left: 10px;
@@ -108,6 +120,16 @@
   font-weight: bold;
 }
 
+.original-price {
+  text-decoration: line-through;
+  color: #999;
+  margin-right: 5px;
+}
+
+.discounted-price {
+  color: #e31837;
+}
+
 /* Đánh giá với sao vàng */
 .rating {
   font-size: 14px;
@@ -120,21 +142,21 @@
   font-size: 14px;
   font-weight: bold;
   color: #e31837;
-  margin: 0;
+  margin: 0 0 5px;
 }
 
 /* Danh mục */
 .cuisine {
   font-size: 14px;
   color: #777;
-  margin: 0;
+  margin: 5px 0;
 }
 
 /* Địa điểm */
 .location {
   font-size: 13px;
   color: #999;
-  margin: 0;
+  margin: 5px 0;
   display: -webkit-box;
   -webkit-line-clamp: 1;
   line-clamp: 1;
@@ -147,13 +169,22 @@
 .description {
   font-size: 14px;
   color: #555;
-  margin: 0;
+  margin: 5px 0;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Các thông tin khác */
+.offer,
+.valid-until,
+.date {
+  font-size: 14px;
+  color: #666;
+  margin: 5px 0;
 }
 
 /* Nút đặt bàn */
@@ -197,7 +228,7 @@
   background: #c31530;
 }
 
-/* Responsive cho mobile */
+/* Responsive cho mobile (từ nhánh develop) */
 @media (max-width: 768px) {
   .restaurant-card {
     border-radius: 6px;

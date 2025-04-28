@@ -1,11 +1,12 @@
 import { Link } from 'react-router-dom';
 import SearchBar from '../components/SearchBar';
 import FilterBox from '../components/FilterBox';
-import '../styles/HomePage.css';
 import RestaurantCard from '../components/RestaurantCard';
+import { useApp } from '../context/AppContext';
+import '../styles/HomePage.css';
 
-// Danh sách nhà hàng ưu đãi Hot
-const hotRestaurants = [
+// Dữ liệu tĩnh từ nhánh develop (dùng làm fallback)
+const hotRestaurantsStatic = [
   {
     id: 1,
     name: 'Ưu đãi nhà hàng Lẩu tại Tp.HCM',
@@ -80,8 +81,7 @@ const hotRestaurants = [
   },
 ];
 
-// Danh sách sản phẩm ưu đãi Hot
-const hotProducts = [
+const hotProductsStatic = [
   {
     id: 1,
     name: 'Giảm 20% Sushi Buffet T2-T6',
@@ -150,8 +150,7 @@ const hotProducts = [
   },
 ];
 
-// Danh sách nhà hàng được đề xuất
-const recommendedRestaurants = [
+const recommendedRestaurantsStatic = [
   {
     id: 5,
     name: 'Phố 79 - Phạm Ngọc Thạch',
@@ -226,8 +225,7 @@ const recommendedRestaurants = [
   },
 ];
 
-// Danh sách nhà hàng phù hợp đặt tiệc
-const partyRestaurants = [
+const partyRestaurantsStatic = [
   {
     id: 9,
     name: 'Nhà hàng đặt tiệc công ty dưới 20 người tại HCM',
@@ -302,8 +300,7 @@ const partyRestaurants = [
   },
 ];
 
-// Danh sách địa danh nổi tiếng
-const famousLocations = [
+const famousLocationsStatic = [
   {
     id: 12,
     name: 'Danh sách nhà hàng, quán ăn ở HAI BÀ TRƯNG',
@@ -378,8 +375,7 @@ const famousLocations = [
   },
 ];
 
-// Danh sách nhà hàng hải sản ngon nhất ưu đãi
-const seafoodRestaurants = [
+const seafoodRestaurantsStatic = [
   {
     id: 16,
     name: 'Dìn Ký Cửu Long Xanh - Trân Văn Trà',
@@ -454,8 +450,7 @@ const seafoodRestaurants = [
   },
 ];
 
-// Danh sách nhà hàng món Trung
-const chineseRestaurants = [
+const chineseRestaurantsStatic = [
   {
     id: 20,
     name: 'Tung Garden - Tôn Thất Tùng',
@@ -530,8 +525,7 @@ const chineseRestaurants = [
   },
 ];
 
-// Danh sách phong cách ẩm thực phổ biến
-const popularCuisines = [
+const popularCuisinesStatic = [
   {
     id: 24,
     name: 'Buffet Nướng Ngon ở Tp.HCM',
@@ -606,8 +600,7 @@ const popularCuisines = [
   },
 ];
 
-// Danh sách yêu thích nhất hàng tháng
-const monthlyFavorites = [
+const monthlyFavoritesStatic = [
   {
     id: 30,
     name: 'Đình Ký Cửu Long Xanh - Trần Văn Trà',
@@ -670,8 +663,7 @@ const monthlyFavorites = [
   },
 ];
 
-// Danh sách tìm nhà hàng theo tiện ích
-const amenitiesRestaurants = [
+const amenitiesRestaurantsStatic = [
   {
     id: 35,
     name: 'Top nhà hàng có karaoke phù hợp tổ chức tiệc liên hoan tại Tp.HCM',
@@ -734,8 +726,7 @@ const amenitiesRestaurants = [
   },
 ];
 
-// Danh sách top nhà hàng cao cấp
-const luxuryRestaurants = [
+const luxuryRestaurantsStatic = [
   {
     id: 40,
     name: 'Katana Wagyu Kappo - Mai Thị Lựu',
@@ -798,8 +789,7 @@ const luxuryRestaurants = [
   },
 ];
 
-// Danh sách đặt chỗ ưu tín
-const trustedRestaurants = [
+const trustedRestaurantsStatic = [
   {
     id: 45,
     name: 'Bếp Thái Koh Yam - Bà Huyện Thanh Quan',
@@ -862,8 +852,7 @@ const trustedRestaurants = [
   },
 ];
 
-// Danh sách danh cho du khách
-const touristRestaurants = [
+const touristRestaurantsStatic = [
   {
     id: 50,
     name: 'Ốc Bạc - Nguyễn Thượng Hiền',
@@ -926,8 +915,7 @@ const touristRestaurants = [
   },
 ];
 
-// Danh sách trưa nay ăn gì
-const lunchSuggestions = [
+const lunchSuggestionsStatic = [
   {
     id: 55,
     name: 'Sushi Buffet Chay TRƯA T2 - T6',
@@ -990,8 +978,7 @@ const lunchSuggestions = [
   },
 ];
 
-// Danh sách mới nhất trên DinerChill
-const newOnDinerChill = [
+const newOnDinerChillStatic = [
   {
     id: 60,
     name: 'Katana Wagyu Kappo - Mai Thị Lựu',
@@ -1054,8 +1041,7 @@ const newOnDinerChill = [
   },
 ];
 
-// Danh sách tin tức & blog
-const newsAndBlog = [
+const newsAndBlogStatic = [
   {
     id: 65,
     name: 'CÁCH TỔ CHỨC TIỆC SINH NHẬT ĐƠN GIẢN NHẤT chỉ với 5 BƯỚC',
@@ -1098,18 +1084,109 @@ const newsAndBlog = [
   },
 ];
 
-
-
-
-
 function HomePage() {
+  const {
+    hotRestaurants,
+    hotProducts,
+    recommendedRestaurants,
+    partyRestaurants,
+    famousLocations,
+    seafoodRestaurants,
+    chineseRestaurants,
+    popularCuisines,
+    monthlyFavorites,
+    amenitiesRestaurants,
+    luxuryRestaurants,
+    trustedRestaurants,
+    touristRestaurants,
+    lunchSuggestions,
+    newOnDinerChill,
+    newsAndBlog,
+    recentlyViewed,
+    clearRecentlyViewed,
+    loading,
+    error,
+    loadMore,
+  } = useApp();
+
+  // Sử dụng dữ liệu từ context, nếu không có thì dùng dữ liệu tĩnh làm fallback
+  const hotRestaurantsData = hotRestaurants.length > 0 ? hotRestaurants : hotRestaurantsStatic;
+  const hotProductsData = hotProducts.length > 0 ? hotProducts : hotProductsStatic;
+  const recommendedRestaurantsData = recommendedRestaurants.length > 0 ? recommendedRestaurants : recommendedRestaurantsStatic;
+  const partyRestaurantsData = partyRestaurants.length > 0 ? partyRestaurants : partyRestaurantsStatic;
+  const famousLocationsData = famousLocations.length > 0 ? famousLocations : famousLocationsStatic;
+  const seafoodRestaurantsData = seafoodRestaurants.length > 0 ? seafoodRestaurants : seafoodRestaurantsStatic;
+  const chineseRestaurantsData = chineseRestaurants.length > 0 ? chineseRestaurants : chineseRestaurantsStatic;
+  const popularCuisinesData = popularCuisines.length > 0 ? popularCuisines : popularCuisinesStatic;
+  const monthlyFavoritesData = monthlyFavorites.length > 0 ? monthlyFavorites : monthlyFavoritesStatic;
+  const amenitiesRestaurantsData = amenitiesRestaurants.length > 0 ? amenitiesRestaurants : amenitiesRestaurantsStatic;
+  const luxuryRestaurantsData = luxuryRestaurants.length > 0 ? luxuryRestaurants : luxuryRestaurantsStatic;
+  const trustedRestaurantsData = trustedRestaurants.length > 0 ? trustedRestaurants : trustedRestaurantsStatic;
+  const touristRestaurantsData = touristRestaurants.length > 0 ? touristRestaurants : touristRestaurantsStatic;
+  const lunchSuggestionsData = lunchSuggestions.length > 0 ? lunchSuggestions : lunchSuggestionsStatic;
+  const newOnDinerChillData = newOnDinerChill.length > 0 ? newOnDinerChill : newOnDinerChillStatic;
+  const newsAndBlogData = newsAndBlog.length > 0 ? newsAndBlog : newsAndBlogStatic;
+
+  const renderSection = (title, subtitle, link, dataList, className, category) => (
+    <div className={`section-wrapper ${className}`}>
+      <div className="section-header">
+        <div className="section-title">
+          <h2>{title}</h2>
+          <p>{subtitle}</p>
+        </div>
+        <Link to={link} className="view-all">Xem tất cả</Link>
+      </div>
+      <div className="restaurant-grid">
+        {dataList.length > 0 ? (
+          dataList.map((item) => (
+            <RestaurantCard key={item.id} restaurant={item} />
+          ))
+        ) : (
+          <p>Không có dữ liệu để hiển thị.</p>
+        )}
+      </div>
+      {dataList.length > 0 && (
+        <button onClick={() => loadMore(category)} className="load-more-btn" disabled={loading}>
+          {loading ? 'Đang tải...' : 'Tải thêm'}
+        </button>
+      )}
+    </div>
+  );
+
+  const renderRecentlyViewed = () => {
+    const allRecentlyViewed = Object.values(recentlyViewed).flat();
+    if (allRecentlyViewed.length === 0) return null;
+
+    return (
+      <div className="section-wrapper recently-viewed-section">
+        <div className="section-header">
+          <div className="section-title">
+            <h2>Đã xem gần đây</h2>
+            <p>Xem lại những nhà hàng bạn đã quan tâm</p>
+          </div>
+          <button onClick={clearRecentlyViewed} className="clear-all-btn">
+            Xóa tất cả
+          </button>
+        </div>
+        <div className="restaurant-grid">
+          {allRecentlyViewed.slice(0, 4).map((item) => (
+            <RestaurantCard key={item.id} restaurant={item} />
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  if (loading && !hotRestaurantsData.length) return <div>Đang tải...</div>;
+  if (error) return <div>Lỗi: {error}</div>;
+
   return (
     <div className="home-page">
       <SearchBar />
-      
       <div className="container">
         <FilterBox />
       </div>
+
       {/* Top nhà hàng ưu đãi Hot */}
       <div className="hot-restaurants-section">
         <div className="section-header">
@@ -1122,7 +1199,7 @@ function HomePage() {
           </Link>
         </div>
         <div className="hot-restaurants">
-          {hotRestaurants.slice(0, 4).map((restaurant) => (
+          {hotRestaurantsData.slice(0, 4).map((restaurant) => (
             <RestaurantCard
               key={restaurant.id}
               restaurant={restaurant}
@@ -1143,7 +1220,7 @@ function HomePage() {
           </Link>
         </div>
         <div className="hot-products">
-          {hotProducts.slice(0, 4).map((product) => (
+          {hotProductsData.slice(0, 4).map((product) => (
             <RestaurantCard
               key={product.id}
               restaurant={product}
@@ -1164,7 +1241,7 @@ function HomePage() {
           </Link>
         </div>
         <div className="recommended-restaurants">
-          {recommendedRestaurants.slice(0, 4).map((restaurant) => (
+          {recommendedRestaurantsData.slice(0, 4).map((restaurant) => (
             <RestaurantCard
               key={restaurant.id}
               restaurant={restaurant}
@@ -1185,7 +1262,7 @@ function HomePage() {
           </Link>
         </div>
         <div className="party-restaurants">
-          {partyRestaurants.slice(0, 4).map((restaurant) => (
+          {partyRestaurantsData.slice(0, 4).map((restaurant) => (
             <RestaurantCard
               key={restaurant.id}
               restaurant={restaurant}
@@ -1206,7 +1283,7 @@ function HomePage() {
           </Link>
         </div>
         <div className="famous-locations">
-          {famousLocations.slice(0, 4).map((restaurant) => (
+          {famousLocationsData.slice(0, 4).map((restaurant) => (
             <RestaurantCard
               key={restaurant.id}
               restaurant={restaurant}
@@ -1227,7 +1304,7 @@ function HomePage() {
           </Link>
         </div>
         <div className="seafood-restaurants">
-          {seafoodRestaurants.slice(0, 4).map((restaurant) => (
+          {seafoodRestaurantsData.slice(0, 4).map((restaurant) => (
             <RestaurantCard
               key={restaurant.id}
               restaurant={restaurant}
@@ -1248,7 +1325,7 @@ function HomePage() {
           </Link>
         </div>
         <div className="chinese-restaurants">
-          {chineseRestaurants.slice(0, 4).map((restaurant) => (
+          {chineseRestaurantsData.slice(0, 4).map((restaurant) => (
             <RestaurantCard
               key={restaurant.id}
               restaurant={restaurant}
@@ -1269,7 +1346,7 @@ function HomePage() {
           </Link>
         </div>
         <div className="popular-cuisines">
-          {popularCuisines.slice(0, 4).map((restaurant) => (
+          {popularCuisinesData.slice(0, 4).map((restaurant) => (
             <RestaurantCard
               key={restaurant.id}
               restaurant={restaurant}
@@ -1278,8 +1355,8 @@ function HomePage() {
         </div>
       </div>
 
-            {/* Yêu thích nhất hàng tháng */}
-            <div className="section-wrapper monthly-favorites-section">
+      {/* Yêu thích nhất hàng tháng */}
+      <div className="section-wrapper monthly-favorites-section">
         <div className="section-header">
           <div>
             <h2>Yêu thích nhất hàng tháng</h2>
@@ -1290,7 +1367,7 @@ function HomePage() {
           </Link>
         </div>
         <div className="horizontal-section monthly-favorites">
-          {monthlyFavorites.map((restaurant) => (
+          {monthlyFavoritesData.map((restaurant) => (
             <RestaurantCard
               key={restaurant.id}
               restaurant={restaurant}
@@ -1311,7 +1388,7 @@ function HomePage() {
           </Link>
         </div>
         <div className="horizontal-section amenities-restaurants">
-          {amenitiesRestaurants.map((amenity) => (
+          {amenitiesRestaurantsData.map((amenity) => (
             <RestaurantCard
               key={amenity.id}
               restaurant={amenity}
@@ -1332,7 +1409,7 @@ function HomePage() {
           </Link>
         </div>
         <div className="horizontal-section luxury-restaurants">
-          {luxuryRestaurants.map((restaurant) => (
+          {luxuryRestaurantsData.map((restaurant) => (
             <RestaurantCard
               key={restaurant.id}
               restaurant={restaurant}
@@ -1353,7 +1430,7 @@ function HomePage() {
           </Link>
         </div>
         <div className="horizontal-section trusted-restaurants">
-          {trustedRestaurants.map((restaurant) => (
+          {trustedRestaurantsData.map((restaurant) => (
             <RestaurantCard
               key={restaurant.id}
               restaurant={restaurant}
@@ -1374,7 +1451,7 @@ function HomePage() {
           </Link>
         </div>
         <div className="horizontal-section tourist-restaurants">
-          {touristRestaurants.map((restaurant) => (
+          {touristRestaurantsData.map((restaurant) => (
             <RestaurantCard
               key={restaurant.id}
               restaurant={restaurant}
@@ -1395,7 +1472,7 @@ function HomePage() {
           </Link>
         </div>
         <div className="horizontal-section lunch-suggestions">
-          {lunchSuggestions.map((product) => (
+          {lunchSuggestionsData.map((product) => (
             <RestaurantCard
               key={product.id}
               restaurant={product}
@@ -1416,7 +1493,7 @@ function HomePage() {
           </Link>
         </div>
         <div className="horizontal-section new-on-DinerChill">
-          {newOnDinerChill.map((restaurant) => (
+          {newOnDinerChillData.map((restaurant) => (
             <RestaurantCard
               key={restaurant.id}
               restaurant={restaurant}
@@ -1437,7 +1514,7 @@ function HomePage() {
           </Link>
         </div>
         <div className="horizontal-section news-and-blog">
-          {newsAndBlog.map((blog) => (
+          {newsAndBlogData.map((blog) => (
             <RestaurantCard
               key={blog.id}
               restaurant={blog}
@@ -1445,6 +1522,152 @@ function HomePage() {
           ))}
         </div>
       </div>
+
+      {renderRecentlyViewed()}
+
+      {renderSection(
+        'Top nhà hàng ưu đãi Hot',
+        'Khám phá những Nhà hàng đang có ưu đãi hấp dẫn ngay',
+        '/restaurants/hot',
+        hotRestaurantsData,
+        'hot-restaurants-section',
+        'hotRestaurants'
+      )}
+
+      {renderSection(
+        'Top sản phẩm ưu đãi Hot',
+        'Khám phá những Sản phẩm đang có ưu đãi hấp dẫn ngay',
+        '/products/hot',
+        hotProductsData,
+        'hot-products-section',
+        'hotProducts'
+      )}
+
+      {renderSection(
+        'Nhà hàng được đề xuất',
+        'Mời bạn lựa chọn và đặt bàn trước qua DinerChill để nhận ngay ưu đãi.',
+        '/restaurants/recommended',
+        recommendedRestaurantsData,
+        'recommended-restaurants-section',
+        'recommendedRestaurants'
+      )}
+
+      {renderSection(
+        'Nhà hàng phù hợp đặt tiệc',
+        'Với nhiều ưu đãi để đặt tiệc giúp bạn dễ dàng lựa chọn hơn!',
+        '/restaurants/party',
+        partyRestaurantsData,
+        'party-restaurants-section',
+        'partyRestaurants'
+      )}
+
+      {renderSection(
+        'Địa danh nổi tiếng',
+        'Cùng DinerChill giới thiệu những địa danh ẩm thực nổi tiếng tại Tp.HCM.',
+        '/restaurants/locations',
+        famousLocationsData,
+        'famous-locations-section',
+        'famousLocations'
+      )}
+
+      {renderSection(
+        'Nhà hàng hải sản ngon nhất ưu đãi',
+        'Mời bạn tham khảo ngay nhà hàng hải sản được yêu thích!',
+        '/restaurants/seafood',
+        seafoodRestaurantsData,
+        'seafood-restaurants-section',
+        'seafoodRestaurants'
+      )}
+
+      {renderSection(
+        'Ăn món Trung ngon ở đâu?',
+        'Xem ngay top quán Trung ngon được DinerChill lựa chọn!',
+        '/restaurants/chinese',
+        chineseRestaurantsData,
+        'chinese-restaurants-section',
+        'chineseRestaurants'
+      )}
+
+      {renderSection(
+        'Phong cách ẩm thực phổ biến',
+        'Với nhiều ưu đãi để ẩm thực giúp bạn dễ dàng lựa chọn hơn!',
+        '/restaurants/cuisines',
+        popularCuisinesData,
+        'popular-cuisines-section',
+        'popularCuisines'
+      )}
+
+      {renderSection(
+        'Yêu thích nhất hàng tháng',
+        'Khám phá nhà hàng được đặt chỗ nhiều nhất ngay',
+        '/restaurants/monthly-favorites',
+        monthlyFavoritesData,
+        'monthly-favorites-section',
+        'monthlyFavorites'
+      )}
+
+      {renderSection(
+        'Tìm nhà hàng theo tiện ích',
+        'Khám phá danh sách nhà hàng theo tiện ích phù hợp để lựa chọn địa điểm nhanh nhất',
+        '/restaurants/amenities',
+        amenitiesRestaurantsData,
+        'amenities-restaurants-section',
+        'amenitiesRestaurants'
+      )}
+
+      {renderSection(
+        'Top nhà hàng cao cấp',
+        'Khám phá nhà hàng cao cấp món ngon, không gian sang trọng, đẳng cấp ưu đãi tốt',
+        '/restaurants/luxury',
+        luxuryRestaurantsData,
+        'luxury-restaurants-section',
+        'luxuryRestaurants'
+      )}
+
+      {renderSection(
+        'Đặt chỗ ưu tín',
+        'Gợi ý nhà hàng ngon, chất lượng, đ.điểm đặt chỗ qua DinerChill',
+        '/restaurants/trusted',
+        trustedRestaurantsData,
+        'trusted-restaurants-section',
+        'trustedRestaurants'
+      )}
+
+      {renderSection(
+        'Danh cho du khách',
+        'Thưởng thức đặc sản Sài Gòn tại đây',
+        '/restaurants/tourist',
+        touristRestaurantsData,
+        'tourist-restaurants-section',
+        'touristRestaurants'
+      )}
+
+      {renderSection(
+        'Trưa nay ăn gì?',
+        'Mời bạn lựa chọn và đặt bàn trước qua DinerChill ngay',
+        '/products/lunch',
+        lunchSuggestionsData,
+        'lunch-suggestions-section',
+        'lunchSuggestions'
+      )}
+
+      {renderSection(
+        'Mới nhất trên DinerChill',
+        'Dự án đây là các nhà hàng mới nhất đặt chỗ qua DinerChill. Khám phá ngay!',
+        '/restaurants/new-on-DinerChill',
+        newOnDinerChillData,
+        'new-on-DinerChill-section',
+        'newOnDinerChill'
+      )}
+
+      {renderSection(
+        'Tin tức & Blog',
+        'Những thông tin hữu ích về ẩm thực, sức khỏe, mẹo vặt,... cho bạn dễ dàng tìm hiểu đặt cập nhật liên tục tại DinerChill',
+        '/blog',
+        newsAndBlogData,
+        'news-and-blog-section',
+        'newsAndBlog'
+      )}
     </div>
   );
 }

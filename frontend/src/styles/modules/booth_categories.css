@@ -5,7 +5,7 @@
   justify-content: center;
   width: 100%;
   position: relative;
-  margin: 10px 0 5px;
+  margin: 15px 0 5px; /* Tăng margin-top để khoảng cách với bộ lọc phía trên thoáng hơn */
   padding: 0 10px;
 }
 
@@ -31,11 +31,16 @@
   align-items: center;
   cursor: pointer;
   min-width: 60px;
-  transition: transform 0.2s;
+  transition: transform 0.2s, background 0.3s;
 }
 
 .category-item:hover {
   transform: translateY(-3px);
+}
+
+.category-item:active {
+  transform: scale(0.95); /* Hiệu ứng nhấn khi click */
+  background: #f0f0f0; /* Thêm màu nền khi nhấn */
 }
 
 .category-icon-wrapper {
@@ -84,20 +89,13 @@
 }
 
 .category-nav.prev {
-  left: 200px;
+  left: 0; /* Đặt sát mép trái thay vì cố định 200px */
 }
 
 .category-nav.next {
-  right: 200px;
+  right: 0; /* Đặt sát mép phải thay vì cố định 200px */
 }
 
-.category-nav.next svg,
-.category-nav.prev svg {
-  width: 18px;
-  height: 18px;
-}
-
-/* Hidden class that can be toggled by JavaScript */
 .category-nav.hidden {
   display: none;
 }
@@ -105,28 +103,53 @@
 /* Responsive styles */
 @media (max-width: 768px) {
   .booth-categories {
-    padding: 0 25px;
+    padding: 0 15px; /* Giảm padding để tiết kiệm không gian */
   }
-  
+
   .categories-slider {
     gap: 15px;
+    padding: 10px 15px;
   }
-  
+
   .category-icon-wrapper {
     width: 50px;
     height: 50px;
   }
-  
+
   .category-icon {
     font-size: 20px;
   }
-  
+
   .category-name {
     font-size: 11px;
   }
 }
 
-/* Add these styles to support the row structure */
+@media (max-width: 480px) {
+  .categories-slider {
+    gap: 10px; /* Giảm gap trên màn hình rất nhỏ */
+    padding: 10px;
+  }
+
+  .category-item {
+    min-width: 55px; /* Giảm min-width để hiển thị nhiều danh mục hơn */
+  }
+
+  .category-icon-wrapper {
+    width: 45px;
+    height: 45px;
+  }
+
+  .category-icon {
+    font-size: 18px;
+  }
+
+  .category-name {
+    font-size: 10px;
+  }
+}
+
+/* Add these styles to support the row structure (giữ nguyên để tương lai sử dụng nếu cần) */
 .row.booth-category {
   width: 100%;
   margin-bottom: 20px;

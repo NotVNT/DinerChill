@@ -180,20 +180,21 @@ function Header() {
                   onMouseLeave={() => setIsHoveringDropdown(false)}
                 >
                   <div className="food-grid">
-                    <Link to="/cuisine/lau">Lẩu</Link>
-                    <Link to="/cuisine/buffet">Buffet</Link>
-                    <Link to="/cuisine/hai-san">Hải sản</Link>
-                    <Link to="/cuisine/lau-nuong">Lẩu & Nướng</Link>
-                    <Link to="/cuisine/quan-nhau">Quán Nhậu</Link>
-                    <Link to="/cuisine/mon-chay">Món chay</Link>
-                    <Link to="/cuisine/do-tiec">Đồ tiệc</Link>
-                    <Link to="/cuisine/han-quoc">Hàn Quốc</Link>
-                    <Link to="/cuisine/nhat-ban">Nhật Bản</Link>
-                    <Link to="/cuisine/mon-viet">Món Việt</Link>
-                    <Link to="/cuisine/mon-thai">Món Thái</Link>
-                    <Link to="/cuisine/mon-trung-hoa">Món Trung Hoa</Link>
-                    <Link to="/cuisine/tiec-cuoi">Tiệc cưới</Link>
-                    <Link to="/cuisine/do-uong">Đồ uống</Link>
+                    <Link to="/nha-hang">Nhà hàng</Link>
+                    <Link to="/lau">Lẩu</Link>
+                    <Link to="/buffet">Buffet</Link>
+                    <Link to="/hai-san">Hải sản</Link>
+                    <Link to="/lau-nuong">Lẩu & Nướng</Link>
+                    <Link to="/quan-nhau">Quán Nhậu</Link>
+                    <Link to="/mon-chay">Món chay</Link>
+                    <Link to="/do-tiec">Đồ tiệc</Link>
+                    <Link to="/han-quoc">Hàn Quốc</Link>
+                    <Link to="/nhat-ban">Nhật Bản</Link>
+                    <Link to="/mon-viet">Món Việt</Link>
+                    <Link to="/mon-thai">Món Thái</Link>
+                    <Link to="/mon-trung-hoa">Món Trung Hoa</Link>
+                    <Link to="/tiec-cuoi">Tiệc cưới</Link>
+                    <Link to="/do-uong">Đồ uống</Link>
                   </div>
                 </div>
               )}
@@ -311,4 +312,4 @@ function Header() {
   );
 }
 
-export default Header; 
+export default Header;
