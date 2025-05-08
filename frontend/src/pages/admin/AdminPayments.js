@@ -209,7 +209,7 @@ function AdminPayments() {
           <table className="admin-table">
             <thead>
               <tr>
-                <th>Mã thanh toán</th>
+                <th>Mã giao dịch</th>
                 <th>Người dùng</th>
                 <th>Nhà hàng</th>
                 <th>Số tiền</th>

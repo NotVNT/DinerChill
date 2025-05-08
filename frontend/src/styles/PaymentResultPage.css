@@ -1,0 +1,84 @@
+.payment-result-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.payment-result-container h1 {
+  font-size: 2rem;
+  margin-bottom: 30px;
+  color: #333;
+}
+
+.payment-result {
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  padding: 30px;
+  margin-bottom: 30px;
+}
+
+.payment-result i {
+  font-size: 4rem;
+  margin-bottom: 20px;
+  display: block;
+}
+
+.payment-result.success i {
+  color: #28a745;
+}
+
+.payment-result.pending i {
+  color: #ffc107;
+}
+
+.payment-error i {
+  color: #dc3545;
+  font-size: 4rem;
+  margin-bottom: 20px;
+  display: block;
+}
+
+.payment-result h2, .payment-error h2 {
+  font-size: 1.8rem;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.payment-details {
+  text-align: left;
+  max-width: 400px;
+  margin: 0 auto;
+  margin-bottom: 30px;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+}
+
+.payment-details p {
+  margin-bottom: 10px;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.loading-spinner {
+  font-size: 1.2rem;
+  color: #666;
+  margin: 40px 0;
+}
+
+.back-button {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 12px 24px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.back-button:hover {
+  background-color: #c82333;
+} 

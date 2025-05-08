@@ -249,6 +249,11 @@ function Header() {
                 <i className="nav-icon">🌟</i> Gợi ý
               </Link>
             </li>
+            <li className="nav-item">
+              <Link to="/test-payment">
+                <i className="nav-icon">💰</i> Test Thanh Toán
+              </Link>
+            </li>
           </ul>
         </nav>
         <div className="auth-nav">

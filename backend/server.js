@@ -14,6 +14,10 @@ const { sendVerificationEmail, sendPasswordResetEmail } = require('./utils/email
 const session = require('express-session');
 const passport = require('./config/passport');
 const authRoutes = require('./routes/auth');
+const promotionRoutes = require('./routes/promotion');
+const tableRoutes = require('./routes/table');
+const reviewRoutes = require('./routes/review');
+const paymentRoutes = require('./routes/payment');
 
 // Đọc biến môi trường từ file .env
 dotenv.config();
@@ -718,6 +722,10 @@ app.use('/api/auth', authRoutes);
 
 // Thêm vào cuối file server.js trước app.listen
 app.use('/api/admin', adminRoutes);
+app.use('/api/promotion', promotionRoutes);
+app.use('/api/table', tableRoutes);
+app.use('/api/review', reviewRoutes);
+app.use('/api/payment', paymentRoutes);
 
 // Hàm khởi động server với port cụ thể
 const startServer = (port) => {

@@ -32,6 +32,8 @@ import TokenHandler from './components/TokenHandler';
 import LocationPage from './components/LocationPage';
 import PromoPage from './pages/PromoPage';
 import ReservationGuidePage from './pages/ReservationGuidePage';
+import TestPaymentPage from './pages/TestPaymentPage';
+import PaymentResultPage from './pages/PaymentResultPage';
 
 
 // Component để cuộn lên đầu trang khi chuyển route
@@ -102,7 +104,8 @@ function App() {
                   <Route path="/vi-tri" element={<LocationPage />} />
                   <Route path="/khuyen-mai" element={<PromoPage />} />
                   <Route path="/huong-dan-dat-ban" element={<ReservationGuidePage />} />
-
+                  <Route path="/test-payment" element={<TestPaymentPage />} />
+                  <Route path="/payment-result" element={<PaymentResultPage />} />
                   
                   {/* Protected Routes */}
                   <Route path="/reservation" element={<ProtectedRoute><ReservationPage /></ProtectedRoute>} />
