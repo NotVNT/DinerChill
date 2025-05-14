@@ -34,7 +34,7 @@ import PromoPage from './pages/PromoPage';
 import ReservationGuidePage from './pages/ReservationGuidePage';
 import TestPaymentPage from './pages/TestPaymentPage';
 import PaymentResultPage from './pages/PaymentResultPage';
-
+import RestaurantOwnerDashboard from './pages/RestaurantOwnerDashboard';
 
 // Component để cuộn lên đầu trang khi chuyển route
 function ScrollToTop() {
@@ -68,6 +68,13 @@ function App() {
             <Route path="tables" element={<AdminTables />} />
             <Route path="reviews" element={<AdminReviews />} />
           </Route>
+          
+          {/* Restaurant Owner Dashboard Routes */}
+          <Route path="/dashboard/*" element={
+            <ProtectedRoute>
+              <RestaurantOwnerDashboard />
+            </ProtectedRoute>
+          } />
           
           {/* Public and Protected Routes - có Header/Footer */}
           <Route path="/*" element={
