@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Restaurant, RestaurantImage, Category, Reservation, User, Table, Promotion, Review } = require('../models');
+const { Restaurant, RestaurantImage, Category, Reservation, User, Table, Promotion, Review, PaymentInformation } = require('../models');
 const authenticateAdmin = require('../middleware/authenticate').authenticateAdmin;
 const multer = require('multer');
 const fs = require('fs');
@@ -839,6 +839,172 @@ router.patch('/reviews/:id/verify', authenticateAdmin, async (req, res) => {
   } catch (error) {
     console.error('Error updating review verification status:', error);
     res.status(500).json({ message: 'Đã xảy ra lỗi khi cập nhật trạng thái xác minh' });
+  }
+});
+
+// Payment Management Routes
+router.get('/payments', authenticateAdmin, async (req, res) => {
+  try {
+    const { status, startDate, endDate } = req.query;
+    
+    // Build query conditions
+    const whereConditions = {};
+    if (status && status !== 'all') {
+      whereConditions.status = status;
+    }
+    
+    // Add date range filter
+    if (startDate || endDate) {
+      whereConditions.createdAt = {};
+      if (startDate) {
+        whereConditions.createdAt[Op.gte] = new Date(startDate);
+      }
+      if (endDate) {
+        // Set to end of day for the end date
+        const endDateTime = new Date(endDate);
+        endDateTime.setHours(23, 59, 59, 999);
+        whereConditions.createdAt[Op.lte] = endDateTime;
+      }
+    }
+    
+    // Query payments with associations
+    const payments = await PaymentInformation.findAll({
+      where: whereConditions,
+      include: [
+        { 
+          model: User, 
+          as: 'user',
+          attributes: ['id', 'name', 'email'] 
+        },
+        {
+          model: Reservation,
+          as: 'reservation',
+          include: [
+            {
+              model: Restaurant,
+              as: 'restaurant',
+              attributes: ['id', 'name']
+            }
+          ]
+        }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+    
+    // Transform data to match frontend expectations
+    const formattedPayments = payments.map(payment => {
+      const paymentData = payment.toJSON();
+      return {
+        id: paymentData.id,
+        transactionId: paymentData.transactionId || paymentData.id.toString().padStart(6, '0'),
+        userName: paymentData.user ? paymentData.user.name : 'N/A',
+        userEmail: paymentData.user ? paymentData.user.email : 'N/A',
+        restaurantName: paymentData.reservation && paymentData.reservation.restaurant 
+          ? paymentData.reservation.restaurant.name 
+          : 'N/A',
+        amount: paymentData.amount,
+        currency: paymentData.currency,
+        paymentMethod: paymentData.paymentMethod,
+        status: paymentData.status,
+        paymentDate: paymentData.paymentDate,
+        paymentDetails: paymentData.paymentDetails,
+        notes: paymentData.notes,
+        createdAt: paymentData.createdAt,
+        updatedAt: paymentData.updatedAt
+      };
+    });
+    
+    res.json(formattedPayments);
+  } catch (error) {
+    console.error('Error fetching payments:', error);
+    res.status(500).json({ message: 'Không thể lấy danh sách thanh toán' });
+  }
+});
+
+// Get specific payment details
+router.get('/payments/:id', authenticateAdmin, async (req, res) => {
+  try {
+    const payment = await PaymentInformation.findByPk(req.params.id, {
+      include: [
+        { 
+          model: User, 
+          as: 'user',
+          attributes: ['id', 'name', 'email'] 
+        },
+        {
+          model: Reservation,
+          as: 'reservation',
+          include: [
+            {
+              model: Restaurant,
+              as: 'restaurant',
+              attributes: ['id', 'name']
+            }
+          ]
+        }
+      ]
+    });
+    
+    if (!payment) {
+      return res.status(404).json({ message: 'Không tìm thấy thông tin thanh toán' });
+    }
+    
+    const paymentData = payment.toJSON();
+    const formattedPayment = {
+      id: paymentData.id,
+      transactionId: paymentData.transactionId || paymentData.id.toString().padStart(6, '0'),
+      userName: paymentData.user ? paymentData.user.name : 'N/A',
+      userEmail: paymentData.user ? paymentData.user.email : 'N/A',
+      restaurantName: paymentData.reservation && paymentData.reservation.restaurant 
+        ? paymentData.reservation.restaurant.name 
+        : 'N/A',
+      amount: paymentData.amount,
+      currency: paymentData.currency,
+      paymentMethod: paymentData.paymentMethod,
+      status: paymentData.status,
+      paymentDate: paymentData.paymentDate,
+      paymentDetails: paymentData.paymentDetails,
+      notes: paymentData.notes,
+      createdAt: paymentData.createdAt,
+      updatedAt: paymentData.updatedAt
+    };
+    
+    res.json(formattedPayment);
+  } catch (error) {
+    console.error('Error fetching payment details:', error);
+    res.status(500).json({ message: 'Không thể lấy thông tin thanh toán' });
+  }
+});
+
+// Update payment status
+router.patch('/payments/:id/status', authenticateAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    
+    // Validate status
+    const validStatuses = ['pending', 'completed', 'failed', 'refunded'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ message: 'Trạng thái không hợp lệ' });
+    }
+    
+    // Find payment
+    const payment = await PaymentInformation.findByPk(id);
+    if (!payment) {
+      return res.status(404).json({ message: 'Không tìm thấy thông tin thanh toán' });
+    }
+    
+    // Update status
+    await payment.update({ 
+      status,
+      // If status is completed, update paymentDate
+      ...(status === 'completed' && !payment.paymentDate ? { paymentDate: new Date() } : {})
+    });
+    
+    res.json({ message: 'Đã cập nhật trạng thái thanh toán', payment });
+  } catch (error) {
+    console.error('Error updating payment status:', error);
+    res.status(500).json({ message: 'Không thể cập nhật trạng thái thanh toán' });
   }
 });
 

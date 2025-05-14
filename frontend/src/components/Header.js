@@ -249,6 +249,11 @@ function Header() {
                 <i className="nav-icon">🌟</i> Gợi ý
               </Link>
             </li>
+            <li className="nav-item">
+              <Link to="/test-payment">
+                <i className="nav-icon">💰</i> Test Thanh Toán
+              </Link>
+            </li>
           </ul>
         </nav>
         <div className="auth-nav">
@@ -262,7 +267,7 @@ function Header() {
                   <Link to="/profile" onClick={() => setShowMenu(false)}>
                     <i className="menu-icon">👤</i> Thông tin tài khoản
                   </Link>
-                  {user.role === 'admin' ? (
+                  {user.roleId === 1 ? (
                     <Link to="/admin" onClick={() => setShowMenu(false)}>
                       <i className="menu-icon">⚙️</i> Quản trị viên
                     </Link>

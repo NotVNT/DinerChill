@@ -16,7 +16,7 @@ module.exports = (sequelize, DataTypes) => {
       });
     }
   }
-  
+
   PaymentInformation.init({
     id: {
       type: DataTypes.INTEGER,
@@ -40,12 +40,15 @@ module.exports = (sequelize, DataTypes) => {
       }
     },
     paymentMethod: {
-      type: DataTypes.ENUM('credit_card', 'bank_transfer', 'cash', 'e_wallet'),
+      type: DataTypes.ENUM('bank_transfer', 'cash'),
       allowNull: false
     },
     amount: {
       type: DataTypes.FLOAT,
-      allowNull: false
+      allowNull: false,
+      validate: {
+        min: 0
+      }
     },
     currency: {
       type: DataTypes.STRING,
@@ -57,25 +60,18 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: 'pending'
     },
-    transactionId: {
-      type: DataTypes.STRING,
-      allowNull: true
-    },
     paymentDate: {
       type: DataTypes.DATE,
       allowNull: true
     },
-    cardLastFourDigits: {
-      type: DataTypes.STRING(4),
-      allowNull: true
+    paymentDetails: {
+      type: DataTypes.JSON,
+      allowNull: true // Lưu thông tin bổ sung (ví dụ: {"cardLastFourDigits": "1234"})
     },
-    bankName: {
-      type: DataTypes.STRING,
-      allowNull: true
-    },
-    accountName: {
-      type: DataTypes.STRING,
-      allowNull: true
+    transactionId: {
+      type: DataTypes.STRING(255),
+      allowNull: true,  // Lưu mã đơn hàng từ PayOS
+      unique: true     // Đảm bảo không có giao dịch trùng lặp
     },
     notes: {
       type: DataTypes.TEXT,
@@ -84,8 +80,16 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'PaymentInformation',
-    tableName: 'payment_information'
+    tableName: 'payment_information',
+    timestamps: true, // Bật createdAt và updatedAt
+    indexes: [
+      { fields: ['reservationId'] },
+      { fields: ['userId'] },
+      { fields: ['paymentDate'] },
+      { fields: ['status'] },
+      { fields: ['transactionId'] }
+    ]
   });
-  
+
   return PaymentInformation;
-}; 
+};

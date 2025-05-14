@@ -14,6 +14,11 @@ const { sendVerificationEmail, sendPasswordResetEmail } = require('./utils/email
 const session = require('express-session');
 const passport = require('./config/passport');
 const authRoutes = require('./routes/auth');
+const promotionRoutes = require('./routes/promotion');
+const tableRoutes = require('./routes/table');
+const reviewRoutes = require('./routes/review');
+const paymentRoutes = require('./routes/payment');
+const { sequelize } = require('./models');
 
 // Đọc biến môi trường từ file .env
 dotenv.config();
@@ -83,7 +88,7 @@ const authenticateAdmin = async (req, res, next) => {
     const decoded = jwt.verify(token, JWT_SECRET);
     const user = await User.findByPk(decoded.id);
     
-    if (!user || !user.isAdmin) {
+    if (!user || user.roleId !== 1) {
       return res.status(403).json({ message: 'Forbidden - Admin access required' });
     }
     
@@ -159,7 +164,7 @@ app.post('/api/auth/login', async (req, res) => {
     }
     
     const token = jwt.sign(
-      { id: user.id, name: user.name, role: user.role },
+      { id: user.id, name: user.name, roleId: user.roleId },
       JWT_SECRET,
       { expiresIn: '1d' }
     );
@@ -256,6 +261,15 @@ app.post('/api/auth/verify-email', async (req, res) => {
       return res.status(400).json({ message: 'Mã xác thực không hợp lệ hoặc đã hết hạn' });
     }
     
+    // Tìm role_id cho user
+    const userRole = await sequelize.model('UserRole').findOne({
+      where: { name: 'user' }
+    });
+
+    if (!userRole) {
+      return res.status(500).json({ message: 'Không thể tạo tài khoản. Vui lòng thử lại sau.' });
+    }
+    
     // Chuyển thông tin từ bảng tạm sang bảng chính thức
     // Sử dụng User.build() và save() thay vì create() để có thể bỏ qua hooks
     const newUser = User.build({
@@ -263,7 +277,7 @@ app.post('/api/auth/verify-email', async (req, res) => {
       email: tempUser.email,
       phone: tempUser.phone,
       password: tempUser.password, // Password đã được hash từ bảng tạm
-      role: 'user',
+      roleId: userRole.id, // Gán roleId từ role 'user'
       isVerified: true
     });
     
@@ -275,7 +289,7 @@ app.post('/api/auth/verify-email', async (req, res) => {
     
     // Generate token for automatic login
     const token = jwt.sign(
-      { id: newUser.id, name: newUser.name, role: newUser.role },
+      { id: newUser.id, name: newUser.name, roleId: newUser.roleId },
       JWT_SECRET,
       { expiresIn: '1d' }
     );
@@ -354,14 +368,29 @@ app.post('/api/auth/check-email', async (req, res) => {
 app.get('/api/auth/me', authenticate, async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id, {
-      attributes: { exclude: ['password'] }
+      attributes: { exclude: ['password'] },
+      include: [
+        {
+          model: sequelize.models.UserRole,
+          as: 'role',
+          attributes: ['id', 'name']
+        }
+      ]
     });
     
     if (!user) {
       return res.status(404).json({ message: 'Không tìm thấy người dùng' });
     }
     
-    res.json(user);
+    // Convert Sequelize model to plain object
+    const userData = user.get({ plain: true });
+    
+    // Add role property for backward compatibility
+    if (userData.role && userData.role.name) {
+      userData.role = userData.role.name;
+    }
+    
+    res.json(userData);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Đã xảy ra lỗi server' });
@@ -718,6 +747,10 @@ app.use('/api/auth', authRoutes);
 
 // Thêm vào cuối file server.js trước app.listen
 app.use('/api/admin', adminRoutes);
+app.use('/api/promotion', promotionRoutes);
+app.use('/api/table', tableRoutes);
+app.use('/api/review', reviewRoutes);
+app.use('/api/payment', paymentRoutes);
 
 // Hàm khởi động server với port cụ thể
 const startServer = (port) => {
@@ -725,7 +758,6 @@ const startServer = (port) => {
     console.log(`Server đang chạy tại http://localhost:${port}`);
     try {
       // Kiểm tra kết nối database khi khởi động server
-      const { sequelize } = require('./models');
       await sequelize.authenticate();
       console.log('Kết nối database thành công.');
     } catch (error) {

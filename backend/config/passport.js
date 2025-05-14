@@ -1,6 +1,6 @@
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
-const { User } = require('../models');
+const { User, UserRole } = require('../models');
 const jwt = require('jsonwebtoken');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dinerchillsecretkey';
@@ -42,6 +42,15 @@ passport.use(new GoogleStrategy({
           user.googleId = profile.id;
           await user.save();
         } else {
+          // Tìm roleId của role "user"
+          const userRole = await UserRole.findOne({
+            where: { name: 'user' }
+          });
+          
+          if (!userRole) {
+            return done(new Error('Role "user" not found'), null);
+          }
+          
           try {
             // Create new user with Google profile info
             user = await User.create({
@@ -50,6 +59,7 @@ passport.use(new GoogleStrategy({
               phone: null, // Changed from empty string to null
               password: null, // Không tạo password cho tài khoản Google
               googleId: profile.id,
+              roleId: userRole.id, // Thiết lập roleId cho user mới
               isVerified: true
             }, { 
               // Bỏ qua validation cho trường password
