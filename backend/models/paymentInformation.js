@@ -40,7 +40,7 @@ module.exports = (sequelize, DataTypes) => {
       }
     },
     paymentMethod: {
-      type: DataTypes.ENUM('credit_card', 'bank_transfer', 'cash', 'e_wallet'),
+      type: DataTypes.ENUM('bank_transfer', 'cash'),
       allowNull: false
     },
     amount: {

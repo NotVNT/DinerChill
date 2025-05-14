@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const passport = require('../config/passport');
 const zaloPassport = require('../middleware/zaloPassport');
-const { User } = require('../models');
+const { User, UserRole } = require('../models');
 const jwt = require('jsonwebtoken');
 const JWT_SECRET = process.env.JWT_SECRET || 'dinerchillsecretkey';
 
@@ -14,20 +14,20 @@ router.get('/google', passport.authenticate('google', {
 // Google OAuth callback route
 router.get('/google/callback', 
   passport.authenticate('google', { failureRedirect: '/login', session: false }),
-  (req, res) => {
+  async (req, res) => {
     try {
-      // Generate JWT token for the authenticated user
-      const token = jwt.sign(
-        { id: req.user.id, name: req.user.name, role: req.user.role },
-        JWT_SECRET,
-        { expiresIn: '1d' }
-      );
-      
       // Đảm bảo đã thiết lập đúng thông tin user trong req.user
       console.log('Google auth user:', req.user);
       
       // Kiểm tra xem người dùng có mật khẩu không
       const hasPassword = req.user.password !== null;
+      
+      // Generate JWT token for the authenticated user
+      const token = jwt.sign(
+        { id: req.user.id, name: req.user.name, roleId: req.user.roleId },
+        JWT_SECRET,
+        { expiresIn: '1d' }
+      );
       
       // Redirect to frontend with token and additional information
       res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/?token=${token}&google=true&has_password=${hasPassword}`);
@@ -104,6 +104,15 @@ router.get('/zalo/callback', async (req, res) => {
     });
     
     if (!user) {
+      // Tìm role_id cho user
+      const userRole = await UserRole.findOne({
+        where: { name: 'user' }
+      });
+
+      if (!userRole) {
+        return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=role_not_found`);
+      }
+      
       // If user doesn't exist, create a new one
       try {
         user = await User.create({
@@ -112,6 +121,7 @@ router.get('/zalo/callback', async (req, res) => {
           phone: zaloProfile.phone || null,
           password: null, // No password for Zalo accounts
           zaloId: zaloProfile.id,
+          roleId: userRole.id, // Thiết lập roleId cho user mới
           isVerified: true // Auto-verify OAuth users
         }, { 
           hooks: false,
@@ -134,7 +144,7 @@ router.get('/zalo/callback', async (req, res) => {
     
     // Generate JWT token for authentication
     const token = jwt.sign(
-      { id: user.id, name: user.name, role: user.role },
+      { id: user.id, name: user.name, roleId: user.roleId },
       JWT_SECRET,
       { expiresIn: '1d' }
     );

@@ -84,7 +84,72 @@ const sendPasswordResetEmail = async (to, resetCode) => {
   }
 };
 
+/**
+ * Send payment confirmation email
+ * @param {string} to - Recipient email address
+ * @param {Object} paymentInfo - Payment information object
+ * @returns {Promise} - Email sending result
+ */
+const sendPaymentConfirmationEmail = async (to, paymentInfo) => {
+  const {
+    transactionId,
+    amount,
+    paymentMethod,
+    paymentDate,
+    status
+  } = paymentInfo;
+
+  // Format payment method for display
+  const formattedPaymentMethod = paymentMethod === 'bank_transfer' ? 'Chuyển khoản ngân hàng' : 'Tiền mặt';
+  
+  // Format amount with thousand separator
+  const formattedAmount = new Intl.NumberFormat('vi-VN').format(amount);
+  
+  // Format date for display
+  const formattedDate = new Date(paymentDate).toLocaleString('vi-VN');
+
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to,
+    subject: 'Xác Nhận Thanh Toán - DinerChill',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+        <h2 style="color: #4a4a4a; text-align: center;">Xác Nhận Thanh Toán</h2>
+        <p style="color: #666; font-size: 16px; line-height: 1.6;">Cảm ơn bạn đã thanh toán tại DinerChill. Dưới đây là thông tin chi tiết về giao dịch của bạn:</p>
+        
+        <div style="background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin: 20px 0;">
+          <p style="margin: 5px 0;"><strong>Mã giao dịch:</strong> ${transactionId}</p>
+          <p style="margin: 5px 0;"><strong>Số tiền:</strong> ${formattedAmount} VND</p>
+          <p style="margin: 5px 0;"><strong>Phương thức thanh toán:</strong> ${formattedPaymentMethod}</p>
+          <p style="margin: 5px 0;"><strong>Thời gian thanh toán:</strong> ${formattedDate}</p>
+          <p style="margin: 5px 0;"><strong>Trạng thái:</strong> 
+            <span style="color: ${status === 'completed' ? '#4CAF50' : '#F44336'}; font-weight: bold;">
+              ${status === 'completed' ? 'Đã thanh toán' : 'Đang xử lý'}
+            </span>
+          </p>
+        </div>
+        
+        <p style="color: #666; font-size: 14px;">Nếu bạn có bất kỳ câu hỏi nào, vui lòng liên hệ với chúng tôi.</p>
+        <p style="color: #666; font-size: 14px;">Trân trọng cảm ơn,</p>
+        <p style="color: #666; font-size: 14px;">Đội ngũ DinerChill</p>
+        
+        <div style="text-align: center; margin-top: 30px; color: #999; font-size: 12px;">
+          <p>© ${new Date().getFullYear()} DinerChill. All rights reserved.</p>
+        </div>
+      </div>
+    `
+  };
+
+  try {
+    return await transporter.sendMail(mailOptions);
+  } catch (error) {
+    console.error('Email sending error:', error);
+    throw error;
+  }
+};
+
 module.exports = {
   sendVerificationEmail,
-  sendPasswordResetEmail
+  sendPasswordResetEmail,
+  sendPaymentConfirmationEmail
 }; 

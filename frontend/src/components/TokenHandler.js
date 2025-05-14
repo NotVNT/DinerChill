@@ -21,10 +21,19 @@ function TokenHandler() {
         const payload = token.split('.')[1];
         const decodedData = JSON.parse(atob(payload));
         
+        // Map roleId to role string for consistency
+        let roleName = 'user';
+        if (decodedData.roleId === 1) {
+          roleName = 'admin';
+        } else if (decodedData.roleId === 2) {
+          roleName = 'restaurant_owner';
+        }
+        
         const userData = {
           id: decodedData.id,
           name: decodedData.name,
-          role: decodedData.role
+          roleId: decodedData.roleId,
+          role: roleName // Add role string based on roleId
         };
         
         setUser(userData);

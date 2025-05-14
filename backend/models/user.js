@@ -27,6 +27,12 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'userId',
         as: 'paymentInformation'
       });
+
+      // Định nghĩa quan hệ với bảng UserRole
+      User.belongsTo(models.UserRole, {
+        foreignKey: 'roleId',
+        as: 'role'
+      });
     }
 
     // Method để kiểm tra mật khẩu
@@ -39,16 +45,19 @@ module.exports = (sequelize, DataTypes) => {
     }
 
     // Helper methods to check user role
-    isAdmin() {
-      return this.role === 'admin';
+    async isAdmin() {
+      const userRole = await this.getRole();
+      return userRole?.name === 'admin';
     }
 
-    isRestaurantOwner() {
-      return this.role === 'restaurant_owner';
+    async isRestaurantOwner() {
+      const userRole = await this.getRole();
+      return userRole?.name === 'restaurant_owner';
     }
 
-    isRegularUser() {
-      return this.role === 'user';
+    async isRegularUser() {
+      const userRole = await this.getRole();
+      return userRole?.name === 'user';
     }
   }
   
@@ -87,10 +96,13 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: true // Cho phép null cho tài khoản Google
     },
-    role: {
-      type: DataTypes.ENUM('admin', 'restaurant_owner', 'user'),
-      defaultValue: 'user',
-      allowNull: false
+    roleId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'user_roles',
+        key: 'id'
+      }
     },
     isVerified: {
       type: DataTypes.BOOLEAN,

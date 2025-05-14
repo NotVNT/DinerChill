@@ -3,6 +3,7 @@ const router = express.Router();
 const PayOS = require('@payos/node'); // This will need to be installed via npm
 const dotenv = require('dotenv');
 const { PaymentInformation, User } = require('../models');
+const { sendPaymentConfirmationEmail } = require('../utils/emailService');
 
 dotenv.config();
 
@@ -163,7 +164,7 @@ router.get('/info/:orderCode', async (req, res) => {
         await PaymentInformation.create({
           userId: 1, // Default user ID
           transactionId: orderCode.toString(), // Save order code in transactionId
-          paymentMethod: 'e_wallet',
+          paymentMethod: 'bank_transfer',
           amount: mockInfo.amount,
           currency: 'VND',
           status: 'completed',
@@ -173,6 +174,23 @@ router.get('/info/:orderCode', async (req, res) => {
         });
         
         console.log(`Mock payment information saved for order ${orderCode}`);
+        
+        // Find user email and send payment confirmation email
+        try {
+          const user = await User.findOne({ where: { id: 1 } });
+          if (user && user.email) {
+            await sendPaymentConfirmationEmail(user.email, {
+              transactionId: orderCode.toString(),
+              amount: mockInfo.amount,
+              paymentMethod: 'bank_transfer',
+              paymentDate: new Date(),
+              status: 'completed'
+            });
+            console.log(`Payment confirmation email sent to ${user.email}`);
+          }
+        } catch (emailError) {
+          console.error('Error sending payment confirmation email:', emailError);
+        }
       } catch (dbError) {
         console.error('Error saving mock payment:', dbError);
       }
@@ -209,7 +227,7 @@ router.get('/info/:orderCode', async (req, res) => {
           await PaymentInformation.create({
             userId,
             transactionId: orderCode.toString(), // Save order code in transactionId
-            paymentMethod: 'e_wallet',
+            paymentMethod: 'bank_transfer',
             amount: paymentLinkInfo.amount,
             currency: 'VND',
             status: 'completed',
@@ -221,6 +239,25 @@ router.get('/info/:orderCode', async (req, res) => {
           });
           
           console.log(`Payment information saved for order ${orderCode} from info endpoint`);
+          
+          // Send payment confirmation email
+          try {
+            // Get user email
+            if (user && user.email) {
+              await sendPaymentConfirmationEmail(user.email, {
+                transactionId: orderCode.toString(),
+                amount: paymentLinkInfo.amount,
+                paymentMethod: 'bank_transfer',
+                paymentDate: transaction?.transactionDateTime 
+                  ? new Date(transaction.transactionDateTime) 
+                  : new Date(paymentLinkInfo.createdAt),
+                status: 'completed'
+              });
+              console.log(`Payment confirmation email sent to ${user.email}`);
+            }
+          } catch (emailError) {
+            console.error('Error sending payment confirmation email:', emailError);
+          }
         } else {
           console.log(`Payment for order ${orderCode} already exists in database, skipping`);
         }
@@ -308,7 +345,7 @@ router.post('/webhook', async (req, res) => {
             await PaymentInformation.create({
               userId,
               transactionId: orderCode.toString(), // Save order code in transactionId as specified
-              paymentMethod: 'e_wallet', // PayOS payments are typically e-wallet or bank transfer
+              paymentMethod: 'bank_transfer',
               amount: parseFloat(amount),
               currency: currency || 'VND',
               status: 'completed',
@@ -318,6 +355,22 @@ router.post('/webhook', async (req, res) => {
             });
             
             console.log(`Payment information saved for order ${orderCode}`);
+            
+            // Send payment confirmation email
+            try {
+              if (user && user.email) {
+                await sendPaymentConfirmationEmail(user.email, {
+                  transactionId: orderCode.toString(),
+                  amount: parseFloat(amount),
+                  paymentMethod: 'bank_transfer',
+                  paymentDate,
+                  status: 'completed'
+                });
+                console.log(`Payment confirmation email sent to ${user.email} for order ${orderCode}`);
+              }
+            } catch (emailError) {
+              console.error('Error sending payment confirmation email:', emailError);
+            }
           } else {
             console.log(`Payment for order ${orderCode} already exists in database, skipping`);
           }

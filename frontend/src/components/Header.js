@@ -267,7 +267,7 @@ function Header() {
                   <Link to="/profile" onClick={() => setShowMenu(false)}>
                     <i className="menu-icon">👤</i> Thông tin tài khoản
                   </Link>
-                  {user.role === 'admin' ? (
+                  {user.roleId === 1 ? (
                     <Link to="/admin" onClick={() => setShowMenu(false)}>
                       <i className="menu-icon">⚙️</i> Quản trị viên
                     </Link>

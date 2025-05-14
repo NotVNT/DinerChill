@@ -34,7 +34,7 @@ exports.authenticateAdmin = async (req, res, next) => {
     const decoded = jwt.verify(token, JWT_SECRET);
     const user = await User.findByPk(decoded.id);
     
-    if (!user || user.role !== 'admin') {
+    if (!user || user.roleId !== 1) {
       return res.status(403).json({ message: 'Forbidden - Admin access required' });
     }
     
