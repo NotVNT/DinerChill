@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import './App.css';
 import './styles/layout/header.css';
-import './styles/modules/search.css';
+import './styles/modules/SearchBar.css';
 import App from './App';
 import { AppProvider } from './context/AppContext';
 import reportWebVitals from './reportWebVitals';

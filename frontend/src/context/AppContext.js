@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { getAll, getHotRestaurants, getHotProducts, getRecommendedRestaurants, getPartyRestaurants, getFamousLocations, getSeafoodRestaurants, getChineseRestaurants, getPopularCuisines, getMonthlyFavorites, getAmenitiesRestaurants, getLuxuryRestaurants, getTrustedRestaurants, getTouristRestaurants, getLunchSuggestions, getNewOnDinerChill, getNewsAndBlog } from '../services/restaurantAPI';
-import { authAPI } from '../services/api'; // API xác thực người dùng
+import { authAPI } from '../services/api';
+import { mockdata } from '../components/mockData';
 
 const AppContext = createContext();
 
@@ -25,8 +25,8 @@ export function AppProvider({ children }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
-  const [authLoading, setAuthLoading] = useState(true); // Thêm state để theo dõi trạng thái xác thực
-  const [recentlyViewed, setRecentlyViewed] = useState({});
+  const [authLoading, setAuthLoading] = useState(true);
+  const [recentlyViewed, setRecentlyViewed] = useState([]);
   const [page, setPage] = useState({
     all: 1,
     hotRestaurants: 1,
@@ -48,82 +48,70 @@ export function AppProvider({ children }) {
   });
 
   const [filters, setFilters] = useState({
-    location: 'Hồ Chí Minh',
+    location: '',
     distance: 'all',
     cuisine: 'all',
     rating: 'all',
+    keyword: '',
   });
 
-  const [locations, setLocations] = useState([]); // Thêm state mới để lưu danh sách khu vực
+  const [locations, setLocations] = useState([]);
+  const [originalData, setOriginalData] = useState([]);
 
-  const [originalData, setOriginalData] = useState({
-    restaurants: [],
-    hotRestaurants: [],
-    hotProducts: [],
-    recommendedRestaurants: [],
-    partyRestaurants: [],
-    famousLocations: [],
-    seafoodRestaurants: [],
-    chineseRestaurants: [],
-    popularCuisines: [],
-    monthlyFavorites: [],
-    amenitiesRestaurants: [],
-    luxuryRestaurants: [],
-    trustedRestaurants: [],
-    touristRestaurants: [],
-    lunchSuggestions: [],
-    newOnDinerChill: [],
-    newsAndBlog: [],
-  });
+  const normalizeData = (data) => {
+    if (!Array.isArray(data)) return [];
+    return data.map(item => ({
+      ...item,
+      category: item.category || 'Khác',
+      cuisine: item.cuisine || 'Khác',
+    }));
+  };
 
-  const normalizeData = (data) => data.map(item => ({
-    ...item,
-    category: item.category || 'Khác',
-  }));
+  const deduplicateData = (data) => {
+    const seenIds = new Set();
+    return data.filter(item => {
+      if (seenIds.has(item.id)) return false;
+      seenIds.add(item.id);
+      return true;
+    });
+  };
 
-  // Khôi phục lịch sử xem và thông tin người dùng từ localStorage khi khởi động
   useEffect(() => {
     try {
-      // Khôi phục lịch sử xem
       const savedRecentlyViewed = localStorage.getItem('recentlyViewed');
       if (savedRecentlyViewed) {
         setRecentlyViewed(JSON.parse(savedRecentlyViewed));
       }
 
-      // Khôi phục thông tin người dùng
       const token = localStorage.getItem('dinerchillToken');
       if (token) {
-        setAuthLoading(true); // Bắt đầu quá trình xác thực
+        setAuthLoading(true);
         authAPI.getCurrentUser()
           .then(userData => {
-            if (userData) {
-              setUser(userData);
-            }
-            setAuthLoading(false); // Kết thúc quá trình xác thực
+            if (userData) setUser(userData);
+            setAuthLoading(false);
           })
           .catch(error => {
             console.error('Lỗi khi lấy thông tin người dùng:', error);
-            // Nếu token hết hạn hoặc không hợp lệ, xóa khỏi localStorage
             if (error.message && (
-                error.message.includes('token') || 
-                error.message.includes('unauthorized') ||
-                error.message.includes('không hợp lệ') ||
-                error.message.includes('hết hạn')
-              )) {
+              error.message.includes('token') ||
+              error.message.includes('unauthorized') ||
+              error.message.includes('không hợp lệ') ||
+              error.message.includes('hết hạn')
+            )) {
               localStorage.removeItem('dinerchillToken');
             }
-            setAuthLoading(false); // Kết thúc quá trình xác thực ngay cả khi có lỗi
+            setAuthLoading(false);
           });
       } else {
-        setAuthLoading(false); // Không có token, kết thúc quá trình xác thực ngay lập tức
+        setAuthLoading(false);
       }
     } catch (err) {
       console.error('Lỗi khi truy cập localStorage:', err);
-      setRecentlyViewed({});
+      setRecentlyViewed([]);
     }
   }, []);
 
-  // Lưu lịch sử xem vào localStorage mỗi khi recentlyViewed thay đổi
   useEffect(() => {
     try {
       localStorage.setItem('recentlyViewed', JSON.stringify(recentlyViewed));
@@ -132,128 +120,67 @@ export function AppProvider({ children }) {
     }
   }, [recentlyViewed]);
 
-  // Hàm để thêm nhà hàng vào lịch sử xem
   const addToRecentlyViewed = (restaurant) => {
     if (!restaurant || !restaurant.id) return;
-
-    setRecentlyViewed((prev) => {
-      // Kiểm tra và đặt giá trị mặc định cho category
-      const category = restaurant.category ? restaurant.category.toLowerCase() : 'khác';
-      const updatedCategory = prev[category] ? [...prev[category]] : [];
-      // Kiểm tra xem nhà hàng đã tồn tại trong lịch sử chưa
-      const existingIndex = updatedCategory.findIndex(item => item.id === restaurant.id);
-      if (existingIndex !== -1) {
-        // Nếu đã tồn tại, xóa và thêm lại để đưa lên đầu
-        updatedCategory.splice(existingIndex, 1);
-      }
-      // Thêm nhà hàng mới vào đầu danh sách
-      updatedCategory.unshift(restaurant);
-      // Giới hạn số lượng nhà hàng trong lịch sử (tối đa 10 nhà hàng mỗi danh mục)
-      if (updatedCategory.length > 10) {
-        updatedCategory.pop();
-      }
-      return {
-        ...prev,
-        [category]: updatedCategory,
-      };
+    setRecentlyViewed(prev => {
+      const updated = [...prev];
+      const existingIndex = updated.findIndex(item => item.id === restaurant.id);
+      if (existingIndex !== -1) updated.splice(existingIndex, 1);
+      updated.unshift(restaurant);
+      if (updated.length > 10) updated.pop();
+      return updated;
     });
   };
 
-  const removeFromRecentlyViewed = (restaurantId, category) => {
-    setRecentlyViewed((prev) => {
-      const normalizedCategory = category ? category.toLowerCase() : 'khác';
-      const updatedCategory = prev[normalizedCategory] ? [...prev[normalizedCategory]] : [];
-      const filteredCategory = updatedCategory.filter(item => item.id !== restaurantId);
-      return {
-        ...prev,
-        [normalizedCategory]: filteredCategory,
-      };
-    });
+  const removeFromRecentlyViewed = (restaurantId) => {
+    setRecentlyViewed(prev => prev.filter(item => item.id !== restaurantId));
   };
 
   const clearRecentlyViewed = () => {
-    setRecentlyViewed({});
+    setRecentlyViewed([]);
     localStorage.removeItem('recentlyViewed');
   };
 
   const applyFilters = useCallback((data) => {
-    let filteredData = [...data];
-
+    let filteredData = [...(data || [])];
     if (filters.location && filters.location !== '') {
-      filteredData = filteredData.filter(item => item.location === filters.location);
+      filteredData = filteredData.filter(item => item.address?.includes(filters.location));
     }
-
     if (filters.distance !== 'all') {
-      filteredData = filteredData.filter((item) => {
+      filteredData = filteredData.filter(item => {
         const distance = item.distance || 0;
-        if (filters.distance === 'near') return distance <= 2;
-        if (filters.distance === 'under5km') return distance <= 5;
-        if (filters.distance === 'under10km') return distance <= 10;
-        return true;
+        return filters.distance === 'near' ? distance <= 2 :
+               filters.distance === 'under5km' ? distance <= 5 :
+               filters.distance === 'under10km' ? distance <= 10 : true;
       });
     }
-
     if (filters.cuisine && filters.cuisine !== 'all') {
-      filteredData = filteredData.filter((item) => {
-        const cuisine = item.cuisine?.toLowerCase() || '';
-        return cuisine.includes(filters.cuisine.toLowerCase());
-      });
+      filteredData = filteredData.filter(item =>
+        (item.cuisine?.toLowerCase() || '').includes(filters.cuisine.toLowerCase())
+      );
     }
-
     if (filters.rating !== 'all') {
-      filteredData = filteredData.filter((item) => {
+      filteredData = filteredData.filter(item => {
         const rating = item.rating || 0;
-        if (filters.rating === 'above4') return rating >= 4;
-        if (filters.rating === 'above3') return rating >= 3;
-        return true;
+        return filters.rating === 'above4' ? rating >= 4 :
+               filters.rating === 'above3' ? rating >= 3 : true;
       });
     }
-
-    return filteredData;
+    if (filters.keyword) {
+      const keywordLower = filters.keyword.toLowerCase();
+      filteredData = filteredData.filter(item =>
+        (item.name?.toLowerCase() || '').includes(keywordLower) ||
+        (item.description?.toLowerCase() || '').includes(keywordLower) ||
+        (item.cuisine?.toLowerCase() || '').includes(keywordLower)
+      );
+    }
+    return deduplicateData(filteredData);
   }, [filters]);
 
-  const fetchInitialData = useCallback(async () => {
+  const fetchInitialData = useCallback(() => {
     setLoading(true);
+    setError(null);
     try {
-      const [
-        allRestaurants,
-        hotRestaurantsData,
-        hotProductsData,
-        recommendedRestaurantsData,
-        partyRestaurantsData,
-        famousLocationsData,
-        seafoodRestaurantsData,
-        chineseRestaurantsData,
-        popularCuisinesData,
-        monthlyFavoritesData,
-        amenitiesRestaurantsData,
-        luxuryRestaurantsData,
-        trustedRestaurantsData,
-        touristRestaurantsData,
-        lunchSuggestionsData,
-        newOnDinerChillData,
-        newsAndBlogData,
-      ] = await Promise.all([
-        getAll(page.all, 20),
-        getHotRestaurants(page.hotRestaurants, 10),
-        getHotProducts(page.hotProducts, 10),
-        getRecommendedRestaurants(page.recommendedRestaurants, 10),
-        getPartyRestaurants(page.partyRestaurants, 10),
-        getFamousLocations(page.famousLocations, 10),
-        getSeafoodRestaurants(page.seafoodRestaurants, 10),
-        getChineseRestaurants(page.chineseRestaurants, 10),
-        getPopularCuisines(page.popularCuisines, 10),
-        getMonthlyFavorites(page.monthlyFavorites, 10),
-        getAmenitiesRestaurants(page.amenitiesRestaurants, 10),
-        getLuxuryRestaurants(page.luxuryRestaurants, 10),
-        getTrustedRestaurants(page.trustedRestaurants, 10),
-        getTouristRestaurants(page.touristRestaurants, 10),
-        getLunchSuggestions(page.lunchSuggestions, 10),
-        getNewOnDinerChill(page.newOnDinerChill, 10),
-        getNewsAndBlog(page.newsAndBlog, 10),
-      ]);
-
-      // Giả lập dữ liệu khu vực (thay bằng API thật nếu có)
       const mockLocations = [
         { LocationID: 1, LocationName: 'Hồ Chí Minh' },
         { LocationID: 2, LocationName: 'Hà Nội' },
@@ -261,85 +188,15 @@ export function AppProvider({ children }) {
       ];
       setLocations(mockLocations);
 
-      setOriginalData({
-        restaurants: normalizeData(allRestaurants),
-        hotRestaurants: normalizeData(hotRestaurantsData),
-        hotProducts: normalizeData(hotProductsData),
-        recommendedRestaurants: normalizeData(recommendedRestaurantsData),
-        partyRestaurants: normalizeData(partyRestaurantsData),
-        famousLocations: normalizeData(famousLocationsData),
-        seafoodRestaurants: normalizeData(seafoodRestaurantsData),
-        chineseRestaurants: normalizeData(chineseRestaurantsData),
-        popularCuisines: normalizeData(popularCuisinesData),
-        monthlyFavorites: normalizeData(monthlyFavoritesData),
-        amenitiesRestaurants: normalizeData(amenitiesRestaurantsData),
-        luxuryRestaurants: normalizeData(luxuryRestaurantsData),
-        trustedRestaurants: normalizeData(trustedRestaurantsData),
-        touristRestaurants: normalizeData(touristRestaurantsData),
-        lunchSuggestions: normalizeData(lunchSuggestionsData),
-        newOnDinerChill: normalizeData(newOnDinerChillData),
-        newsAndBlog: normalizeData(newsAndBlogData),
-      });
-
-      setRestaurants(normalizeData(allRestaurants));
-      setHotRestaurants(normalizeData(hotRestaurantsData));
-      setHotProducts(normalizeData(hotProductsData));
-      setRecommendedRestaurants(normalizeData(recommendedRestaurantsData));
-      setPartyRestaurants(normalizeData(partyRestaurantsData));
-      setFamousLocations(normalizeData(famousLocationsData));
-      setSeafoodRestaurants(normalizeData(seafoodRestaurantsData));
-      setChineseRestaurants(normalizeData(chineseRestaurantsData));
-      setPopularCuisines(normalizeData(popularCuisinesData));
-      setMonthlyFavorites(normalizeData(monthlyFavoritesData));
-      setAmenitiesRestaurants(normalizeData(amenitiesRestaurantsData));
-      setLuxuryRestaurants(normalizeData(luxuryRestaurantsData));
-      setTrustedRestaurants(normalizeData(trustedRestaurantsData));
-      setTouristRestaurants(normalizeData(touristRestaurantsData));
-      setLunchSuggestions(normalizeData(lunchSuggestionsData));
-      setNewOnDinerChill(normalizeData(newOnDinerChillData));
-      setNewsAndBlog(normalizeData(newsAndBlogData));
-      setLoading(false);
+      const normalizedData = normalizeData(mockdata);
+      setOriginalData(normalizedData);
+      setRestaurants(normalizedData);
     } catch (err) {
-      setError(err.message);
+      console.error('Fetch initial data error:', err);
+      setError('Không thể tải dữ liệu. Vui lòng thử lại sau.');
+    } finally {
       setLoading(false);
     }
-  }, [
-    page.all,
-    page.hotRestaurants,
-    page.hotProducts,
-    page.recommendedRestaurants,
-    page.partyRestaurants,
-    page.famousLocations,
-    page.seafoodRestaurants,
-    page.chineseRestaurants,
-    page.popularCuisines,
-    page.monthlyFavorites,
-    page.amenitiesRestaurants,
-    page.luxuryRestaurants,
-    page.trustedRestaurants,
-    page.touristRestaurants,
-    page.lunchSuggestions,
-    page.newOnDinerChill,
-    page.newsAndBlog,
-  ]);
-
-  // Lấy dữ liệu nhà hàng từ API và chuẩn hóa dữ liệu (từ nhánh develop)
-  useEffect(() => {
-    setLoading(true);
-    getAll()
-      .then(data => {
-        // Chuẩn hóa dữ liệu: đảm bảo tất cả nhà hàng đều có category
-        const normalizedData = data.map(restaurant => ({
-          ...restaurant,
-          category: restaurant.category || 'Khác',
-        }));
-        setRestaurants(normalizedData);
-        setLoading(false);
-      })
-      .catch(err => {
-        setError(err.message);
-        setLoading(false);
-      });
   }, []);
 
   useEffect(() => {
@@ -347,219 +204,72 @@ export function AppProvider({ children }) {
   }, [fetchInitialData]);
 
   useEffect(() => {
-    setRestaurants(applyFilters(originalData.restaurants));
-    setHotRestaurants(applyFilters(originalData.hotRestaurants));
-    setHotProducts(applyFilters(originalData.hotProducts));
-    setRecommendedRestaurants(applyFilters(originalData.recommendedRestaurants));
-    setPartyRestaurants(applyFilters(originalData.partyRestaurants));
-    setFamousLocations(applyFilters(originalData.famousLocations));
-    setSeafoodRestaurants(applyFilters(originalData.seafoodRestaurants));
-    setChineseRestaurants(applyFilters(originalData.chineseRestaurants));
-    setPopularCuisines(applyFilters(originalData.popularCuisines));
-    setMonthlyFavorites(applyFilters(originalData.monthlyFavorites));
-    setAmenitiesRestaurants(applyFilters(originalData.amenitiesRestaurants));
-    setLuxuryRestaurants(applyFilters(originalData.luxuryRestaurants));
-    setTrustedRestaurants(applyFilters(originalData.trustedRestaurants));
-    setTouristRestaurants(applyFilters(originalData.touristRestaurants));
-    setLunchSuggestions(applyFilters(originalData.lunchSuggestions));
-    setNewOnDinerChill(applyFilters(originalData.newOnDinerChill));
-    setNewsAndBlog(applyFilters(originalData.newsAndBlog));
-  }, [
-    filters,
-    applyFilters,
-    originalData.restaurants,
-    originalData.hotRestaurants,
-    originalData.hotProducts,
-    originalData.recommendedRestaurants,
-    originalData.partyRestaurants,
-    originalData.famousLocations,
-    originalData.seafoodRestaurants,
-    originalData.chineseRestaurants,
-    originalData.popularCuisines,
-    originalData.monthlyFavorites,
-    originalData.amenitiesRestaurants,
-    originalData.luxuryRestaurants,
-    originalData.trustedRestaurants,
-    originalData.touristRestaurants,
-    originalData.lunchSuggestions,
-    originalData.newOnDinerChill,
-    originalData.newsAndBlog,
-  ]);
+    setRestaurants(applyFilters(originalData));
+    setHotRestaurants(applyFilters(originalData.filter(r => r.category?.toLowerCase() === 'hotrestaurants')));
+    setHotProducts(applyFilters(originalData.filter(r => r.category?.toLowerCase() === 'hotproducts')));
+    setRecommendedRestaurants(applyFilters(originalData.filter(r => r.category?.toLowerCase() === 'recommendedrestaurants')));
+    setPartyRestaurants(applyFilters(originalData.filter(r => r.category?.toLowerCase() === 'partyrestaurants')));
+    setFamousLocations(applyFilters(originalData.filter(r => r.category?.toLowerCase() === 'famouslocations')));
+    setSeafoodRestaurants(applyFilters(originalData.filter(r => r.cuisine?.toLowerCase() === 'seafood')));
+    setChineseRestaurants(applyFilters(originalData.filter(r => r.cuisine?.toLowerCase() === 'chinese')));
+    setPopularCuisines(applyFilters(originalData.filter(r => r.cuisine?.toLowerCase() !== 'khác')));
+    setMonthlyFavorites(applyFilters(originalData.filter(r => r.category?.toLowerCase() === 'monthlyfavorites')));
+    setAmenitiesRestaurants(applyFilters(originalData.filter(r => r.category?.toLowerCase() === 'amenitiesrestaurants')));
+    setLuxuryRestaurants(applyFilters(originalData.filter(r => r.category?.toLowerCase() === 'luxuryrestaurants')));
+    setTrustedRestaurants(applyFilters(originalData.filter(r => r.category?.toLowerCase() === 'trustedrestaurants')));
+    setTouristRestaurants(applyFilters(originalData.filter(r => r.category?.toLowerCase() === 'touristrestaurants')));
+    setLunchSuggestions(applyFilters(originalData.filter(r => r.category?.toLowerCase() === 'lunchsuggestions')));
+    setNewOnDinerChill(applyFilters(originalData.filter(r => r.category?.toLowerCase() === 'newondinerchill')));
+    setNewsAndBlog(applyFilters(originalData.filter(r => r.category?.toLowerCase() === 'newsandblog')));
+  }, [filters, applyFilters, originalData]);
 
   const loadMore = async (category) => {
     setLoading(true);
+    setError(null);
     try {
       const nextPage = page[category] + 1;
-      let newData;
+      const pageSize = category === 'all' ? 20 : 10;
+      const newData = originalData
+        .filter(r => r.category?.toLowerCase() === category)
+        .slice((nextPage - 1) * pageSize, nextPage * pageSize);
 
-      switch (category) {
-        case 'all':
-          newData = await getAll(nextPage, 20);
-          setRestaurants((prev) => [...prev, ...normalizeData(newData)]);
-          setOriginalData((prev) => ({
-            ...prev,
-            restaurants: [...prev.restaurants, ...normalizeData(newData)],
-          }));
-          break;
-        case 'hotRestaurants':
-          newData = await getHotRestaurants(nextPage, 10);
-          setHotRestaurants((prev) => [...prev, ...normalizeData(newData)]);
-          setOriginalData((prev) => ({
-            ...prev,
-            hotRestaurants: [...prev.hotRestaurants, ...normalizeData(newData)],
-          }));
-          break;
-        case 'hotProducts':
-          newData = await getHotProducts(nextPage, 10);
-          setHotProducts((prev) => [...prev, ...normalizeData(newData)]);
-          setOriginalData((prev) => ({
-            ...prev,
-            hotProducts: [...prev.hotProducts, ...normalizeData(newData)],
-          }));
-          break;
-        case 'recommendedRestaurants':
-          newData = await getRecommendedRestaurants(nextPage, 10);
-          setRecommendedRestaurants((prev) => [...prev, ...normalizeData(newData)]);
-          setOriginalData((prev) => ({
-            ...prev,
-            recommendedRestaurants: [...prev.recommendedRestaurants, ...normalizeData(newData)],
-          }));
-          break;
-        case 'partyRestaurants':
-          newData = await getPartyRestaurants(nextPage, 10);
-          setPartyRestaurants((prev) => [...prev, ...normalizeData(newData)]);
-          setOriginalData((prev) => ({
-            ...prev,
-            partyRestaurants: [...prev.partyRestaurants, ...normalizeData(newData)],
-          }));
-          break;
-        case 'famousLocations':
-          newData = await getFamousLocations(nextPage, 10);
-          setFamousLocations((prev) => [...prev, ...normalizeData(newData)]);
-          setOriginalData((prev) => ({
-            ...prev,
-            famousLocations: [...prev.famousLocations, ...normalizeData(newData)],
-          }));
-          break;
-        case 'seafoodRestaurants':
-          newData = await getSeafoodRestaurants(nextPage, 10);
-          setSeafoodRestaurants((prev) => [...prev, ...normalizeData(newData)]);
-          setOriginalData((prev) => ({
-            ...prev,
-            seafoodRestaurants: [...prev.seafoodRestaurants, ...normalizeData(newData)],
-          }));
-          break;
-        case 'chineseRestaurants':
-          newData = await getChineseRestaurants(nextPage, 10);
-          setChineseRestaurants((prev) => [...prev, ...normalizeData(newData)]);
-          setOriginalData((prev) => ({
-            ...prev,
-            chineseRestaurants: [...prev.chineseRestaurants, ...normalizeData(newData)],
-          }));
-          break;
-        case 'popularCuisines':
-          newData = await getPopularCuisines(nextPage, 10);
-          setPopularCuisines((prev) => [...prev, ...normalizeData(newData)]);
-          setOriginalData((prev) => ({
-            ...prev,
-            popularCuisines: [...prev.popularCuisines, ...normalizeData(newData)],
-          }));
-          break;
-        case 'monthlyFavorites':
-          newData = await getMonthlyFavorites(nextPage, 10);
-          setMonthlyFavorites((prev) => [...prev, ...normalizeData(newData)]);
-          setOriginalData((prev) => ({
-            ...prev,
-            monthlyFavorites: [...prev.monthlyFavorites, ...normalizeData(newData)],
-          }));
-          break;
-        case 'amenitiesRestaurants':
-          newData = await getAmenitiesRestaurants(nextPage, 10);
-          setAmenitiesRestaurants((prev) => [...prev, ...normalizeData(newData)]);
-          setOriginalData((prev) => ({
-            ...prev,
-            amenitiesRestaurants: [...prev.amenitiesRestaurants, ...normalizeData(newData)],
-          }));
-          break;
-        case 'luxuryRestaurants':
-          newData = await getLuxuryRestaurants(nextPage, 10);
-          setLuxuryRestaurants((prev) => [...prev, ...normalizeData(newData)]);
-          setOriginalData((prev) => ({
-            ...prev,
-            luxuryRestaurants: [...prev.luxuryRestaurants, ...normalizeData(newData)],
-          }));
-          break;
-        case 'trustedRestaurants':
-          newData = await getTrustedRestaurants(nextPage, 10);
-          setTrustedRestaurants((prev) => [...prev, ...normalizeData(newData)]);
-          setOriginalData((prev) => ({
-            ...prev,
-            trustedRestaurants: [...prev.trustedRestaurants, ...normalizeData(newData)],
-          }));
-          break;
-        case 'touristRestaurants':
-          newData = await getTouristRestaurants(nextPage, 10);
-          setTouristRestaurants((prev) => [...prev, ...normalizeData(newData)]);
-          setOriginalData((prev) => ({
-            ...prev,
-            touristRestaurants: [...prev.touristRestaurants, ...normalizeData(newData)],
-          }));
-          break;
-        case 'lunchSuggestions':
-          newData = await getLunchSuggestions(nextPage, 10);
-          setLunchSuggestions((prev) => [...prev, ...normalizeData(newData)]);
-          setOriginalData((prev) => ({
-            ...prev,
-            lunchSuggestions: [...prev.lunchSuggestions, ...normalizeData(newData)],
-          }));
-          break;
-        case 'newOnDinerChill':
-          newData = await getNewOnDinerChill(nextPage, 10);
-          setNewOnDinerChill((prev) => [...prev, ...normalizeData(newData)]);
-          setOriginalData((prev) => ({
-            ...prev,
-            newOnDinerChill: [...prev.newOnDinerChill, ...normalizeData(newData)],
-          }));
-          break;
-        case 'newsAndBlog':
-          newData = await getNewsAndBlog(nextPage, 10);
-          setNewsAndBlog((prev) => [...prev, ...normalizeData(newData)]);
-          setOriginalData((prev) => ({
-            ...prev,
-            newsAndBlog: [...prev.newsAndBlog, ...normalizeData(newData)],
-          }));
-          break;
-        default:
-          break;
-      }
+      const updateState = {
+        all: () => setRestaurants(prev => deduplicateData([...prev, ...newData])),
+        hotRestaurants: () => setHotRestaurants(prev => deduplicateData([...prev, ...newData])),
+        hotProducts: () => setHotProducts(prev => deduplicateData([...prev, ...newData])),
+        recommendedRestaurants: () => setRecommendedRestaurants(prev => deduplicateData([...prev, ...newData])),
+        partyRestaurants: () => setPartyRestaurants(prev => deduplicateData([...prev, ...newData])),
+        famousLocations: () => setFamousLocations(prev => deduplicateData([...prev, ...newData])),
+        seafoodRestaurants: () => setSeafoodRestaurants(prev => deduplicateData([...prev, ...newData])),
+        chineseRestaurants: () => setChineseRestaurants(prev => deduplicateData([...prev, ...newData])),
+        popularCuisines: () => setPopularCuisines(prev => deduplicateData([...prev, ...newData])),
+        monthlyFavorites: () => setMonthlyFavorites(prev => deduplicateData([...prev, ...newData])),
+        amenitiesRestaurants: () => setAmenitiesRestaurants(prev => deduplicateData([...prev, ...newData])),
+        luxuryRestaurants: () => setLuxuryRestaurants(prev => deduplicateData([...prev, ...newData])),
+        trustedRestaurants: () => setTrustedRestaurants(prev => deduplicateData([...prev, ...newData])),
+        touristRestaurants: () => setTouristRestaurants(prev => deduplicateData([...prev, ...newData])),
+        lunchSuggestions: () => setLunchSuggestions(prev => deduplicateData([...prev, ...newData])),
+        newOnDinerChill: () => setNewOnDinerChill(prev => deduplicateData([...prev, ...newData])),
+        newsAndBlog: () => setNewsAndBlog(prev => deduplicateData([...prev, ...newData])),
+      }[category];
+      updateState();
 
-      setPage((prev) => ({ ...prev, [category]: nextPage }));
-      setLoading(false);
+      setPage(prev => ({ ...prev, [category]: nextPage }));
     } catch (err) {
-      setError(err.message);
+      console.error('Load more error:', err);
+      setError('Không thể tải thêm dữ liệu. Vui lòng thử lại sau.');
+    } finally {
       setLoading(false);
     }
   };
 
-  // Cập nhật thông tin người dùng
   const updateProfile = async (userData) => {
     try {
-      // Kiểm tra xem userData có phải FormData hay không
       const isFormData = userData instanceof FormData;
-      
-      // Log để debug
       console.log('updateProfile - userData:', isFormData ? 'FormData object' : userData);
-      
       const response = await authAPI.updateProfile(userData);
-      
-      // Log phản hồi
       console.log('updateProfile - response:', response);
-      
-      // Cập nhật thông tin người dùng trên client
-      if (response && response.user) {
-        setUser(response.user);
-      }
-      
+      if (response && response.user) setUser(response.user);
       return response;
     } catch (err) {
       console.error('Update profile error:', err);
@@ -567,44 +277,40 @@ export function AppProvider({ children }) {
     }
   };
 
-  // Đăng ký người dùng mới
   const register = async (userData) => {
     try {
-      setAuthLoading(true); // Bắt đầu quá trình xác thực
+      setAuthLoading(true);
       const response = await authAPI.register(userData);
-      // Only set user and token if the response doesn't require verification
       if (!response.requiresVerification) {
         localStorage.setItem('dinerchillToken', response.token);
         setUser(response.user);
       }
-      setAuthLoading(false); // Kết thúc quá trình xác thực
+      setAuthLoading(false);
       return response;
     } catch (err) {
-      setAuthLoading(false); // Kết thúc quá trình xác thực khi có lỗi
+      setAuthLoading(false);
       console.error('Register error:', err);
       throw err;
     }
   };
 
-  // Xác thực email
   const verifyEmail = async (email, code) => {
     try {
-      setAuthLoading(true); // Bắt đầu quá trình xác thực
+      setAuthLoading(true);
       const response = await authAPI.verifyEmail(email, code);
       if (response.token) {
         localStorage.setItem('dinerchillToken', response.token);
         setUser(response.user);
       }
-      setAuthLoading(false); // Kết thúc quá trình xác thực
+      setAuthLoading(false);
       return response;
     } catch (err) {
-      setAuthLoading(false); // Kết thúc quá trình xác thực khi có lỗi
+      setAuthLoading(false);
       console.error('Email verification error:', err);
       throw err;
     }
   };
 
-  // Gửi lại mã xác thực
   const resendVerification = async (email) => {
     try {
       return await authAPI.resendVerification(email);
@@ -614,52 +320,41 @@ export function AppProvider({ children }) {
     }
   };
 
-  // Google Login
   const googleLogin = async (tokenId) => {
     try {
-      setAuthLoading(true); // Bắt đầu quá trình xác thực
+      setAuthLoading(true);
       const response = await authAPI.googleLogin(tokenId);
-      
-      // Nếu tên người dùng từ Google có ký tự đặc biệt, sửa lại
       if (response.user && response.user.name) {
-        // Xử lý các trường hợp tên Google bị lỗi hiển thị (ví dụ: có ký tự UTF-8 không hiển thị được)
         if (response.user.name.includes('\\')) {
           response.user.name = response.user.displayName || response.user.email.split('@')[0] || 'Người dùng';
         }
       }
-      
       setUser(response.user);
-      // Lưu token vào localStorage
       localStorage.setItem('dinerchillToken', response.token);
-      setAuthLoading(false); // Kết thúc quá trình xác thực
+      setAuthLoading(false);
       return true;
     } catch (error) {
-      setAuthLoading(false); // Kết thúc quá trình xác thực khi có lỗi
+      setAuthLoading(false);
       console.error('Google login error:', error);
       throw error;
     }
   };
 
-  // Zalo Login
   const zaloLogin = async (tokenId) => {
     try {
-      setAuthLoading(true); // Bắt đầu quá trình xác thực
+      setAuthLoading(true);
       const response = await authAPI.zaloLogin(tokenId);
-      
       if (response.user && response.user.name) {
-        // Xử lý các trường hợp tên Zalo bị lỗi hiển thị
         if (response.user.name.includes('\\')) {
           response.user.name = response.user.displayName || response.user.email.split('@')[0] || 'Người dùng';
         }
       }
-      
       setUser(response.user);
-      // Lưu token vào localStorage
       localStorage.setItem('dinerchillToken', response.token);
-      setAuthLoading(false); // Kết thúc quá trình xác thực
+      setAuthLoading(false);
       return true;
     } catch (error) {
-      setAuthLoading(false); // Kết thúc quá trình xác thực khi có lỗi
+      setAuthLoading(false);
       console.error('Zalo login error:', error);
       throw error;
     }
@@ -667,15 +362,14 @@ export function AppProvider({ children }) {
 
   const login = async (userData) => {
     try {
-      setAuthLoading(true); // Bắt đầu quá trình xác thực
+      setAuthLoading(true);
       const response = await authAPI.login(userData);
       setUser(response.user);
-      // Lưu token vào localStorage
       localStorage.setItem('dinerchillToken', response.token);
-      setAuthLoading(false); // Kết thúc quá trình xác thực
+      setAuthLoading(false);
       return true;
     } catch (error) {
-      setAuthLoading(false); // Kết thúc quá trình xác thực khi có lỗi
+      setAuthLoading(false);
       console.error('Lỗi đăng nhập:', error);
       throw error;
     }
@@ -685,6 +379,24 @@ export function AppProvider({ children }) {
     setUser(null);
     localStorage.removeItem('dinerchillToken');
   };
+
+  const addReservationHistory = (reservation) => {
+    if (!user) return;
+    console.log('Lưu lịch sử đặt chỗ:', reservation);
+    setUser(prev => ({
+      ...prev,
+      reservationHistory: [...(prev.reservationHistory || []), reservation],
+    }));
+  };
+
+  const addReservation = async (reservationData) => {
+    console.log('Đặt bàn:', reservationData);
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    return { success: true, message: 'Đặt bàn thành công' };
+  };
+
+  // Lấy userName từ user (nếu có)
+  const userName = user ? user.name || user.displayName || user.email?.split('@')[0] || 'Người dùng' : null;
 
   return (
     <AppContext.Provider value={{
@@ -709,6 +421,7 @@ export function AppProvider({ children }) {
       error,
       user,
       authLoading,
+      userName, // Thêm userName vào context
       login,
       logout,
       recentlyViewed,
@@ -724,7 +437,10 @@ export function AppProvider({ children }) {
       resendVerification,
       googleLogin,
       zaloLogin,
-      updateProfile
+      updateProfile,
+      addReservation,
+      addReservationHistory,
+      mockdata,
     }}>
       {children}
     </AppContext.Provider>

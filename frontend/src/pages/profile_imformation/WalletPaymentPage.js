@@ -20,7 +20,7 @@ function WalletPaymentPage() {
     { id: 101, date: '2023-11-15', amount: 250000, type: 'payment', description: 'Thanh toán đặt bàn - Nhà hàng ABC', status: 'completed' },
     { id: 102, date: '2023-11-10', amount: 50000, type: 'deposit', description: 'Nạp tiền vào ví', status: 'completed' },
     { id: 103, date: '2023-11-05', amount: 180000, type: 'payment', description: 'Thanh toán đặt bàn - Nhà hàng XYZ', status: 'completed' },
-    { id: 104, date: '2023-10-28', amount: 200000, type: 'deposit', description: 'Nạp tiền vào ví', status: 'completed' },
+    { id: 104, date: '2023-10-28', amount: 200, type: 'deposit', description: 'Nạp tiền vào ví', status: 'completed' },
     { id: 105, date: '2023-10-20', amount: 150000, type: 'payment', description: 'Thanh toán đặt bàn - Nhà hàng DEF', status: 'completed' }
   ]);
   

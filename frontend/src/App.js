@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Outlet } from 'react-router-dom';
 import './App.css';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -36,15 +36,27 @@ import TestPaymentPage from './pages/TestPaymentPage';
 import PaymentResultPage from './pages/PaymentResultPage';
 import RestaurantOwnerDashboard from './pages/RestaurantOwnerDashboard';
 
-// Component để cuộn lên đầu trang khi chuyển route
+// Component để cuộn lên đầu trang
 function ScrollToTop() {
-  const { pathname } = useLocation();
-
-  useEffect(() => {
+  React.useEffect(() => {
     window.scrollTo(0, 0);
-  }, [pathname]);
+  }); // Loại bỏ dependency array
 
   return null;
+}
+
+// Layout cho ứng dụng (có Header và Footer)
+function AppLayout() {
+  return (
+    <div className="App">
+      <Header />
+      <main className="main-content">
+        <ScrollToTop />
+        <Outlet />
+      </main>
+      <Footer />
+    </div>
+  );
 }
 
 function App() {
@@ -52,6 +64,7 @@ function App() {
     <Router>
       <AppProvider>
         <TokenHandler />
+        <ScrollToTop /> {/* Đảm bảo cuộn lên đầu trang trên toàn bộ ứng dụng */}
         <Routes>
           {/* Admin Routes - không có Header/Footer */}
           <Route path="/admin/*" element={
@@ -76,59 +89,48 @@ function App() {
             </ProtectedRoute>
           } />
           
-          {/* Public and Protected Routes - có Header/Footer */}
-          <Route path="/*" element={
-            <div className="App">
-              <Header />
-              <main className="main-content">
-                <ScrollToTop />
-                <Routes>
-                  {/* Public Routes */}
-                  <Route path="/" element={<HomePage />} />
-                  <Route path="/restaurants" element={<RestaurantPage />} />
-
-                  <Route path="/nha-hang" element={<RestaurantPage />} />
-                  <Route path="/lau" element={<RestaurantPage />} />
-                  <Route path="/buffet" element={<RestaurantPage />} />
-                  <Route path="/hai-san" element={<RestaurantPage />} />
-                  <Route path="/lau-nuong" element={<RestaurantPage />} />
-                  <Route path="/quan-nhau" element={<RestaurantPage />} />
-                  <Route path="/mon-chay" element={<RestaurantPage />} />
-                  <Route path="/do-tiec" element={<RestaurantPage />} />
-                  <Route path="/han-quoc" element={<RestaurantPage />} />
-                  <Route path="/nhat-ban" element={<RestaurantPage />} />
-                  <Route path="/mon-viet" element={<RestaurantPage />} />
-                  <Route path="/mon-thai" element={<RestaurantPage />} />
-                  <Route path="/mon-trung-hoa" element={<RestaurantPage />} />
-                  <Route path="/tiec-cuoi" element={<RestaurantPage />} />
-                  <Route path="/do-uong" element={<RestaurantPage />} />
-
-                  <Route path="/restaurant/:id" element={<RestaurantDetailPage />} />
-                  <Route path="/login" element={<LoginPage />} />
-                  <Route path="/register" element={<RegisterPage />} />
-                  <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-                  <Route path="/reset-password" element={<ResetPasswordPage />} />
-                  <Route path="/vi-tri" element={<LocationPage />} />
-                  <Route path="/khuyen-mai" element={<PromoPage />} />
-                  <Route path="/huong-dan-dat-ban" element={<ReservationGuidePage />} />
-                  <Route path="/test-payment" element={<TestPaymentPage />} />
-                  <Route path="/payment-result" element={<PaymentResultPage />} />
-                  
-                  {/* Protected Routes */}
-                  <Route path="/reservation" element={<ProtectedRoute><ReservationPage /></ProtectedRoute>} />
-                  <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-                  <Route path="/my-reservations" element={<ProtectedRoute><MyReservationsPage /></ProtectedRoute>} />
-                  <Route path="/favorites" element={<ProtectedRoute><FavoritesPage /></ProtectedRoute>} />
-                  <Route path="/change-password" element={<ProtectedRoute><ChangePasswordPage /></ProtectedRoute>} />
-                  <Route path="/linked-accounts" element={<ProtectedRoute><WalletPaymentPage /></ProtectedRoute>} />
-                  
-                  {/* Route 404 */}
-                  <Route path="*" element={<div className="not-found">404 - Trang không tìm thấy</div>} />
-                </Routes>
-              </main>
-              <Footer />
-            </div>
-          } />
+          {/* Public and Protected Routes - sử dụng AppLayout */}
+          <Route path="/*" element={<AppLayout />}>
+            {/* Public Routes */}
+            <Route index element={<HomePage />} />
+            <Route path="restaurants" element={<RestaurantPage />} />
+            <Route path="nha-hang" element={<RestaurantPage />} />
+            <Route path="lau" element={<RestaurantPage />} />
+            <Route path="buffet" element={<RestaurantPage />} />
+            <Route path="hai-san" element={<RestaurantPage />} />
+            <Route path="lau-nuong" element={<RestaurantPage />} />
+            <Route path="quan-nhau" element={<RestaurantPage />} />
+            <Route path="mon-chay" element={<RestaurantPage />} />
+            <Route path="do-tiec" element={<RestaurantPage />} />
+            <Route path="han-quoc" element={<RestaurantPage />} />
+            <Route path="nhat-ban" element={<RestaurantPage />} />
+            <Route path="mon-viet" element={<RestaurantPage />} />
+            <Route path="mon-thai" element={<RestaurantPage />} />
+            <Route path="mon-trung-hoa" element={<RestaurantPage />} />
+            <Route path="tiec-cuoi" element={<RestaurantPage />} />
+            <Route path="do-uong" element={<RestaurantPage />} />
+            <Route path="restaurants/:id" element={<RestaurantDetailPage />} />
+            <Route path="login" element={<LoginPage />} />
+            <Route path="register" element={<RegisterPage />} />
+            <Route path="forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="reset-password" element={<ResetPasswordPage />} />
+            <Route path="vi-tri" element={<LocationPage />} />
+            <Route path="khuyen-mai" element={<PromoPage />} />
+            <Route path="huong-dan-dat-ban" element={<ReservationGuidePage />} />
+            <Route path="test-payment" element={<TestPaymentPage />} />
+            <Route path="payment-result" element={<PaymentResultPage />} />
+            
+            {/* Protected Routes */}
+            <Route path="reservation" element={<ProtectedRoute><ReservationPage /></ProtectedRoute>} />
+            <Route path="profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+            <Route path="my-reservations" element={<ProtectedRoute><MyReservationsPage /></ProtectedRoute>} />
+            <Route path="favorites" element={<ProtectedRoute><FavoritesPage /></ProtectedRoute>} />
+            <Route path="change-password" element={<ProtectedRoute><ChangePasswordPage /></ProtectedRoute>} />
+            <Route path="linked-accounts" element={<ProtectedRoute><WalletPaymentPage /></ProtectedRoute>} />
+            
+            {/* Route 404 */}
+            <Route path="*" element={<div className="not-found">404 - Trang không tìm thấy</div>} />
+          </Route>
         </Routes>
       </AppProvider>
     </Router>

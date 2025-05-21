@@ -1,1094 +1,34 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
 import SearchBar from '../components/SearchBar';
 import FilterBox from '../components/FilterBox';
 import RestaurantCard from '../components/RestaurantCard';
 import { useApp } from '../context/AppContext';
+import { restaurantAPI } from '../services/api';
+import { mockdata, useMockData } from '../components/mockData';
 import '../styles/HomePage.css';
 
-// Dữ liệu tĩnh từ nhánh develop (dùng làm fallback)
-const hotRestaurantsStatic = [
-  {
-    id: 1,
-    name: 'Ưu đãi nhà hàng Lẩu tại Tp.HCM',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Số điểm đến: 22',
-    offer: 'Được đặt xuất',
-    location: 'Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Lẩu',
-    rating: 4.5,
-    description: 'Nhà hàng lẩu ngon nhất khu vực',
-  },
-  {
-    id: 2,
-    name: 'Ưu đãi nhà hàng Việt Nam tại Tp.HCM',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Số điểm đến: 23',
-    offer: 'Được đặt xuất',
-    location: 'Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Việt Nam',
-    rating: 4.7,
-    description: 'Ẩm thực Việt Nam truyền thống',
-  },
-  {
-    id: 3,
-    name: 'Ưu đãi nhà hàng Chay tại Tp.HCM',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Số điểm đến: 8',
-    offer: 'Được đặt xuất',
-    location: 'Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Chay',
-    rating: 4.2,
-    description: 'Thực phẩm chay lành mạnh',
-  },
-  {
-    id: 4,
-    name: 'Khám phá danh sách Nhà hàng nổi bật',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Số điểm đến: 5',
-    offer: 'Được đặt xuất',
-    location: 'Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Đa dạng',
-    rating: 4.8,
-    description: 'Trải nghiệm ẩm thực độc đáo',
-  },
-  {
-    id: 5,
-    name: 'Nhà hàng BBQ tại Quận 1',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Số điểm đến: 15',
-    offer: 'Được đặt xuất',
-    location: 'Quận 1, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Nướng',
-    rating: 4.6,
-    description: 'BBQ phong cách Hàn Quốc',
-  },
-  {
-    id: 6,
-    name: 'Nhà hàng Hải sản tại Quận 7',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Số điểm đến: 10',
-    offer: 'Được đặt xuất',
-    location: 'Quận 7, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Hải sản',
-    rating: 4.9,
-    description: 'Hải sản tươi sống',
-  },
-];
-
-const hotProductsStatic = [
-  {
-    id: 1,
-    name: 'Giảm 20% Sushi Buffet T2-T6',
-    image: 'https://via.placeholder.com/300x200',
-    price: '249K',
-    discountPrice: '199K',
-    offer: 'Bán chạy',
-    location: 'Bối Yuhua - Taiwanese Hotpot',
-    validUntil: 'Hết 30/06/2025',
-    type: 'product',
-  },
-  {
-    id: 2,
-    name: 'T2 -> T6 GIẢM 15% món ăn',
-    image: 'https://via.placeholder.com/300x200',
-    price: '',
-    discountPrice: '',
-    offer: 'Bán chạy',
-    location: 'Bối Phú 79 - Phạm Ngọc Thạch',
-    validUntil: 'Chỉ áp dụng từ 10h00 - 15h00',
-    type: 'product',
-  },
-  {
-    id: 3,
-    name: 'Giảm 10% Buffet 648K Đã Gồm VAT',
-    image: 'https://via.placeholder.com/300x200',
-    price: '648K',
-    discountPrice: '',
-    offer: 'Bán chạy',
-    location: 'Bối D*Maris - An Phú',
-    validUntil: 'Hết 09/03/2025',
-    type: 'product',
-  },
-  {
-    id: 4,
-    name: 'T7 & Chủ nhật GIẢM 15% món ăn',
-    image: 'https://via.placeholder.com/300x200',
-    price: '',
-    discountPrice: '',
-    offer: 'Bán chạy',
-    location: 'Bối Phú 79 - 120 Sương Nguyệt Ánh',
-    validUntil: 'Áp dụng cả ngày từ 9h30 - 23h30',
-    type: 'product',
-  },
-  {
-    id: 5,
-    name: 'Giảm 25% Buffet Lẩu T2-T5',
-    image: 'https://via.placeholder.com/300x200',
-    price: '300K',
-    discountPrice: '225K',
-    offer: 'Bán chạy',
-    location: 'Lẩu King - Quận 3',
-    validUntil: 'Hết 31/12/2025',
-    type: 'product',
-  },
-  {
-    id: 6,
-    name: 'Giảm 10% Set Menu Gia Đình',
-    image: 'https://via.placeholder.com/300x200',
-    price: '500K',
-    discountPrice: '450K',
-    offer: 'Bán chạy',
-    location: 'Family Resto - Quận 1',
-    validUntil: 'Hết 15/11/2025',
-    type: 'product',
-  },
-];
-
-const recommendedRestaurantsStatic = [
-  {
-    id: 5,
-    name: 'Phố 79 - Phạm Ngọc Thạch',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Giảm 15%',
-    offer: 'Được đề xuất',
-    location: '120 Sương Nguyệt Ánh, Q.1, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Hải sản',
-    rating: 4.6,
-    description: 'Đặt bàn giảm giá',
-  },
-  {
-    id: 6,
-    name: 'Dìn Ký Cửu Long Xanh - Trân Văn Trà',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Đặt bàn giảm giá',
-    offer: 'Được đề xuất',
-    location: 'Quận 7, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Việt Nam',
-    rating: 4.8,
-    description: 'Ẩm thực Việt Nam đa dạng',
-  },
-  {
-    id: 7,
-    name: 'MATSURI Japanese Restaurant',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Giảm 20%',
-    offer: 'Được đề xuất',
-    location: 'Nguyễn Huệ, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Nhật Bản',
-    rating: 4.7,
-    description: 'Sushi và sashimi tươi ngon',
-  },
-  {
-    id: 8,
-    name: 'Tâm Rượu - Nướng Phường',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Giảm 10%',
-    offer: 'Được đề xuất',
-    location: 'Quận 1, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Nướng',
-    rating: 4.5,
-    description: 'Nướng và nhậu phong cách',
-  },
-  {
-    id: 9,
-    name: 'Lẩu Nấm Ashima - Lê Lợi',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Giảm 15%',
-    offer: 'Được đề xuất',
-    location: 'Quận 1, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Lẩu',
-    rating: 4.7,
-    description: 'Lẩu nấm tự nhiên',
-  },
-  {
-    id: 10,
-    name: 'The Pizza Company - Quận 3',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Đặt bàn giảm giá',
-    offer: 'Được đề xuất',
-    location: 'Quận 3, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Pizza',
-    rating: 4.4,
-    description: 'Pizza phong cách Ý',
-  },
-];
-
-const partyRestaurantsStatic = [
-  {
-    id: 9,
-    name: 'Nhà hàng đặt tiệc công ty dưới 20 người tại HCM',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Có phòng riêng, khu riêng',
-    offer: '',
-    location: 'Quận 1, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Đa dạng',
-    rating: 4.9,
-    description: 'Thích hợp cho tiệc công ty, sân khấu hiện đại',
-  },
-  {
-    id: 10,
-    name: 'Top nhà hàng tiệc sinh nhật phù hợp',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Trang trí sinh nhật cao cấp',
-    offer: '',
-    location: 'Quận 3, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Việt Nam',
-    rating: 4.6,
-    description: 'Không gian ấm cúng, tiệc sinh nhật lý tưởng',
-  },
-  {
-    id: 11,
-    name: 'Nhà hàng đặt tiệc công ty từ 20-50 người',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Có phòng riêng, sân khấu',
-    offer: '',
-    location: 'Quận 7, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Hải sản',
-    rating: 4.8,
-    description: 'Tiệc công ty quy mô lớn',
-  },
-  {
-    id: 12,
-    name: 'Nhà hàng tiệc cưới tại Quận 1',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Trang trí cao cấp',
-    offer: '',
-    location: 'Quận 1, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Đa dạng',
-    rating: 4.7,
-    description: 'Không gian sang trọng cho tiệc cưới',
-  },
-  {
-    id: 13,
-    name: 'Nhà hàng tiệc gia đình tại Quận 7',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Có khu vui chơi trẻ em',
-    offer: '',
-    location: 'Quận 7, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Việt Nam',
-    rating: 4.5,
-    description: 'Thích hợp cho gia đình',
-  },
-  {
-    id: 14,
-    name: 'Nhà hàng tiệc họp lớp tại Quận 3',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Có phòng riêng',
-    offer: '',
-    location: 'Quận 3, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Đa dạng',
-    rating: 4.6,
-    description: 'Không gian thân mật cho họp lớp',
-  },
-];
-
-const famousLocationsStatic = [
-  {
-    id: 12,
-    name: 'Danh sách nhà hàng, quán ăn ở HAI BÀ TRƯNG',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Số điểm đến: 3',
-    offer: '',
-    location: 'Quận 1, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Đa dạng',
-    rating: 4.5,
-    description: 'Ẩm thực phong phú tại Hai Bà Trưng',
-  },
-  {
-    id: 13,
-    name: 'Top nhà hàng, quán ăn ở BÀU CÁT',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Số điểm đến: 9',
-    offer: '',
-    location: 'Tân Bình, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Việt Nam',
-    rating: 4.7,
-    description: 'Trải nghiệm ẩm thực tại Bàu Cát',
-  },
-  {
-    id: 14,
-    name: 'Top nhà hàng, quán ăn ở GIGA MALL',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Số điểm đến: 3',
-    offer: '',
-    location: 'Thủ Đức, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Đa dạng',
-    rating: 4.6,
-    description: 'Ẩm thực đa dạng tại Giga Mall',
-  },
-  {
-    id: 15,
-    name: 'Top nhà hàng, quán ăn ở PHÚ MỸ HƯNG',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Số điểm đến: 5',
-    offer: '',
-    location: 'Quận 7, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Hải sản',
-    rating: 4.8,
-    description: 'Nhà hàng nổi tiếng tại Phú Mỹ Hưng',
-  },
-  {
-    id: 16,
-    name: 'Top nhà hàng, quán ăn ở NGUYỄN HUỆ',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Số điểm đến: 7',
-    offer: '',
-    location: 'Quận 1, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Đa dạng',
-    rating: 4.7,
-    description: 'Ẩm thực sôi động tại Nguyễn Huệ',
-  },
-  {
-    id: 17,
-    name: 'Top nhà hàng, quán ăn ở TÂN BÌNH',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Số điểm đến: 6',
-    offer: '',
-    location: 'Tân Bình, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Việt Nam',
-    rating: 4.5,
-    description: 'Ẩm thực đa dạng tại Tân Bình',
-  },
-];
-
-const seafoodRestaurantsStatic = [
-  {
-    id: 16,
-    name: 'Dìn Ký Cửu Long Xanh - Trân Văn Trà',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Đặt bàn giảm giá',
-    offer: 'Được đề xuất',
-    location: 'Quận 7, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Hải sản',
-    rating: 4.8,
-    description: 'Hải sản tươi sống, đặt bàn giảm giá',
-  },
-  {
-    id: 17,
-    name: 'Mọ Mẹ Ốc - Cách Mạng Tháng 8',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Đặt bàn giảm giá',
-    offer: 'Được đề xuất',
-    location: 'Quận 3, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Hải sản',
-    rating: 4.5,
-    description: 'Ốc và hải sản đa dạng',
-  },
-  {
-    id: 18,
-    name: 'Ngọc Sương Sài Gòn - Sương Nguyệt Ánh',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Giảm 5%',
-    offer: 'Được đề xuất',
-    location: 'Quận 1, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Hải sản',
-    rating: 4.7,
-    description: 'Hải sản cao cấp, không gian sang trọng',
-  },
-  {
-    id: 19,
-    name: 'Bonjour Resto - Nguyễn Trãi',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Đặt bàn giảm giá',
-    offer: 'Được đề xuất',
-    location: 'Quận 5, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Hải sản',
-    rating: 4.6,
-    description: 'Hải sản tươi ngon, phong cách Pháp',
-  },
-  {
-    id: 20,
-    name: 'Hải Sản Hoàng Gia - Quận 1',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Giảm 10%',
-    offer: 'Được đề xuất',
-    location: 'Quận 1, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Hải sản',
-    rating: 4.8,
-    description: 'Hải sản cao cấp, không gian hiện đại',
-  },
-  {
-    id: 21,
-    name: 'Ốc Hương - Quận 4',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Đặt bàn giảm giá',
-    offer: 'Được đề xuất',
-    location: 'Quận 4, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Hải sản',
-    rating: 4.4,
-    description: 'Ốc tươi ngon, giá bình dân',
-  },
-];
-
-const chineseRestaurantsStatic = [
-  {
-    id: 20,
-    name: 'Tung Garden - Tôn Thất Tùng',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Đặt bàn giảm giá',
-    offer: 'Được đề xuất',
-    location: 'Quận 1, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Trung Hoa',
-    rating: 4.7,
-    description: 'Dimsum và món Trung truyền thống',
-  },
-  {
-    id: 21,
-    name: 'Tân Hải Vân - Nguyễn Đình Chiểu',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Giảm 10%',
-    offer: 'Được đề xuất',
-    location: 'Quận 3, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Trung Hoa',
-    rating: 4.8,
-    description: 'Ẩm thực Trung Hoa cao cấp',
-  },
-  {
-    id: 22,
-    name: 'Saigon 3 - Tứ Xương',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Đặt bàn giảm giá',
-    offer: 'Được đề xuất',
-    location: 'Quận 7, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Trung Hoa',
-    rating: 4.6,
-    description: 'Món Trung đa dạng, giá hợp lý',
-  },
-  {
-    id: 23,
-    name: 'Long Wang - Minh Khai',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Đặt bàn giảm giá',
-    offer: 'Được đề xuất',
-    location: 'Quận 1, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Trung Hoa',
-    rating: 4.9,
-    description: 'Há cảo và sủi cảo thơm ngon',
-  },
-  {
-    id: 24,
-    name: 'Dimsum House - Quận 5',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Giảm 15%',
-    offer: 'Được đề xuất',
-    location: 'Quận 5, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Trung Hoa',
-    rating: 4.7,
-    description: 'Dimsum tươi ngon, giá hợp lý',
-  },
-  {
-    id: 25,
-    name: 'Peking Duck - Quận 1',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Đặt bàn giảm giá',
-    offer: 'Được đề xuất',
-    location: 'Quận 1, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Trung Hoa',
-    rating: 4.8,
-    description: 'Vịt quay Bắc Kinh chuẩn vị',
-  },
-];
-
-const popularCuisinesStatic = [
-  {
-    id: 24,
-    name: 'Buffet Nướng Ngon ở Tp.HCM',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Số điểm đến: 30',
-    offer: '',
-    location: 'Quận 7, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Nướng',
-    rating: 4.7,
-    description: 'Buffet nướng đa dạng, giá hợp lý',
-  },
-  {
-    id: 25,
-    name: 'Tổng Hợp Danh Sách Nhà Hàng Món Âu',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Số điểm đến: 158',
-    offer: '',
-    location: 'Quận 1, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Châu Âu',
-    rating: 4.8,
-    description: 'Ẩm thực Âu sang trọng',
-  },
-  {
-    id: 26,
-    name: 'Top Nhà Hàng Trung Hoa Ngon ở Tp.HCM',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Số điểm đến: 24',
-    offer: '',
-    location: 'Quận 3, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Trung Hoa',
-    rating: 4.6,
-    description: 'Món Trung hấp dẫn',
-  },
-  {
-    id: 27,
-    name: 'Danh Sách Nhà Hàng Quốc Ngon ở Tp.HCM',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Số điểm đến: 15',
-    offer: '',
-    location: 'Quận 5, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Quốc tế',
-    rating: '4.9',
-    description: 'Ẩm thực quốc tế đa dạng',
-  },
-  {
-    id: 28,
-    name: 'Top Nhà Hàng Nhật Bản tại Tp.HCM',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Số điểm đến: 20',
-    offer: '',
-    location: 'Quận 1, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Nhật Bản',
-    rating: 4.7,
-    description: 'Sushi và sashimi tươi ngon',
-  },
-  {
-    id: 29,
-    name: 'Danh Sách Nhà Hàng Hàn Quốc tại Tp.HCM',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Số điểm đến: 18',
-    offer: '',
-    location: 'Quận 7, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Hàn Quốc',
-    rating: 4.6,
-    description: 'Ẩm thực Hàn Quốc đậm đà',
-  },
-];
-
-const monthlyFavoritesStatic = [
-  {
-    id: 30,
-    name: 'Đình Ký Cửu Long Xanh - Trần Văn Trà',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Đặt bàn giảm giá',
-    offer: '',
-    location: 'Quận 7, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Hải sản',
-    rating: 4.8,
-    description: 'Hải sản tươi sống, đặt bàn giảm giá',
-  },
-  {
-    id: 31,
-    name: 'MATSURI Japanese Restaurant - Nguyễn Huệ',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Giảm 20%',
-    offer: '',
-    location: 'Quận 1, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Nhật Bản',
-    rating: 4.7,
-    description: 'Sushi và sashimi tươi ngon',
-  },
-  {
-    id: 32,
-    name: 'Phố 79 - 120 Sương Nguyệt Ánh',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Giảm 15%',
-    offer: '',
-    location: 'Quận 1, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Hải sản',
-    rating: 4.6,
-    description: 'Đặt bàn giảm giá',
-  },
-  {
-    id: 33,
-    name: 'Phố 79 - Phạm Ngọc Thạch',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Giảm 15%',
-    offer: '',
-    location: 'Quận 1, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Hải sản',
-    rating: 4.7,
-    description: 'Đặt bàn giảm giá',
-  },
-  {
-    id: 34,
-    name: 'Gyu Shige Ngố - Nguyễn Thị Minh Khai',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Đặt bàn giảm giá',
-    offer: '',
-    location: 'Quận 1, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Nhật Bản',
-    rating: 4.8,
-    description: 'Thịt nướng phong cách Nhật',
-  },
-];
-
-const amenitiesRestaurantsStatic = [
-  {
-    id: 35,
-    name: 'Top nhà hàng có karaoke phù hợp tổ chức tiệc liên hoan tại Tp.HCM',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Số điểm đến: 12',
-    offer: '',
-    location: 'Tp.HCM',
-    type: 'amenity',
-    cuisine: 'Đa dạng',
-    rating: 4.5,
-    description: 'Thích hợp cho tiệc liên hoan',
-  },
-  {
-    id: 36,
-    name: 'Nhà hàng có PHÒNG RIÊNG tại Tp.HCM',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Số điểm đến: 139',
-    offer: '',
-    location: 'Tp.HCM',
-    type: 'amenity',
-    cuisine: 'Đa dạng',
-    rating: 4.6,
-    description: 'Không gian riêng tư',
-  },
-  {
-    id: 37,
-    name: 'Top nhà hàng xuất hóa đơn VAT tại Tp.HCM',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Số điểm đến: 24',
-    offer: '',
-    location: 'Tp.HCM',
-    type: 'amenity',
-    cuisine: 'Đa dạng',
-    rating: 4.7,
-    description: 'Hỗ trợ xuất hóa đơn VAT',
-  },
-  {
-    id: 38,
-    name: 'Top nhà hàng phục vụ trẻ em tại Tp.HCM',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Số điểm đến: 26',
-    offer: '',
-    location: 'Tp.HCM',
-    type: 'amenity',
-    cuisine: 'Đa dạng',
-    rating: 4.5,
-    description: 'Không gian thân thiện với trẻ em',
-  },
-  {
-    id: 39,
-    name: 'Top nhà hàng cho trẻ em tại Tp.HCM',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Số điểm đến: 10',
-    offer: '',
-    location: 'Tp.HCM',
-    type: 'amenity',
-    cuisine: 'Đa dạng',
-    rating: 4.6,
-    description: 'Có khu vui chơi cho trẻ em',
-  },
-];
-
-const luxuryRestaurantsStatic = [
-  {
-    id: 40,
-    name: 'Katana Wagyu Kappo - Mai Thị Lựu',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Đặt bàn giảm giá',
-    offer: '',
-    location: 'Quận 1, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Nhật Bản',
-    rating: 4.9,
-    description: 'Ẩm thực Nhật Bản cao cấp',
-  },
-  {
-    id: 41,
-    name: 'Fashionista Café - Fashion & Cuisine - Phùng Khắc Khoan',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Đặt bàn giảm giá',
-    offer: '',
-    location: 'Quận 1, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Châu Âu',
-    rating: 4.8,
-    description: 'Không gian sang trọng, phong cách châu Âu',
-  },
-  {
-    id: 42,
-    name: 'Lux 68 Restaurant - Nguyễn Đình Chiểu',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Đặt bàn giảm giá',
-    offer: '',
-    location: 'Quận 3, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Đa dạng',
-    rating: 4.7,
-    description: 'Nhà hàng cao cấp, không gian hiện đại',
-  },
-  {
-    id: 43,
-    name: 'Twilight SKY Bar - Lý Tự Trọng',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Đặt bàn giảm giá',
-    offer: '',
-    location: 'Quận 1, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Đa dạng',
-    rating: 4.8,
-    description: 'Không gian rooftop, view đẹp',
-  },
-  {
-    id: 44,
-    name: 'Cloud Nine Restaurant - Lý Tự Trọng',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Đặt bàn giảm giá',
-    offer: '',
-    location: 'Quận 1, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Châu Âu',
-    rating: 4.7,
-    description: 'Ẩm thực châu Âu, không gian sang trọng',
-  },
-];
-
-const trustedRestaurantsStatic = [
-  {
-    id: 45,
-    name: 'Bếp Thái Koh Yam - Bà Huyện Thanh Quan',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Giảm 10%',
-    offer: '',
-    location: 'Quận 3, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Thái Lan',
-    rating: 4.6,
-    description: 'Ẩm thực Thái Lan chính gốc',
-  },
-  {
-    id: 46,
-    name: 'Le Monde Steak - Cao Thắng',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Ưu đãi hấp dẫn',
-    offer: '',
-    location: 'Quận 3, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Châu Âu',
-    rating: 4.7,
-    description: 'Steak phong cách Pháp',
-  },
-  {
-    id: 47,
-    name: 'Thai Market - Cao Thắng',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Giảm tối 20%',
-    offer: '',
-    location: 'Quận 3, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Thái Lan',
-    rating: 4.6,
-    description: 'Ẩm thực Thái Lan đa dạng',
-  },
-  {
-    id: 48,
-    name: 'Khoái - Lê Quý Đôn',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Giảm 10%',
-    offer: '',
-    location: 'Quận 3, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Việt Nam',
-    rating: 4.5,
-    description: 'Ẩm thực Việt Nam truyền thống',
-  },
-  {
-    id: 49,
-    name: 'Kobe Teppan Xuong',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Giảm 10%',
-    offer: '',
-    location: 'Quận 1, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Nhật Bản',
-    rating: 4.8,
-    description: 'Teppan phong cách Nhật',
-  },
-];
-
-const touristRestaurantsStatic = [
-  {
-    id: 50,
-    name: 'Ốc Bạc - Nguyễn Thượng Hiền',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Đặt bàn giảm giá',
-    offer: '',
-    location: 'Quận 3, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Hải sản',
-    rating: 4.5,
-    description: 'Ốc tươi ngon, đặc sản Sài Gòn',
-  },
-  {
-    id: 51,
-    name: 'Quán Bún Mắm - Lẩu Mắm Di Sâu - Tôn Thất Tùng',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Đặt bàn giảm giá',
-    offer: '',
-    location: 'Quận 7, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Việt Nam',
-    rating: 4.6,
-    description: 'Bún mắm, lẩu mắm đậm đà',
-  },
-  {
-    id: 52,
-    name: 'Cơm Tấm Thưởng Thức - Tôn Thất Tùng',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Đặt bàn giảm giá',
-    offer: '',
-    location: 'Quận 7, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Việt Nam',
-    rating: 4.5,
-    description: 'Cơm tấm chuẩn vị Sài Gòn',
-  },
-  {
-    id: 53,
-    name: 'Bò Tơ Quán Mộc - Nguyễn Thị Minh Khai',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Đặt bàn giảm giá',
-    offer: '',
-    location: 'Quận 1, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Việt Nam',
-    rating: 4.7,
-    description: 'Bò tơ nướng thơm ngon',
-  },
-  {
-    id: 54,
-    name: 'Ốc Chỉ Em - Quốc Tế',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Giảm 10%',
-    offer: '',
-    location: 'Quận 3, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Hải sản',
-    rating: 4.6,
-    description: 'Ốc tươi ngon, giá bình dân',
-  },
-];
-
-const lunchSuggestionsStatic = [
-  {
-    id: 55,
-    name: 'Sushi Buffet Chay TRƯA T2 - T6',
-    image: 'https://via.placeholder.com/300x200',
-    price: '250K',
-    discountPrice: '',
-    offer: '',
-    location: 'Quận 1, Tp.HCM',
-    validUntil: '11h00 - 14h00',
-    type: 'product',
-    description: 'Sushi buffet chay ngon miệng',
-  },
-  {
-    id: 56,
-    name: 'Sushi Buffet Trưa T2-T6, Giá 295K',
-    image: 'https://via.placeholder.com/300x200',
-    price: '295K',
-    discountPrice: '',
-    offer: '',
-    location: 'Quận 1, Tp.HCM',
-    validUntil: 'Hạn sử dụng: Bắc, Trung, Nam',
-    type: 'product',
-    description: 'Sushi buffet trưa giá hợp lý',
-  },
-  {
-    id: 57,
-    name: 'Sushi Buffet Trưa T2-T6 Trưa T7-CN, Giá 431K',
-    image: 'https://via.placeholder.com/300x200',
-    price: '431K',
-    discountPrice: '',
-    offer: '',
-    location: 'Quận 1, Tp.HCM',
-    validUntil: 'Hạn sử dụng: Bắc, Trung, Nam',
-    type: 'product',
-    description: 'Buffet sushi cao cấp',
-  },
-  {
-    id: 58,
-    name: 'Sushi Buffet Trưa Ngậy Ăn Chay & Lề Tế, Giá 239K - Cơ Hội Kết Bạn Sẻn',
-    image: 'https://via.placeholder.com/300x200',
-    price: '239K',
-    discountPrice: '',
-    offer: '',
-    location: 'Quận 1, Tp.HCM',
-    validUntil: '29/4, vui vẻ, thân thiện 1, 14, 15, 30 AL',
-    type: 'product',
-    description: 'Buffet sushi chay thân thiện',
-  },
-  {
-    id: 59,
-    name: 'Sushi Buffet Cơ Hội Kết Bạn Sẻn - Khách Sẵn',
-    image: 'https://via.placeholder.com/300x200',
-    price: '295K',
-    discountPrice: '',
-    offer: '',
-    location: 'Quận 1, Tp.HCM',
-    validUntil: 'Hạn sử dụng: Bắc, Trung, Nam',
-    type: 'product',
-    description: 'Buffet sushi ngon, giá hợp lý',
-  },
-];
-
-const newOnDinerChillStatic = [
-  {
-    id: 60,
-    name: 'Katana Wagyu Kappo - Mai Thị Lựu',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Đặt bàn giảm giá',
-    offer: '',
-    location: 'Quận 1, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Nhật Bản',
-    rating: 4.9,
-    description: 'Ẩm thực Nhật Bản cao cấp',
-  },
-  {
-    id: 61,
-    name: 'Fashionista Café - Fashion & Cuisine - Phùng Khắc Khoan',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Đặt bàn giảm giá',
-    offer: '',
-    location: 'Quận 1, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Châu Âu',
-    rating: 4.8,
-    description: 'Không gian sang trọng, phong cách châu Âu',
-  },
-  {
-    id: 62,
-    name: 'Lux 68 Restaurant - Nguyễn Đình Chiểu',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Đặt bàn giảm giá',
-    offer: '',
-    location: 'Quận 3, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Đa dạng',
-    rating: 4.7,
-    description: 'Nhà hàng cao cấp, không gian hiện đại',
-  },
-  {
-    id: 63,
-    name: 'Coco Grill Saigon - Nam Kỳ Khởi Nghĩa',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Đặt bàn giảm giá',
-    offer: '',
-    location: 'Quận 1, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Đa dạng',
-    rating: 4.8,
-    description: 'Thịt nướng phong cách hiện đại',
-  },
-  {
-    id: 64,
-    name: 'Phố Di Băng Số - Nguyễn Đình Chiểu',
-    image: 'https://via.placeholder.com/300x200',
-    discount: 'Đặt bàn giảm giá',
-    offer: '',
-    location: 'Quận 3, Tp.HCM',
-    type: 'restaurant',
-    cuisine: 'Hải sản',
-    rating: 4.7,
-    description: 'Hải sản tươi ngon, không gian hiện đại',
-  },
-];
-
-const newsAndBlogStatic = [
-  {
-    id: 65,
-    name: 'CÁCH TỔ CHỨC TIỆC SINH NHẬT ĐƠN GIẢN NHẤT chỉ với 5 BƯỚC',
-    image: 'https://via.placeholder.com/300x200',
-    date: '00:00 07/04/2025',
-    type: 'blog',
-    description: 'DinerChill tuyen gap NHA Vien Ke toan Nơi BỐ, 1 năm kinh nghiệm nghiem',
-  },
-  {
-    id: 66,
-    name: '15 cách làm gỏi gà ngon từ DỄ ĐẾN MIỆNG không bị ngậy',
-    image: 'https://via.placeholder.com/300x200',
-    date: '00:00 05/02/2024',
-    type: 'blog',
-    description: '20+ món ngon dễ làm từ gỏi gà thơm ngon, hấp dẫn tại nhà',
-  },
-  {
-    id: 67,
-    name: '2 cách làm ruốc thịt heo ngon MÀY XANH',
-    image: 'https://via.placeholder.com/300x200',
-    date: '00:00 05/12/2023',
-    type: 'blog',
-    description: 'Cách làm ruốc thịt heo thơm ngon, đơn giản tại nhà',
-  },
-  {
-    id: 68,
-    name: 'TOP 4 cách nấu canh mọc vừa ngon vừa bổ dưỡng cực đơn giản tại nhà',
-    image: 'https://via.placeholder.com/300x200',
-    date: '00:00 07/02/2024',
-    type: 'blog',
-    description: 'Hướng dẫn nấu canh mọc thơm ngon, bổ dưỡng cho gia đình',
-  },
-  {
-    id: 69,
-    name: 'Cách làm tôm rang thịt ba chỉ CHẢY vị ngọt cả nhà T',
-    image: 'https://via.placeholder.com/300x200',
-    date: '00:00 27/09/2023',
-    type: 'blog',
-    description: 'Cách làm tôm rang thịt ba chỉ thơm ngon, đậm đà',
-  },
-];
-
 function HomePage() {
+  const navigate = useNavigate(); // Giữ lại navigate
+  const [showPasswordBanner, setShowPasswordBanner] = useState(true);
+  const [filters, setFilters] = useState({
+    area: '',
+    priceRange: '',
+    mainDish: '',
+    occasion: '',
+    promotion: '',
+    privateRoom: '',
+    dailyMeal: '',
+    companyEvent: '',
+    privateArea: '',
+    familyEvent: '',
+    serviceStyle: '',
+    cuisineStyle: '',
+  });
+
   const {
     hotRestaurants,
     hotProducts,
-    recommendedRestaurants,
     partyRestaurants,
     famousLocations,
     seafoodRestaurants,
@@ -1106,52 +46,161 @@ function HomePage() {
     clearRecentlyViewed,
     loading,
     error,
-    loadMore,
   } = useApp();
 
-  // Sử dụng dữ liệu từ context, nếu không có thì dùng dữ liệu tĩnh làm fallback
-  const hotRestaurantsData = hotRestaurants.length > 0 ? hotRestaurants : hotRestaurantsStatic;
-  const hotProductsData = hotProducts.length > 0 ? hotProducts : hotProductsStatic;
-  const recommendedRestaurantsData = recommendedRestaurants.length > 0 ? recommendedRestaurants : recommendedRestaurantsStatic;
-  const partyRestaurantsData = partyRestaurants.length > 0 ? partyRestaurants : partyRestaurantsStatic;
-  const famousLocationsData = famousLocations.length > 0 ? famousLocations : famousLocationsStatic;
-  const seafoodRestaurantsData = seafoodRestaurants.length > 0 ? seafoodRestaurants : seafoodRestaurantsStatic;
-  const chineseRestaurantsData = chineseRestaurants.length > 0 ? chineseRestaurants : chineseRestaurantsStatic;
-  const popularCuisinesData = popularCuisines.length > 0 ? popularCuisines : popularCuisinesStatic;
-  const monthlyFavoritesData = monthlyFavorites.length > 0 ? monthlyFavorites : monthlyFavoritesStatic;
-  const amenitiesRestaurantsData = amenitiesRestaurants.length > 0 ? amenitiesRestaurants : amenitiesRestaurantsStatic;
-  const luxuryRestaurantsData = luxuryRestaurants.length > 0 ? luxuryRestaurants : luxuryRestaurantsStatic;
-  const trustedRestaurantsData = trustedRestaurants.length > 0 ? trustedRestaurants : trustedRestaurantsStatic;
-  const touristRestaurantsData = touristRestaurants.length > 0 ? touristRestaurants : touristRestaurantsStatic;
-  const lunchSuggestionsData = lunchSuggestions.length > 0 ? lunchSuggestions : lunchSuggestionsStatic;
-  const newOnDinerChillData = newOnDinerChill.length > 0 ? newOnDinerChill : newOnDinerChillStatic;
-  const newsAndBlogData = newsAndBlog.length > 0 ? newsAndBlog : newsAndBlogStatic;
+  const filterRef = useRef(null);
+  const [allRestaurants, setAllRestaurants] = useState([]);
 
-  const renderSection = (title, subtitle, link, dataList, className, category) => (
-    <div className={`section-wrapper ${className}`}>
-      <div className="section-header">
-        <div className="section-title">
-          <h2>{title}</h2>
-          <p>{subtitle}</p>
+  const [displayCounts, setDisplayCounts] = useState({
+    hotDeals: 4,
+    seafoodRestaurants: 4,
+    chineseRestaurants: 4,
+    popularCuisines: 4,
+    partyRestaurants: 4,
+    famousLocations: 4,
+    touristRestaurants: 4,
+    lunchSuggestions: 4,
+    luxuryRestaurants: 4,
+    trustedRestaurants: 4,
+    monthlyFavorites: 4,
+    amenitiesRestaurants: 4,
+    newOnDinerChill: 4,
+    newsAndBlog: 4,
+  });
+
+  useEffect(() => {
+    const isBannerDismissed = localStorage.getItem('passwordBannerDismissed');
+    if (isBannerDismissed === 'true') {
+      setShowPasswordBanner(false);
+    }
+
+    const fetchRestaurants = async () => {
+      try {
+        let data;
+        if (useMockData) {
+          data = mockdata;
+          if (!data || data.length === 0) {
+            throw new Error('Không có dữ liệu mẫu nào.');
+          }
+        } else {
+          data = await restaurantAPI.getAll();
+          if (!data || data.length === 0) {
+            throw new Error('Không có dữ liệu từ API.');
+          }
+        }
+        setAllRestaurants(data);
+      } catch (err) {
+        console.error('Lỗi khi tải danh sách nhà hàng:', err);
+        setAllRestaurants([]);
+      }
+    };
+
+    fetchRestaurants();
+  }, []);
+
+  const handleDismissBanner = () => {
+    setShowPasswordBanner(false);
+    localStorage.setItem('passwordBannerDismissed', 'true');
+  };
+
+  const areas = ['Quận 1', 'Quận 3', 'Quận 7', 'Bình Thạnh', 'Phú Nhuận'];
+  const priceRanges = ['Dưới 100k', '100k-200k', '200k-300k', '300k-500k', 'Trên 500k'];
+  const mainDishes = ['Lẩu', 'Nướng', 'Món Á', 'Món Âu', 'Món Nhật', 'Món Hàn'];
+  const occasions = ['Hội nghị', 'Truyền thống', 'Hiện đại', 'Tiệc sinh nhật'];
+  const promotions = ['Ưu đãi', 'Độc quyền'];
+  const privateRooms = ['10-20 người', '20-50 người', '50-100 người'];
+  const dailyMeals = ['Sáng', 'Trưa', 'Chiều', 'Tối', 'Đêm', 'Khuya'];
+  const companyEvents = ['Tiệc nhỏ', 'Tiệc lớn', 'Tiệc buffet', 'Tiệc công ty ngoài trời'];
+  const privateAreas = ['Nhóm nhỏ (dưới 20)', 'Nhóm vừa (20-50)', 'Nhóm lớn (50-100)'];
+  const familyEvents = ['Tiệc nhỏ', 'Tiệc ấm cúng', 'Tiệc ngoài trời', 'Tiệc đông người'];
+  const serviceStyles = ['Tại bàn', 'Buffet', 'Gọi món', 'Tự phục vụ'];
+  const cuisineStyles = ['Việt Nam', 'Trung Quốc', 'Nhật Bản', 'Hàn Quốc', 'Thái Lan', 'Âu'];
+
+  const cuisines = [
+    { name: 'Buffet', path: '/cuisines?cuisineStyle=Buffet', icon: 'fa-utensils' },
+    { name: 'Lẩu', path: '/cuisines?cuisineStyle=Lẩu', icon: 'fa-hot-tub' },
+    { name: 'Nướng', path: '/cuisines?cuisineStyle=Nướng', icon: 'fa-fire' },
+    { name: 'Hải sản', path: '/cuisines?cuisineStyle=Hải sản', icon: 'fa-fish' },
+    { name: 'Quán nhậu', path: '/cuisines?cuisineStyle=Quán nhậu', icon: 'fa-beer-mug-empty' },
+    { name: 'Món Nhẹ', path: '/cuisines?cuisineStyle=Món Nhẹ', icon: 'fa-leaf' },
+    { name: 'Món Việt', path: '/cuisines?cuisineStyle=Việt Nam', icon: 'fa-bowl-rice' },
+    { name: 'Món Hàn', path: '/cuisines?cuisineStyle=Hàn Quốc', icon: 'fa-pepper-hot' },
+    { name: 'Món chay', path: '/cuisines?cuisineStyle=Món chay', icon: 'fa-carrot' },
+    { name: 'Món khác', path: '/cuisines?cuisineStyle=Món khác', icon: 'fa-utensil-spoon' },
+  ];
+
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilters({ ...filters, [name]: value });
+  };
+
+  const applyFilters = () => {
+    // Tạo query string từ filters
+    const queryParams = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value) {
+        queryParams.append(key, value);
+      }
+    });
+    // Điều hướng đến trang /restaurants với bộ lọc
+    navigate(`/restaurants?${queryParams.toString()}`);
+  };
+
+  const scrollFiltersLeft = () => {
+    if (filterRef.current) {
+      filterRef.current.scrollBy({ left: -200, behavior: 'smooth' });
+    }
+  };
+
+  const scrollFiltersRight = () => {
+    if (filterRef.current) {
+      filterRef.current.scrollBy({ left: 200, behavior: 'smooth' });
+    }
+  };
+
+  const handleLoadMore = (category, dataList) => {
+    setDisplayCounts(prev => ({
+      ...prev,
+      [category]: prev[category] + 4,
+    }));
+  };
+
+  const renderSection = (title, subtitle, link, queryParams, dataList, className, category) => {
+    const displayedData = dataList.slice(0, displayCounts[category]);
+    const hasMoreData = dataList.length > displayedData.length;
+
+    return (
+      <div className={`section-wrapper ${className}`}>
+        <div className="section-header">
+          <div className="section-title">
+            <h2>{title}</h2>
+            <p>{subtitle}</p>
+          </div>
+          <Link to={`${link}${queryParams ? `?${queryParams}` : ''}`} className="view-all">
+            Xem tất cả
+          </Link>
         </div>
-        <Link to={link} className="view-all">Xem tất cả</Link>
-      </div>
-      <div className="restaurant-grid">
-        {dataList.length > 0 ? (
-          dataList.map((item) => (
-            <RestaurantCard key={item.id} restaurant={item} />
-          ))
-        ) : (
-          <p>Không có dữ liệu để hiển thị.</p>
+        <div className="restaurant-grid">
+          {displayedData.length > 0 ? (
+            displayedData.map((item) => (
+              <RestaurantCard key={item.id} restaurant={item} />
+            ))
+          ) : (
+            <p>Không có dữ liệu để hiển thị.</p>
+          )}
+        </div>
+        {hasMoreData && (
+          <button
+            onClick={() => handleLoadMore(category, dataList)}
+            className="load-more-btn"
+            disabled={loading}
+          >
+            {loading ? 'Đang tải...' : 'Tải thêm'}
+          </button>
         )}
       </div>
-      {dataList.length > 0 && (
-        <button onClick={() => loadMore(category)} className="load-more-btn" disabled={loading}>
-          {loading ? 'Đang tải...' : 'Tải thêm'}
-        </button>
-      )}
-    </div>
-  );
+    );
+  };
 
   const renderRecentlyViewed = () => {
     const allRecentlyViewed = Object.values(recentlyViewed).flat();
@@ -1177,497 +226,308 @@ function HomePage() {
     );
   };
 
-  if (loading && !hotRestaurantsData.length) return <div>Đang tải...</div>;
+  if (loading && !hotRestaurants.length && !allRestaurants.length) return <div>Đang tải...</div>;
   if (error) return <div>Lỗi: {error}</div>;
 
   return (
     <div className="home-page">
-      <SearchBar />
+      {showPasswordBanner && (
+        <div className="password-notification-banner">
+          <div className="password-notification-content">
+            <span className="password-notification-icon">🔒</span>
+            <div className="password-notification-text">
+              <p>
+                Để bảo mật tài khoản, hãy cập nhật mật khẩu của bạn thường xuyên.{' '}
+                <Link to="/update-password">Cập nhật ngay</Link>
+              </p>
+            </div>
+            <button className="password-notification-dismiss" onClick={handleDismissBanner}>
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+      <div className="search-container">
+        <SearchBar location="Hồ Chí Minh" supportPhone="1900 6005" />
+      </div>
+      <div className="filter-container">
+        <div className="top-filters-wrapper">
+          <button className="scroll-arrow scroll-left" onClick={scrollFiltersLeft}>
+            ←
+          </button>
+          <div className="top-filters" ref={filterRef}>
+            <select name="area" value={filters.area} onChange={handleFilterChange}>
+              <option value="">Khu vực</option>
+              {areas.map((area) => (
+                <option key={area} value={area}>{area}</option>
+              ))}
+            </select>
+            <select name="mainDish" value={filters.mainDish} onChange={handleFilterChange}>
+              <option value="">Nhà hàng</option>
+              {mainDishes.map((dish) => (
+                <option key={dish} value={dish}>{dish}</option>
+              ))}
+            </select>
+            <select name="priceRange" value={filters.priceRange} onChange={handleFilterChange}>
+              <option value="">Giá trung bình</option>
+              {priceRanges.map((range) => (
+                <option key={range} value={range}>{range}</option>
+              ))}
+            </select>
+            <select name="occasion" value={filters.occasion} onChange={handleFilterChange}>
+              <option value="">Đồ ăn chính</option>
+              {occasions.map((occasion) => (
+                <option key={occasion} value={occasion}>{occasion}</option>
+              ))}
+            </select>
+            <select name="promotion" value={filters.promotion} onChange={handleFilterChange}>
+              <option value="">Phù hợp</option>
+              {promotions.map((promo) => (
+                <option key={promo} value={promo}>{promo}</option>
+              ))}
+            </select>
+            <select name="privateRoom" value={filters.privateRoom} onChange={handleFilterChange}>
+              <option value="">Phòng riêng</option>
+              {privateRooms.map((room) => (
+                <option key={room} value={room}>{room}</option>
+              ))}
+            </select>
+            <select name="dailyMeal" value={filters.dailyMeal} onChange={handleFilterChange}>
+              <option value="">Bữa ăn hàng ngày</option>
+              {dailyMeals.map((meal) => (
+                <option key={meal} value={meal}>{meal}</option>
+              ))}
+            </select>
+            <select name="companyEvent" value={filters.companyEvent} onChange={handleFilterChange}>
+              <option value="">Đặt tiệc công ty</option>
+              {companyEvents.map((event) => (
+                <option key={event} value={event}>{event}</option>
+              ))}
+            </select>
+            <select name="privateArea" value={filters.privateArea} onChange={handleFilterChange}>
+              <option value="">Khu riêng</option>
+              {privateAreas.map((area) => (
+                <option key={area} value={area}>{area}</option>
+              ))}
+            </select>
+            <select name="familyEvent" value={filters.familyEvent} onChange={handleFilterChange}>
+              <option value="">Đặt tiệc gia đình</option>
+              {familyEvents.map((event) => (
+                <option key={event} value={event}>{event}</option>
+              ))}
+            </select>
+            <select name="serviceStyle" value={filters.serviceStyle} onChange={handleFilterChange}>
+              <option value="">Kiểu phục vụ</option>
+              {serviceStyles.map((style) => (
+                <option key={style} value={style}>{style}</option>
+              ))}
+            </select>
+            <select name="cuisineStyle" value={filters.cuisineStyle} onChange={handleFilterChange}>
+              <option value="">Phong cách ẩm thực</option>
+              {cuisineStyles.map((style) => (
+                <option key={style} value={style}>{style}</option>
+              ))}
+            </select>
+          </div>
+          <button className="scroll-arrow scroll-right" onClick={scrollFiltersRight}>
+            →
+          </button>
+          <button className="apply-filter-button" onClick={applyFilters}>
+            Tìm kiếm
+          </button>
+        </div>
+        <div className="cuisine-filter">
+          {cuisines.map((cuisine) => (
+            <Link key={cuisine.name} to={cuisine.path} className="cuisine-button">
+              <div className="cuisine-top">
+                <i className={`fas ${cuisine.icon} cuisine-icon`}></i>
+              </div>
+              <div className="cuisine-content">
+                <h3 className="cuisine-headline">{cuisine.name}</h3>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
       <div className="container">
         <FilterBox />
       </div>
 
-      {/* Top nhà hàng ưu đãi Hot */}
-      <div className="hot-restaurants-section">
-        <div className="section-header">
-          <div>
-            <h2>Top nhà hàng ưu đãi Hot</h2>
-            <p>Khám phá những Nhà hàng đang có ưu đãi hấp dẫn ngay</p>
-          </div>
-          <Link to="/restaurants/hot" className="view-all">
-            Xem tất cả
-          </Link>
-        </div>
-        <div className="hot-restaurants">
-          {hotRestaurantsData.slice(0, 4).map((restaurant) => (
-            <RestaurantCard
-              key={restaurant.id}
-              restaurant={restaurant}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* Top sản phẩm ưu đãi Hot */}
-      <div className="hot-products-section">
-        <div className="section-header">
-          <div>
-            <h2>Top sản phẩm ưu đãi Hot</h2>
-            <p>Khám phá những Sản phẩm đang có ưu đãi hấp dẫn ngay</p>
-          </div>
-          <Link to="/products/hot" className="view-all">
-            Xem tất cả
-          </Link>
-        </div>
-        <div className="hot-products">
-          {hotProductsData.slice(0, 4).map((product) => (
-            <RestaurantCard
-              key={product.id}
-              restaurant={product}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* Nhà hàng được đề xuất */}
-      <div className="recommended-restaurants-section">
-        <div className="section-header">
-          <div>
-            <h2>Nhà hàng được đề xuất</h2>
-            <p>Mời bạn lựa chọn và đặt bàn trước qua DinerChill để nhận ngay ưu đãi.</p>
-          </div>
-          <Link to="/restaurants/recommended" className="view-all">
-            Xem tất cả
-          </Link>
-        </div>
-        <div className="recommended-restaurants">
-          {recommendedRestaurantsData.slice(0, 4).map((restaurant) => (
-            <RestaurantCard
-              key={restaurant.id}
-              restaurant={restaurant}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* Nhà hàng phù hợp đặt tiệc */}
-      <div className="party-restaurants-section">
-        <div className="section-header">
-          <div>
-            <h2>Nhà hàng phù hợp đặt tiệc</h2>
-            <p>Với nhiều ưu đãi để đặt tiệc giúp bạn dễ dàng lựa chọn hơn!</p>
-          </div>
-          <Link to="/restaurants/party" className="view-all">
-            Xem tất cả
-          </Link>
-        </div>
-        <div className="party-restaurants">
-          {partyRestaurantsData.slice(0, 4).map((restaurant) => (
-            <RestaurantCard
-              key={restaurant.id}
-              restaurant={restaurant}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* Địa danh nổi tiếng */}
-      <div className="famous-locations-section">
-        <div className="section-header">
-          <div>
-            <h2>Địa danh nổi tiếng</h2>
-            <p>Cùng DinerChill giới thiệu những địa danh ẩm thực nổi tiếng tại Tp.HCM.</p>
-          </div>
-          <Link to="/restaurants/locations" className="view-all">
-            Xem tất cả
-          </Link>
-        </div>
-        <div className="famous-locations">
-          {famousLocationsData.slice(0, 4).map((restaurant) => (
-            <RestaurantCard
-              key={restaurant.id}
-              restaurant={restaurant}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* Nhà hàng hải sản ngon nhất ưu đãi */}
-      <div className="seafood-restaurants-section">
-        <div className="section-header">
-          <div>
-            <h2>Nhà hàng hải sản ngon nhất ưu đãi</h2>
-            <p>Mời bạn tham khảo ngay nhà hàng hải sản được yêu thích!</p>
-          </div>
-          <Link to="/restaurants/seafood" className="view-all">
-            Xem tất cả
-          </Link>
-        </div>
-        <div className="seafood-restaurants">
-          {seafoodRestaurantsData.slice(0, 4).map((restaurant) => (
-            <RestaurantCard
-              key={restaurant.id}
-              restaurant={restaurant}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* Ăn món Trung ngon ở đâu? */}
-      <div className="chinese-restaurants-section">
-        <div className="section-header">
-          <div>
-            <h2>Ăn món Trung ngon ở đâu?</h2>
-            <p>Xem ngay top quán Trung ngon được DinerChill lựa chọn!</p>
-          </div>
-          <Link to="/restaurants/chinese" className="view-all">
-            Xem tất cả
-          </Link>
-        </div>
-        <div className="chinese-restaurants">
-          {chineseRestaurantsData.slice(0, 4).map((restaurant) => (
-            <RestaurantCard
-              key={restaurant.id}
-              restaurant={restaurant}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* Phong cách ẩm thực phổ biến */}
-      <div className="popular-cuisines-section">
-        <div className="section-header">
-          <div>
-            <h2>Phong cách ẩm thực phổ biến</h2>
-            <p>Với nhiều ưu đãi để ẩm thực giúp bạn dễ dàng lựa chọn hơn!</p>
-          </div>
-          <Link to="/restaurants/cuisines" className="view-all">
-            Xem tất cả
-          </Link>
-        </div>
-        <div className="popular-cuisines">
-          {popularCuisinesData.slice(0, 4).map((restaurant) => (
-            <RestaurantCard
-              key={restaurant.id}
-              restaurant={restaurant}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* Yêu thích nhất hàng tháng */}
-      <div className="section-wrapper monthly-favorites-section">
-        <div className="section-header">
-          <div>
-            <h2>Yêu thích nhất hàng tháng</h2>
-            <p>Khám phá nhà hàng được đặt chỗ nhiều nhất ngay</p>
-          </div>
-          <Link to="/restaurants/monthly-favorites" className="view-all">
-            Xem tất cả
-          </Link>
-        </div>
-        <div className="horizontal-section monthly-favorites">
-          {monthlyFavoritesData.map((restaurant) => (
-            <RestaurantCard
-              key={restaurant.id}
-              restaurant={restaurant}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* Tìm nhà hàng theo tiện ích */}
-      <div className="section-wrapper amenities-restaurants-section">
-        <div className="section-header">
-          <div>
-            <h2>Tìm nhà hàng theo tiện ích</h2>
-            <p>Khám phá danh sách nhà hàng theo tiện ích phù hợp để lựa chọn địa điểm nhanh nhất</p>
-          </div>
-          <Link to="/restaurants/amenities" className="view-all">
-            Xem tất cả
-          </Link>
-        </div>
-        <div className="horizontal-section amenities-restaurants">
-          {amenitiesRestaurantsData.map((amenity) => (
-            <RestaurantCard
-              key={amenity.id}
-              restaurant={amenity}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* Top nhà hàng cao cấp */}
-      <div className="section-wrapper luxury-restaurants-section">
-        <div className="section-header">
-          <div>
-            <h2>Top nhà hàng cao cấp</h2>
-            <p>Khám phá nhà hàng cao cấp món ngon, không gian sang trọng, đẳng cấp ưu đãi tốt</p>
-          </div>
-          <Link to="/restaurants/luxury" className="view-all">
-            Xem tất cả
-          </Link>
-        </div>
-        <div className="horizontal-section luxury-restaurants">
-          {luxuryRestaurantsData.map((restaurant) => (
-            <RestaurantCard
-              key={restaurant.id}
-              restaurant={restaurant}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* Đặt chỗ ưu tín */}
-      <div className="section-wrapper trusted-restaurants-section">
-        <div className="section-header">
-          <div>
-            <h2>Đặt chỗ ưu tín</h2>
-            <p>Gợi ý nhà hàng ngon, chất lượng, đ.điểm đặt chỗ qua DinerChill</p>
-          </div>
-          <Link to="/restaurants/trusted" className="view-all">
-            Xem tất cả
-          </Link>
-        </div>
-        <div className="horizontal-section trusted-restaurants">
-          {trustedRestaurantsData.map((restaurant) => (
-            <RestaurantCard
-              key={restaurant.id}
-              restaurant={restaurant}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* Danh cho du khách */}
-      <div className="section-wrapper tourist-restaurants-section">
-        <div className="section-header">
-          <div>
-            <h2>Danh cho du khách</h2>
-            <p>Thưởng thức đặc sản Sài Gòn tại đây</p>
-          </div>
-          <Link to="/restaurants/tourist" className="view-all">
-            Xem tất cả
-          </Link>
-        </div>
-        <div className="horizontal-section tourist-restaurants">
-          {touristRestaurantsData.map((restaurant) => (
-            <RestaurantCard
-              key={restaurant.id}
-              restaurant={restaurant}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* Trưa nay ăn gì */}
-      <div className="section-wrapper lunch-suggestions-section">
-        <div className="section-header">
-          <div>
-            <h2>Trưa nay ăn gì?</h2>
-            <p>Mời bạn lựa chọn và đặt bàn trước qua DinerChill ngay</p>
-          </div>
-          <Link to="/products/lunch" className="view-all">
-            Xem tất cả
-          </Link>
-        </div>
-        <div className="horizontal-section lunch-suggestions">
-          {lunchSuggestionsData.map((product) => (
-            <RestaurantCard
-              key={product.id}
-              restaurant={product}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* Mới nhất trên DinerChill */}
-      <div className="section-wrapper new-on-DinerChill-section">
-        <div className="section-header">
-          <div>
-            <h2>Mới nhất trên DinerChill</h2>
-            <p>Dự án đây là các nhà hàng mới nhất đặt chỗ qua DinerChill. Khám phá ngay!</p>
-          </div>
-          <Link to="/restaurants/new-on-DinerChill" className="view-all">
-            Xem tất cả
-          </Link>
-        </div>
-        <div className="horizontal-section new-on-DinerChill">
-          {newOnDinerChillData.map((restaurant) => (
-            <RestaurantCard
-              key={restaurant.id}
-              restaurant={restaurant}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* Tin tức & Blog */}
-      <div className="section-wrapper news-and-blog-section">
-        <div className="section-header">
-          <div>
-            <h2>Tin tức & Blog</h2>
-            <p>Những thông tin hữu ích về ẩm thực, sức khỏe, mẹo vặt,... cho bạn dễ dàng tìm hiểu đặt cập nhật liên tục tại DinerChill</p>
-          </div>
-          <Link to="/blog" className="view-all">
-            Xem tất cả
-          </Link>
-        </div>
-        <div className="horizontal-section news-and-blog">
-          {newsAndBlogData.map((blog) => (
-            <RestaurantCard
-              key={blog.id}
-              restaurant={blog}
-            />
-          ))}
-        </div>
-      </div>
-
-      {renderRecentlyViewed()}
-
       {renderSection(
-        'Top nhà hàng ưu đãi Hot',
-        'Khám phá những Nhà hàng đang có ưu đãi hấp dẫn ngay',
-        '/restaurants/hot',
-        hotRestaurantsData,
-        'hot-restaurants-section',
-        'hotRestaurants'
+        'Ưu đãi Hot',
+        'Khám phá các nhà hàng và sản phẩm đang có ưu đãi hấp dẫn ngay',
+        '/deals',
+        'promotion=Ưu đãi',
+        [...hotRestaurants, ...hotProducts].filter(item => item.promotions?.length > 0),
+        'hot-deals-section',
+        'hotDeals'
       )}
 
       {renderSection(
-        'Top sản phẩm ưu đãi Hot',
-        'Khám phá những Sản phẩm đang có ưu đãi hấp dẫn ngay',
-        '/products/hot',
-        hotProductsData,
-        'hot-products-section',
-        'hotProducts'
-      )}
-
-      {renderSection(
-        'Nhà hàng được đề xuất',
-        'Mời bạn lựa chọn và đặt bàn trước qua DinerChill để nhận ngay ưu đãi.',
-        '/restaurants/recommended',
-        recommendedRestaurantsData,
-        'recommended-restaurants-section',
-        'recommendedRestaurants'
-      )}
-
-      {renderSection(
-        'Nhà hàng phù hợp đặt tiệc',
-        'Với nhiều ưu đãi để đặt tiệc giúp bạn dễ dàng lựa chọn hơn!',
-        '/restaurants/party',
-        partyRestaurantsData,
-        'party-restaurants-section',
-        'partyRestaurants'
-      )}
-
-      {renderSection(
-        'Địa danh nổi tiếng',
-        'Cùng DinerChill giới thiệu những địa danh ẩm thực nổi tiếng tại Tp.HCM.',
-        '/restaurants/locations',
-        famousLocationsData,
-        'famous-locations-section',
-        'famousLocations'
-      )}
-
-      {renderSection(
-        'Nhà hàng hải sản ngon nhất ưu đãi',
-        'Mời bạn tham khảo ngay nhà hàng hải sản được yêu thích!',
-        '/restaurants/seafood',
-        seafoodRestaurantsData,
+        'Nhà hàng hải sản ngon nhất',
+        'Tham khảo ngay các nhà hàng hải sản được yêu thích!',
+        '/restaurants',
+        'cuisine=Hải sản&minRating=4',
+        seafoodRestaurants.length > 0
+          ? seafoodRestaurants
+          : allRestaurants.filter(r => r.cuisine?.toLowerCase() === 'hải sản' && r.rating >= 4),
         'seafood-restaurants-section',
         'seafoodRestaurants'
       )}
 
       {renderSection(
         'Ăn món Trung ngon ở đâu?',
-        'Xem ngay top quán Trung ngon được DinerChill lựa chọn!',
-        '/restaurants/chinese',
-        chineseRestaurantsData,
+        'Top quán Trung ngon được DinerChill lựa chọn!',
+        '/restaurants',
+        'cuisine=Trung Hoa&minRating=4',
+        chineseRestaurants.length > 0
+          ? chineseRestaurants
+          : allRestaurants.filter(r => r.cuisine?.toLowerCase() === 'trung hoa' && r.rating >= 4),
         'chinese-restaurants-section',
         'chineseRestaurants'
       )}
 
       {renderSection(
         'Phong cách ẩm thực phổ biến',
-        'Với nhiều ưu đãi để ẩm thực giúp bạn dễ dàng lựa chọn hơn!',
-        '/restaurants/cuisines',
-        popularCuisinesData,
+        'Khám phá các loại ẩm thực đa dạng với ưu đãi hấp dẫn',
+        '/restaurants',
+        'minRating=4.5&cuisines=Việt Nam,Trung Hoa,Nhật Bản,Quốc tế',
+        popularCuisines.length > 0
+          ? popularCuisines
+          : allRestaurants
+              .filter(r => r.rating >= 4.5 && ['Việt Nam', 'Trung Hoa', 'Nhật Bản', 'Quốc tế'].includes(r.cuisine))
+              .sort((a, b) => b.rating - a.rating)
+              .slice(0, 5),
         'popular-cuisines-section',
         'popularCuisines'
       )}
 
       {renderSection(
-        'Yêu thích nhất hàng tháng',
-        'Khám phá nhà hàng được đặt chỗ nhiều nhất ngay',
-        '/restaurants/monthly-favorites',
-        monthlyFavoritesData,
-        'monthly-favorites-section',
-        'monthlyFavorites'
+        'Nhà hàng phù hợp đặt tiệc',
+        'Ưu đãi đa dạng giúp bạn dễ dàng lựa chọn địa điểm tiệc',
+        '/restaurants',
+        'suitableFor=tiệc&minCapacity=50',
+        partyRestaurants.length > 0
+          ? partyRestaurants
+          : allRestaurants.filter(r => r.suitableFor?.toLowerCase().includes('tiệc') && r.capacity >= 50),
+        'party-restaurants-section',
+        'partyRestaurants'
       )}
 
       {renderSection(
-        'Tìm nhà hàng theo tiện ích',
-        'Khám phá danh sách nhà hàng theo tiện ích phù hợp để lựa chọn địa điểm nhanh nhất',
-        '/restaurants/amenities',
-        amenitiesRestaurantsData,
-        'amenities-restaurants-section',
-        'amenitiesRestaurants'
+        'Địa danh nổi tiếng',
+        'Khám phá các địa điểm ẩm thực nổi bật tại Tp.HCM',
+        '/restaurants',
+        'area=Quận 1&minRating=4.5',
+        famousLocations.length > 0
+          ? famousLocations
+          : allRestaurants
+              .filter(r => r.address?.toLowerCase().includes('quận 1') && r.rating >= 4.5)
+              .sort((a, b) => b.rating - a.rating),
+        'famous-locations-section',
+        'famousLocations'
       )}
 
       {renderSection(
-        'Top nhà hàng cao cấp',
-        'Khám phá nhà hàng cao cấp món ngon, không gian sang trọng, đẳng cấp ưu đãi tốt',
-        '/restaurants/luxury',
-        luxuryRestaurantsData,
-        'luxury-restaurants-section',
-        'luxuryRestaurants'
-      )}
-
-      {renderSection(
-        'Đặt chỗ ưu tín',
-        'Gợi ý nhà hàng ngon, chất lượng, đ.điểm đặt chỗ qua DinerChill',
-        '/restaurants/trusted',
-        trustedRestaurantsData,
-        'trusted-restaurants-section',
-        'trustedRestaurants'
-      )}
-
-      {renderSection(
-        'Danh cho du khách',
-        'Thưởng thức đặc sản Sài Gòn tại đây',
-        '/restaurants/tourist',
-        touristRestaurantsData,
+        'Dành cho du khách',
+        'Thưởng thức đặc sản Sài Gòn tại các nhà hàng nổi bật',
+        '/restaurants',
+        'suitableFor=khách du lịch&minRating=4',
+        touristRestaurants.length > 0
+          ? touristRestaurants
+          : allRestaurants.filter(r => r.suitableFor?.toLowerCase().includes('khách du lịch') && r.rating >= 4),
         'tourist-restaurants-section',
         'touristRestaurants'
       )}
 
       {renderSection(
         'Trưa nay ăn gì?',
-        'Mời bạn lựa chọn và đặt bàn trước qua DinerChill ngay',
-        '/products/lunch',
-        lunchSuggestionsData,
+        'Lựa chọn nhanh các sản phẩm ăn trưa qua DinerChill',
+        '/restaurants',
+        'suitableFor=nhân viên văn phòng&openTime=11:00',
+        lunchSuggestions.length > 0
+          ? lunchSuggestions
+          : allRestaurants.filter(r => r.suitableFor?.toLowerCase().includes('nhân viên văn phòng') && r.openingHours?.includes('11:00')),
         'lunch-suggestions-section',
         'lunchSuggestions'
       )}
 
       {renderSection(
+        'Top nhà hàng cao cấp',
+        'Khám phá không gian sang trọng với ưu đãi tốt',
+        '/restaurants',
+        'minPriceRange=500000&ambiance=sang trọng',
+        luxuryRestaurants.length > 0
+          ? luxuryRestaurants
+          : allRestaurants.filter(r => r.priceRange?.toLowerCase().includes('trên 500k') && r.ambiance?.toLowerCase().includes('sang trọng')),
+        'luxury-restaurants-section',
+        'luxuryRestaurants'
+      )}
+
+      {renderSection(
+        'Đặt chỗ uy tín',
+        'Gợi ý nhà hàng ngon, chất lượng qua DinerChill',
+        '/restaurants',
+        'minRating=4.5&minReviews=100',
+        trustedRestaurants.length > 0
+          ? trustedRestaurants
+          : allRestaurants
+              .filter(r => r.rating >= 4.5 && r.reviewCount >= 100)
+              .sort((a, b) => b.rating - a.rating),
+        'trusted-restaurants-section',
+        'trustedRestaurants'
+      )}
+
+      {renderSection(
+        'Yêu thích nhất hàng tháng',
+        'Nhà hàng được đặt chỗ nhiều nhất trong tháng',
+        '/restaurants',
+        'minRating=4&minReviews=50',
+        monthlyFavorites.length > 0
+          ? monthlyFavorites
+          : allRestaurants
+              .filter(r => r.rating >= 4 && r.reviewCount >= 50)
+              .sort((a, b) => b.reviewCount - a.reviewCount)
+              .slice(0, 5),
+        'monthly-favorites-section',
+        'monthlyFavorites'
+      )}
+
+      {renderSection(
+        'Tìm nhà hàng theo tiện ích',
+        'Lựa chọn nhà hàng dựa trên các tiện ích đặc biệt',
+        '/restaurants',
+        'amenities=wifi,airConditioning',
+        amenitiesRestaurants.length > 0
+          ? amenitiesRestaurants
+          : allRestaurants.filter(r => r.amenities?.wifi && r.amenities?.airConditioning),
+        'amenities-restaurants-section',
+        'amenitiesRestaurants'
+      )}
+
+      {renderSection(
         'Mới nhất trên DinerChill',
-        'Dự án đây là các nhà hàng mới nhất đặt chỗ qua DinerChill. Khám phá ngay!',
-        '/restaurants/new-on-DinerChill',
-        newOnDinerChillData,
+        'Khám phá các nhà hàng mới nhất trên nền tảng',
+        '/restaurants',
+        'sortBy=createdAt&order=desc',
+        newOnDinerChill.length > 0
+          ? newOnDinerChill
+          : allRestaurants.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5),
         'new-on-DinerChill-section',
         'newOnDinerChill'
       )}
 
       {renderSection(
         'Tin tức & Blog',
-        'Những thông tin hữu ích về ẩm thực, sức khỏe, mẹo vặt,... cho bạn dễ dàng tìm hiểu đặt cập nhật liên tục tại DinerChill',
+        'Cập nhật thông tin hữu ích về ẩm thực và mẹo vặt',
         '/blog',
-        newsAndBlogData,
+        '',
+        newsAndBlog,
         'news-and-blog-section',
         'newsAndBlog'
       )}
+
+      {renderRecentlyViewed()}
     </div>
   );
 }
