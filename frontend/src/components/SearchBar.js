@@ -15,17 +15,21 @@ function SearchBar() {
     <div className="search-section">
       <div className="search-container">
         <form className="search-form" onSubmit={handleSearch}>
-          <select 
-            className="location-select" 
-            value={location} 
-            onChange={(e) => setLocation(e.target.value)}
-          >
-            <option value="Hồ Chí Minh">Hồ Chí Minh</option>
-            <option value="Hà Nội">Hà Nội</option>
-            <option value="Đà Nẵng">Đà Nẵng</option>
-            <option value="Nha Trang">Nha Trang</option>
-            <option value="Đà Lạt">Đà Lạt</option>
-          </select>
+          <div className="location-wrapper">
+            <span className="location-icon">🏙️</span>
+            <select 
+              className="location-select" 
+              value={location} 
+              onChange={(e) => setLocation(e.target.value)}
+            >
+              <option value="Hồ Chí Minh">Hồ Chí Minh</option>
+              <option value="Hà Nội">Hà Nội</option>
+              <option value="Đà Nẵng">Đà Nẵng</option>
+              <option value="Nha Trang">Nha Trang</option>
+              <option value="Đà Lạt">Đà Lạt</option>
+            </select>
+            <span className="dropdown-icon">▼</span>
+          </div>
           <input 
             type="text" 
             className="search-input" 
@@ -33,6 +37,10 @@ function SearchBar() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
+          <button type="submit" className="search-button">
+            <span className="search-icon">🔍</span>
+            <span className="text-search">Tìm kiếm</span>
+          </button>
         </form>
         <div className="hotline">
           <span className="phone-icon">📞</span>
@@ -43,4 +51,4 @@ function SearchBar() {
   );
 }
 
-export default SearchBar; 
+export default SearchBar;

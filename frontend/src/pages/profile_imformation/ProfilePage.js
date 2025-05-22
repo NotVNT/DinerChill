@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
+import { reservationAPI, favoriteAPI, authAPI } from '../../services/api';
 import '../../styles/profile_imformation/ProfilePage.css';
 import LogoutHandler from '../identity/LogoutHandler';
-import { authAPI } from '../../services/api';
 
 function ProfilePage() {
   const { user, updateProfile } = useApp();
@@ -29,6 +29,70 @@ function ProfilePage() {
   // Thêm thông báo Toast
   const [toast, setToast] = useState({ show: false, message: '', type: '' });
   
+  // State cho dữ liệu thống kê
+  const [stats, setStats] = useState({
+    reservationsCount: 0,
+    favoritesCount: 0,
+    reviewsCount: 0
+  });
+
+  // Fetch dữ liệu cho Lịch sử đặt chỗ và Danh sách yêu thích
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        // Lấy dữ liệu đặt chỗ
+        let reservations = [];
+        try {
+          const response = await reservationAPI.getByUser();
+          if (Array.isArray(response)) {
+            reservations = response;
+          } else {
+            console.warn('API response for reservations is not an array:', response);
+          }
+        } catch (apiErr) {
+          console.error('API call for reservations failed:', apiErr);
+        }
+        const reservationsCount = reservations.length || 0;
+        console.log('Reservations data:', reservations);
+
+        // Lấy dữ liệu danh sách yêu thích
+        let favorites = [];
+        try {
+          const response = await favoriteAPI.getByUser();
+          if (Array.isArray(response)) {
+            favorites = response;
+          } else {
+            console.warn('API response for favorites is not an array:', response);
+          }
+        } catch (apiErr) {
+          console.error('API call for favorites failed:', apiErr);
+        }
+        const favoritesCount = favorites.length || 0;
+        console.log('Favorites data:', favorites);
+
+        // Đặt mặc định reviewsCount là 0 vì chưa có reviewAPI
+        setStats({
+          reservationsCount,
+          favoritesCount,
+          reviewsCount: 0
+        });
+      } catch (err) {
+        console.error('Lỗi khi lấy dữ liệu thống kê:', err);
+        setError('Không thể tải dữ liệu thống kê.');
+        setToast({
+          show: true,
+          message: 'Không thể tải dữ liệu thống kê. Vui lòng kiểm tra console log.',
+          type: 'error'
+        });
+        setTimeout(() => {
+          setToast({ show: false, message: '', type: '' });
+        }, 3000);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
   // Initialize form with user data
   useEffect(() => {
     if (user) {
@@ -39,6 +103,7 @@ function ProfilePage() {
         phone: user.phone || '',
       }));
       setOriginalEmail(user.email || '');
+      setAvatarPreview(user.avatar || null); // Đặt lại avatar preview từ user
     }
   }, [user]);
   
@@ -90,7 +155,6 @@ function ProfilePage() {
         try {
           const emailExists = await checkEmailExists(formData.email);
           if (emailExists) {
-            // Email đã tồn tại, khôi phục email ban đầu
             setFormData(prev => ({
               ...prev,
               email: originalEmail
@@ -102,12 +166,9 @@ function ProfilePage() {
               type: 'error'
             });
             setLoading(false);
-            
-            // Ẩn toast sau 3 giây
             setTimeout(() => {
               setToast({ show: false, message: '', type: '' });
             }, 3000);
-            
             return;
           }
         } catch (checkError) {
@@ -124,15 +185,16 @@ function ProfilePage() {
         const formDataObj = new FormData();
         formDataObj.append('name', formData.name);
         formDataObj.append('email', formData.email);
+        formDataObj.append('phone', formData.phone);
         formDataObj.append('avatar', avatar);
         
-        console.log('Sending FormData with avatar');
+        console.log('Sending FormData with avatar:', Object.fromEntries(formDataObj));
         updateData = formDataObj;
       } else {
-        // Nếu không có avatar, gửi dữ liệu JSON bình thường
         updateData = {
           name: formData.name,
           email: formData.email,
+          phone: formData.phone
         };
         console.log('Sending JSON data:', updateData);
       }
@@ -140,49 +202,38 @@ function ProfilePage() {
       const response = await updateProfile(updateData);
       console.log('Update profile response:', response);
       
-      // Nếu update thành công
       if (response && response.user) {
         setSuccess(true);
-        
-        // Cập nhật email gốc nếu thành công
         if (formData.email !== originalEmail) {
           setOriginalEmail(formData.email);
         }
-        
-        // Hiện toast thông báo
+        // Cập nhật user trong AppContext (giả định updateProfile trả về user mới)
         setToast({
           show: true,
-          message: formData.email !== originalEmail 
-            ? 'Cập nhật thông tin và email thành công!' 
-            : 'Cập nhật thông tin thành công!',
+          message: 'Cập nhật thông tin thành công!',
           type: 'success'
         });
       } else {
-        throw new Error('Không nhận được phản hồi từ server');
+        throw new Error('Không nhận được phản hồi từ server hoặc dữ liệu không được cập nhật.');
       }
       
-      // Ẩn toast sau 3 giây
       setTimeout(() => {
         setToast({ show: false, message: '', type: '' });
       }, 3000);
     } catch (err) {
       console.error('Lỗi cập nhật:', err);
       let errorMessage = 'Có lỗi xảy ra khi cập nhật thông tin.';
-      
-      // Kiểm tra chi tiết lỗi
       if (err.response && err.response.data) {
         errorMessage = err.response.data.message || errorMessage;
       } else if (err.message) {
         errorMessage = err.message;
       }
-      
       setError(errorMessage);
       setToast({
         show: true,
         message: errorMessage,
         type: 'error'
       });
-      
       setTimeout(() => {
         setToast({ show: false, message: '', type: '' });
       }, 3000);
@@ -229,12 +280,12 @@ function ProfilePage() {
                 accept="image/*"
               />
             </div>
-            <div className="username">{user?.name}</div>
-            <div className="user-info">ID: {user?.id}</div>
+            <div className="username">{user?.name || 'Người dùng'}</div>
+            <div className="user-info">ID: {user?.id || 'N/A'}</div>
             <div className="user-info">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-              </svg> {user?.phone}
+              </svg> {user?.phone || 'Chưa có số điện thoại'}
             </div>
           </div>
           
@@ -327,7 +378,7 @@ function ProfilePage() {
                 </svg>
               </div>
               <div className="stat-content">
-                <div className="stat-value">{user?.reservations?.length || 0}</div>
+                <div className="stat-value">{stats.reservationsCount}</div>
                 <div className="stat-label">Lượt đặt bàn</div>
               </div>
             </div>
@@ -339,7 +390,7 @@ function ProfilePage() {
                 </svg>
               </div>
               <div className="stat-content">
-                <div className="stat-value">{user?.favorites?.length || 0}</div>
+                <div className="stat-value">{stats.favoritesCount}</div>
                 <div className="stat-label">Nhà hàng yêu thích</div>
               </div>
             </div>
@@ -351,7 +402,7 @@ function ProfilePage() {
                 </svg>
               </div>
               <div className="stat-content">
-                <div className="stat-value">{user?.reviews?.length || 0}</div>
+                <div className="stat-value">{stats.reviewsCount}</div>
                 <div className="stat-label">Đánh giá</div>
               </div>
             </div>
@@ -469,7 +520,6 @@ function ProfilePage() {
                       name="phone"
                       value={formData.phone}
                       onChange={handleChange}
-                      disabled
                     />
                   </div>
                 </div>
@@ -536,4 +586,4 @@ function ProfilePage() {
   );
 }
 
-export default ProfilePage; 
+export default ProfilePage;

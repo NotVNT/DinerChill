@@ -19,7 +19,7 @@ function ReservationGuidePage() {
           <div className="guide-step">
             <div className="step-arrow">→</div>
             <div className="step-content">
-              <h3>Truy cập trang web hoặc ứng dụng PasGo</h3>
+              <h3>Truy cập trang web hoặc ứng dụng DinerChill</h3>
               <div className="step-number">
                 <span>1</span>
               </div>

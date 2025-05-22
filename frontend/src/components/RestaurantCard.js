@@ -7,30 +7,25 @@ function RestaurantCard({ restaurant }) {
   const navigate = useNavigate();
   const { addToRecentlyViewed } = useApp();
 
-
-  const [imageSrc, setImageSrc] = useState(restaurant?.image || 'https://via.placeholder.com/300x200');
+  const [imageSrc, setImageSrc] = useState(restaurant?.image || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?fit=crop&w=300&h=200&q=80');
 
   const handleCardClick = () => {
     if (!restaurant?.id) return;
     addToRecentlyViewed(restaurant);
-    if (restaurant.type === 'product') {
-      navigate(`/promotions/${restaurant.id}`);
-
-    } else if (restaurant.type === 'blog') {
-      navigate(`/blog/${restaurant.id}`);
-    } else if (restaurant.type === 'amenity') {
-      navigate(`/amenities/${restaurant.id}`);
-    } else {
-      navigate(`/restaurants/${restaurant.id}`);
-    }
+    const routes = {
+      product: `/promotions/${restaurant.id}`,
+      blog: `/blog/${restaurant.id}`,
+      amenity: `/amenities/${restaurant.id}`,
+    };
+    const route = routes[restaurant.type] || `/restaurants/${restaurant.id}`;
+    navigate(route);
   };
 
-
-  const handleBooking = () => {
+  const handleBooking = (e) => {
+    e.stopPropagation();
     if (!restaurant?.id) return;
     navigate(`/reservation?restaurant=${restaurant.id}`);
   };
-
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -39,15 +34,13 @@ function RestaurantCard({ restaurant }) {
     }
   };
 
-
   const handleImageError = () => {
-    setImageSrc('/assets/placeholder-300x200.jpg');
+    setImageSrc('https://images.unsplash.com/photo-1600585154360-0e7d76a0e0e7?fit=crop&w=300&h=200&q=80');
   };
 
   const renderStars = (rating) => {
-
     const numericRating = typeof rating === 'string' ? parseFloat(rating) : rating;
-    if (isNaN(numericRating) || numericRating == null) return null;
+    if (isNaN(numericRating) || numericRating === 0) return null;
 
     const stars = Math.round(numericRating);
     const fullStars = Math.min(Math.max(stars, 0), 5);
@@ -60,8 +53,11 @@ function RestaurantCard({ restaurant }) {
     );
   };
 
+  if (!restaurant || !restaurant.id || !restaurant.name) return null;
 
-  if (!restaurant) return null;
+  const discountValue = restaurant.discountPrice && restaurant.price 
+    ? restaurant.price - restaurant.discountPrice 
+    : null;
 
   return (
     <div
@@ -70,56 +66,56 @@ function RestaurantCard({ restaurant }) {
       onKeyDown={handleKeyDown}
       tabIndex={0}
       role="button"
-      aria-label={`Xem chi tiết ${restaurant.name}`}
+      aria-label={`Xem chi tiết ${restaurant.type === 'product' ? 'sản phẩm' : restaurant.type === 'blog' ? 'bài viết' : restaurant.type === 'amenity' ? 'tiện ích' : 'nhà hàng'} ${restaurant.name}`}
     >
       <div className="card-image">
-
-        <img src={imageSrc} alt={restaurant.name} onError={handleImageError} />
+        <img src={imageSrc} alt={`Ảnh của ${restaurant.name}`} onError={handleImageError} />
         <div className="logo-overlay">DinerChill</div>
-        {(restaurant.discount || restaurant.discountPrice) && (
+        {(restaurant.discount || discountValue) && (
           <span className="discount-badge">
-            {restaurant.discount || (restaurant.discountPrice && `Giảm ${restaurant.price - restaurant.discountPrice}K`)}
+            {restaurant.discount || (discountValue > 0 && `Giảm ${discountValue}K`)}
           </span>
-
         )}
       </div>
       <div className="card-content">
         <h3>{restaurant.name}</h3>
         <div className="rating-price">
-
           {typeof restaurant.rating !== 'undefined' && renderStars(restaurant.rating)}
           {(restaurant.price || restaurant.discountPrice) && (
             <span className="price">
-              {restaurant.discountPrice ? (
+              {restaurant.discountPrice && restaurant.price ? (
                 <>
                   <span className="original-price">{restaurant.price}K</span>
                   <span className="discounted-price">{restaurant.discountPrice}K</span>
                 </>
               ) : (
-                `${restaurant.price}K`
+                `${restaurant.price || restaurant.discountPrice}K`
               )}
             </span>
           )}
         </div>
-        {restaurant.cuisine && <p className="cuisine">{restaurant.cuisine}</p>}
-        {restaurant.offer && <p className="offer">{restaurant.offer}</p>}
-        {restaurant.validUntil && <p className="valid-until">{restaurant.validUntil}</p>}
-        {restaurant.location && <p className="location">{restaurant.location}</p>}
-        {restaurant.description && <p className="description">{restaurant.description}</p>}
-        {restaurant.date && <p className="date">{restaurant.date}</p>}
+        <div className="additional-info">
+          {restaurant.cuisine && <p className="cuisine">{restaurant.cuisine}</p>}
+          {restaurant.offer && <p className="offer">{restaurant.offer}</p>}
+          {restaurant.validUntil && <p className="valid-until">{restaurant.validUntil}</p>}
+          {restaurant.location && (
+            <p className="location">
+              Tọa độ: {restaurant.location.latitude}, {restaurant.location.longitude}
+            </p>
+          )}
+          {restaurant.description && <p className="description">{restaurant.description}</p>}
+          {restaurant.date && <p className="date">{restaurant.date}</p>}
+        </div>
         {restaurant.type !== 'product' && restaurant.type !== 'blog' && restaurant.type !== 'amenity' && (
-
           <button
+            type="button"
             className="book-now-btn"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleBooking();
-            }}
+            onClick={handleBooking}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.stopPropagation();
                 e.preventDefault();
-                handleBooking();
+                handleBooking(e);
               }
             }}
             tabIndex={0}

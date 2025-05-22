@@ -19,12 +19,81 @@ function FavoritesPage() {
   const fetchFavorites = async () => {
     try {
       setLoading(true);
-      const data = await favoriteAPI.getUserFavorites();
-      setFavorites(data);
+
+      // Lấy dữ liệu từ localStorage làm nguồn ban đầu
+      const localFavoriteDetails = JSON.parse(localStorage.getItem('favoriteDetails') || '[]');
+      const formattedLocalFavorites = Array.isArray(localFavoriteDetails) ? localFavoriteDetails.map(fav => ({
+        id: fav.id,
+        restaurantId: fav.id,
+        restaurantName: fav.name || 'Nhà hàng không xác định',
+        restaurantImage: fav.image || '',
+        address: fav.address || 'Địa chỉ không xác định',
+        source: 'local',
+      })) : [];
+
+      // Gọi API để lấy dữ liệu từ server
+      let apiData = [];
+      try {
+        const response = await favoriteAPI.getUserFavorites();
+        if (Array.isArray(response)) {
+          apiData = response;
+        } else {
+          console.warn('API response is not an array:', response);
+        }
+      } catch (apiErr) {
+        console.error('API call failed:', apiErr);
+      }
+
+      const apiFavorites = Array.isArray(apiData) ? apiData.map(fav => ({
+        id: fav.id,
+        restaurantId: fav.restaurantId,
+        restaurantName: fav.restaurantName || 'Nhà hàng không xác định',
+        restaurantImage: fav.restaurantImage || '',
+        address: fav.address || 'Địa chỉ không xác định',
+        cuisine: fav.cuisine || '',
+        rating: fav.rating || 0,
+        reviewCount: fav.reviewCount || 0,
+        priceRange: fav.priceRange || '',
+        description: fav.description || '',
+        source: 'api',
+      })) : [];
+
+      // Hợp nhất dữ liệu: ưu tiên API, bổ sung từ localStorage nếu chưa có
+      const mergedFavorites = [
+        ...apiFavorites,
+        ...formattedLocalFavorites.filter(localFav => 
+          !apiFavorites.some(apiFav => apiFav.restaurantId === localFav.restaurantId)
+        ),
+      ];
+
+      // Loại bỏ trùng lặp dựa trên restaurantId
+      const uniqueFavorites = Array.from(new Map(mergedFavorites.map(fav => [fav.restaurantId, fav])).values());
+      setFavorites(uniqueFavorites);
+
+      // Đồng bộ localStorage với dữ liệu từ API
+      localStorage.setItem('favorites', JSON.stringify(uniqueFavorites.map(fav => fav.restaurantId)));
+      localStorage.setItem('favoriteDetails', JSON.stringify(uniqueFavorites.map(fav => ({
+        id: fav.restaurantId,
+        name: fav.restaurantName,
+        image: fav.restaurantImage,
+        address: fav.address,
+      }))));
+
       setError(null);
     } catch (err) {
       console.error('Error fetching favorites:', err);
-      setError('Không thể tải danh sách nhà hàng yêu thích của bạn. Vui lòng thử lại sau.');
+      // Nếu API lỗi, vẫn dùng dữ liệu từ localStorage
+      const localFavoriteDetails = JSON.parse(localStorage.getItem('favoriteDetails') || '[]');
+      const formattedLocalFavorites = Array.isArray(localFavoriteDetails) ? localFavoriteDetails.map(fav => ({
+        id: fav.id,
+        restaurantId: fav.id,
+        restaurantName: fav.name || 'Nhà hàng không xác định',
+        restaurantImage: fav.image || '',
+        address: fav.address || 'Địa chỉ không xác định',
+        source: 'local',
+      })) : [];
+      setFavorites(formattedLocalFavorites);
+      setError('Không thể tải danh sách yêu thích từ server. Đang hiển thị dữ liệu cục bộ.');
     } finally {
       setLoading(false);
     }
@@ -33,30 +102,56 @@ function FavoritesPage() {
   const handleRemoveFavorite = async (restaurantId) => {
     if (window.confirm('Bạn có chắc muốn xóa nhà hàng này khỏi danh sách yêu thích?')) {
       try {
+        // Gọi API để xóa trên server
         await favoriteAPI.remove(restaurantId);
-        setFavorites(prev => prev.filter(favorite => favorite.restaurantId !== restaurantId));
-        
+
+        // Cập nhật localStorage
+        const updatedFavorites = favorites.filter(fav => fav.restaurantId !== restaurantId);
+        localStorage.setItem('favorites', JSON.stringify(updatedFavorites.map(fav => fav.restaurantId)));
+        localStorage.setItem('favoriteDetails', JSON.stringify(updatedFavorites.map(fav => ({
+          id: fav.restaurantId,
+          name: fav.restaurantName,
+          image: fav.restaurantImage,
+          address: fav.address,
+        }))));
+
+        // Cập nhật state favorites
+        setFavorites(updatedFavorites);
+
         // Hiển thị thông báo thành công
         setToast({
           show: true,
           message: 'Đã xóa nhà hàng khỏi danh sách yêu thích!',
-          type: 'success'
+          type: 'success',
         });
-        
+
         // Ẩn toast sau 3 giây
         setTimeout(() => {
           setToast({ show: false, message: '', type: '' });
         }, 3000);
       } catch (err) {
         console.error('Error removing favorite:', err);
-        
+
+        // Cập nhật localStorage ngay cả khi API lỗi
+        const updatedFavorites = favorites.filter(fav => fav.restaurantId !== restaurantId);
+        localStorage.setItem('favorites', JSON.stringify(updatedFavorites.map(fav => fav.restaurantId)));
+        localStorage.setItem('favoriteDetails', JSON.stringify(updatedFavorites.map(fav => ({
+          id: fav.restaurantId,
+          name: fav.restaurantName,
+          image: fav.restaurantImage,
+          address: fav.address,
+        }))));
+
+        // Cập nhật state favorites
+        setFavorites(updatedFavorites);
+
         // Hiển thị thông báo lỗi
         setToast({
           show: true,
-          message: 'Không thể xóa nhà hàng khỏi danh sách yêu thích. Vui lòng thử lại.',
-          type: 'error'
+          message: 'Không thể xóa trên server. Đã cập nhật cục bộ.',
+          type: 'error',
         });
-        
+
         // Ẩn toast sau 3 giây
         setTimeout(() => {
           setToast({ show: false, message: '', type: '' });
@@ -88,12 +183,12 @@ function FavoritesPage() {
                 getInitials()
               )}
             </div>
-            <div className="username">{user?.name}</div>
-            <div className="user-info">ID: {user?.id}</div>
+            <div className="username">{user?.name || 'Người dùng'}</div>
+            <div className="user-info">ID: {user?.id || 'N/A'}</div>
             <div className="user-info">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-              </svg> {user?.phone}
+              </svg> {user?.phone || 'Chưa có số điện thoại'}
             </div>
           </div>
           
@@ -215,17 +310,29 @@ function FavoritesPage() {
               {favorites.map(favorite => (
                 <div key={favorite.id} className="favorite-card">
                   <div className="favorite-image">
-                    {favorite.restaurantImage ? (
-                      <img src={favorite.restaurantImage} alt={favorite.restaurantName} />
-                    ) : (
-                      <div className="image-placeholder">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
-                          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                          <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                          <polyline points="21 15 16 10 5 21"></polyline>
-                        </svg>
-                      </div>
-                    )}
+                    {favorite.restaurantImage && typeof favorite.restaurantImage === 'string' && favorite.restaurantImage.trim() !== '' ? (
+                      <img
+                        src={favorite.restaurantImage}
+                        alt={favorite.restaurantName}
+                        className="restaurant-image"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.nextSibling.style.display = 'flex';
+                        }}
+                      />
+                    ) : null}
+                    <div
+                      className="image-placeholder"
+                      style={{
+                        display: favorite.restaurantImage && typeof favorite.restaurantImage === 'string' && favorite.restaurantImage.trim() !== '' ? 'none' : 'flex',
+                      }}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                        <polyline points="21 15 16 10 5 21"></polyline>
+                      </svg>
+                    </div>
                     <button 
                       className="remove-favorite-btn"
                       onClick={() => handleRemoveFavorite(favorite.restaurantId)}
@@ -246,7 +353,7 @@ function FavoritesPage() {
                           <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                           <circle cx="12" cy="10" r="3"></circle>
                         </svg>
-                        <span>{favorite.address || 'Chưa có địa chỉ'}</span>
+                        <span>{favorite.address}</span>
                       </div>
                       
                       {favorite.cuisine && (
@@ -262,12 +369,12 @@ function FavoritesPage() {
                         </div>
                       )}
                       
-                      {favorite.rating && (
+                      {favorite.rating > 0 && (
                         <div className="info-item">
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                           </svg>
-                          <span>{favorite.rating} ({favorite.reviewCount || 0} đánh giá)</span>
+                          <span>{favorite.rating} ({favorite.reviewCount} đánh giá)</span>
                         </div>
                       )}
                       
@@ -295,7 +402,7 @@ function FavoritesPage() {
                         Xem chi tiết
                       </Link>
                       
-                      <Link to={`/reservation/${favorite.restaurantId}`} className="btn-reserve">
+                      <Link to={`/restaurants/${favorite.restaurantId}?showReservation=true`} className="btn-reserve">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                           <line x1="16" y1="2" x2="16" y2="6"></line>
@@ -337,4 +444,4 @@ function FavoritesPage() {
   );
 }
 
-export default FavoritesPage; 
+export default FavoritesPage;
