@@ -5,68 +5,261 @@ import { useApp } from '../../context/AppContext';
 import '../../styles/profile_imformation/MyReservationsPage.css';
 import LogoutHandler from '../identity/LogoutHandler';
 
+const currentDate = new Date('2025-05-18T21:12:00+07:00'); // Cập nhật thời gian hiện tại: 21:12 ngày 18/05/2025
+
+const fetchReservations = async (setReservations, setLoading, setError) => {
+  try {
+    setLoading(true);
+    let apiData = [];
+    try {
+      const response = await reservationAPI.getByUser();
+      if (Array.isArray(response)) {
+        apiData = response;
+      } else {
+        console.warn('API response is not an array:', response);
+      }
+    } catch (apiErr) {
+      console.error('API call failed:', apiErr);
+    }
+
+    const apiReservations = Array.isArray(apiData) ? apiData.map(res => ({
+      ...res,
+      source: 'api',
+      restaurantImage: res.restaurantImage || '',
+      depositAmount: res.finalDeposit || 0,
+      refundStatus: res.refundStatus || (res.status === 'cancelled' ? 'pending' : undefined),
+    })) : [];
+
+    const localReservations = JSON.parse(localStorage.getItem('successfulReservations') || '[]');
+    const formattedLocalReservations = Array.isArray(localReservations) ? localReservations.map(res => ({
+      id: res.id,
+      restaurantId: res.restaurantId,
+      restaurantName: res.restaurantName || 'Nhà hàng không xác định',
+      restaurantImage: res.restaurantImage || '',
+      restaurantAddress: res.restaurantAddress || 'Địa chỉ không xác định',
+      date: res.date,
+      time: res.time,
+      guests: res.guests,
+      status: res.status || 'confirmed',
+      code: res.code || res.id,
+      specialRequests: res.specialRequests || '',
+      depositAmount: res.finalDeposit || 0,
+      source: 'local',
+      refundStatus: res.refundStatus || (res.status === 'cancelled' ? 'pending' : undefined),
+    })) : [];
+
+    const mergedReservations = [
+      ...apiReservations,
+      ...formattedLocalReservations.filter(localRes =>
+        !apiReservations.some(apiRes => apiRes.id === localRes.id)
+      )
+    ];
+
+    const uniqueReservations = Array.from(new Map(mergedReservations.map(res => [res.id, res])).values());
+
+    const updatedReservations = uniqueReservations.map(res => {
+      const reservationDateTime = new Date(`${res.date}T${res.time}:00+07:00`);
+      if (res.status === 'confirmed' && reservationDateTime < currentDate) {
+        return { ...res, status: 'completed' };
+      }
+      return res;
+    });
+
+    setReservations(updatedReservations);
+
+    localStorage.setItem('successfulReservations', JSON.stringify(
+      updatedReservations.filter(res => res.status === 'confirmed' || res.status === 'completed')
+    ));
+
+    setError(null);
+  } catch (err) {
+    console.error('Error fetching reservations:', err);
+    const localReservations = JSON.parse(localStorage.getItem('successfulReservations') || '[]');
+    const formattedLocalReservations = Array.isArray(localReservations) ? localReservations.map(res => ({
+      id: res.id,
+      restaurantId: res.restaurantId,
+      restaurantName: res.restaurantName || 'Nhà hàng không xác định',
+      restaurantImage: res.restaurantImage || '',
+      restaurantAddress: res.restaurantAddress || 'Địa chỉ không xác định',
+      date: res.date,
+      time: res.time,
+      guests: res.guests,
+      status: res.status || 'confirmed',
+      code: res.code || res.id,
+      specialRequests: res.specialRequests || '',
+      depositAmount: res.finalDeposit || 0,
+      source: 'local',
+      refundStatus: res.refundStatus || (res.status === 'cancelled' ? 'pending' : undefined),
+    })) : [];
+
+    const updatedLocalReservations = formattedLocalReservations.map(res => {
+      const reservationDateTime = new Date(`${res.date}T${res.time}:00+07:00`);
+      if (res.status === 'confirmed' && reservationDateTime < currentDate) {
+        return { ...res, status: 'completed' };
+      }
+      return res;
+    });
+
+    setReservations(updatedLocalReservations);
+    setError('Không thể tải danh sách đặt bàn từ server. Đang hiển thị dữ liệu cục bộ.');
+  } finally {
+    setLoading(false);
+  }
+};
+
 function MyReservationsPage() {
   const { user } = useApp();
   const [reservations, setReservations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [toast, setToast] = useState({ show: false, message: '', type: '' });
+  const [cancelModal, setCancelModal] = useState({ show: false, reservationId: null, reason: '' });
 
   useEffect(() => {
-    fetchReservations();
+    fetchReservations(setReservations, setLoading, setError);
   }, []);
 
-  const fetchReservations = async () => {
-    try {
-      setLoading(true);
-      const data = await reservationAPI.getUserReservations();
-      setReservations(data);
-      setError(null);
-    } catch (err) {
-      console.error('Error fetching reservations:', err);
-      setError('Không thể tải danh sách đặt bàn của bạn. Vui lòng thử lại sau.');
-    } finally {
-      setLoading(false);
-    }
+  const openCancelModal = (reservationId) => {
+    setCancelModal({ show: true, reservationId, reason: '' });
   };
 
-  const handleCancelReservation = async (reservationId) => {
-    if (window.confirm('Bạn có chắc muốn hủy đặt bàn này?')) {
-      try {
-        await reservationAPI.delete(reservationId);
-        setReservations(prev => prev.filter(reservation => reservation.id !== reservationId));
-        
-        // Hiển thị thông báo thành công
+  const closeCancelModal = () => {
+    setCancelModal({ show: false, reservationId: null, reason: '' });
+  };
+
+  const handleReasonChange = (e) => {
+    setCancelModal(prev => ({ ...prev, reason: e.target.value }));
+  };
+
+  const confirmCancel = async () => {
+    if (!cancelModal.reason) {
+      setToast({
+        show: true,
+        message: 'Vui lòng chọn lý do hủy.',
+        type: 'error'
+      });
+      setTimeout(() => setToast({ show: false, message: '', type: '' }), 3000);
+      return;
+    }
+
+    try {
+      const reservation = reservations.find(res => res.id === cancelModal.reservationId);
+      const reservationDateTime = new Date(`${reservation.date}T${reservation.time}:00+07:00`);
+      const timeDiffHours = (reservationDateTime - currentDate) / (1000 * 60 * 60);
+      const isRefundable = timeDiffHours >= 24;
+
+      console.log('Sending cancel request for reservationId:', cancelModal.reservationId, 'with reason:', cancelModal.reason);
+      const response = await reservationAPI.delete(cancelModal.reservationId, { reason: cancelModal.reason });
+      console.log('API response:', response);
+
+      let refundStatus = 'pending';
+      if (isRefundable && reservation.depositAmount > 0) {
+        try {
+          const refundResponse = await reservationAPI.refund(cancelModal.reservationId, {
+            amount: reservation.depositAmount,
+            reason: cancelModal.reason
+          });
+          refundStatus = refundResponse.status === 'success' ? 'completed' : 'rejected';
+        } catch (refundErr) {
+          console.error('Refund API failed:', refundErr);
+          refundStatus = 'rejected';
+          setToast({
+            show: true,
+            message: 'Hủy đặt bàn thành công nhưng không thể xử lý hoàn tiền. Vui lòng liên hệ hỗ trợ!',
+            type: 'warning'
+          });
+        }
+      }
+
+      const updatedReservations = reservations.map(res =>
+        res.id === cancelModal.reservationId ? { ...res, status: 'cancelled', refundStatus } : res
+      );
+      setReservations(updatedReservations);
+
+      const syncedReservations = updatedReservations.filter(
+        res => res.status === 'confirmed' || res.status === 'completed'
+      );
+      localStorage.setItem('successfulReservations', JSON.stringify(syncedReservations));
+
+      setToast({
+        show: true,
+        message: isRefundable && reservation.depositAmount > 0
+          ? `Hủy đặt bàn thành công! ${refundStatus === 'completed' ? `Số tiền ${reservation.depositAmount.toLocaleString('vi-VN')}đ đã được hoàn.` : 'Đang xử lý hoàn tiền.'}`
+          : 'Hủy đặt bàn thành công! Không đủ điều kiện hoàn tiền.',
+        type: 'success'
+      });
+
+      setTimeout(() => {
+        setToast({ show: false, message: '', type: '' });
+        closeCancelModal();
+      }, 3000);
+    } catch (err) {
+      console.error('Error canceling reservation:', err.message, 'Details:', err.response?.data);
+
+      const reservationToCancel = reservations.find(res => res.id === cancelModal.reservationId);
+      if (reservationToCancel.source === 'local') {
+        const reservationDateTime = new Date(`${reservationToCancel.date}T${reservationToCancel.time}:00+07:00`);
+        const timeDiffHours = (reservationDateTime - currentDate) / (1000 * 60 * 60);
+        const isRefundable = timeDiffHours >= 24;
+        let refundStatus = 'pending';
+
+        if (isRefundable && reservationToCancel.depositAmount > 0) {
+          refundStatus = 'completed'; // Giả định hoàn tiền cục bộ
+        }
+
+        const updatedReservations = reservations.map(res =>
+          res.id === cancelModal.reservationId ? { ...res, status: 'cancelled', refundStatus } : res
+        );
+        setReservations(updatedReservations);
+
+        const syncedReservations = updatedReservations.filter(
+          res => res.status === 'confirmed' || res.status === 'completed'
+        );
+        localStorage.setItem('successfulReservations', JSON.stringify(syncedReservations));
+
         setToast({
           show: true,
-          message: 'Hủy đặt bàn thành công!',
+          message: isRefundable && reservationToCancel.depositAmount > 0
+            ? `Hủy đặt bàn thành công (cục bộ)! ${refundStatus === 'completed' ? `Số tiền ${reservationToCancel.depositAmount.toLocaleString('vi-VN')}đ đã được hoàn.` : 'Đang xử lý hoàn tiền.'}`
+            : 'Hủy đặt bàn thành công (cục bộ)! Không đủ điều kiện hoàn tiền.',
           type: 'success'
         });
-        
-        // Ẩn toast sau 3 giây
+
         setTimeout(() => {
           setToast({ show: false, message: '', type: '' });
+          closeCancelModal();
         }, 3000);
-      } catch (err) {
-        console.error('Error canceling reservation:', err);
+      } else {
         setError('Không thể hủy đặt bàn. Vui lòng thử lại.');
-        
-        // Hiển thị thông báo lỗi
         setToast({
           show: true,
           message: 'Không thể hủy đặt bàn. Vui lòng thử lại.',
           type: 'error'
         });
-        
-        // Ẩn toast sau 3 giây
-        setTimeout(() => {
-          setToast({ show: false, message: '', type: '' });
-        }, 3000);
+        setTimeout(() => setToast({ show: false, message: '', type: '' }), 3000);
       }
     }
   };
 
+  const deleteReservation = (reservationId) => {
+    const updatedReservations = reservations.filter(res => res.id !== reservationId);
+    setReservations(updatedReservations);
+    const syncedReservations = updatedReservations.filter(
+      res => res.status === 'confirmed' || res.status === 'completed'
+    );
+    localStorage.setItem('successfulReservations', JSON.stringify(syncedReservations));
+    setToast({
+      show: true,
+      message: 'Đã xóa đặt bàn khỏi lịch sử.',
+      type: 'success'
+    });
+    setTimeout(() => setToast({ show: false, message: '', type: '' }), 3000);
+  };
+
   const formatDate = (dateString) => {
+    if (!dateString || isNaN(new Date(dateString).getTime())) {
+      return 'Ngày không xác định';
+    }
     const date = new Date(dateString);
     return new Intl.DateTimeFormat('vi-VN').format(date);
   };
@@ -89,7 +282,15 @@ function MyReservationsPage() {
     }
   };
 
-  // Get user initials for avatar
+  const getRefundText = (refundStatus) => {
+    switch(refundStatus) {
+      case 'completed': return 'Đã hoàn tiền.';
+      case 'pending': return 'Đang xử lý hoàn tiền.';
+      case 'rejected': return 'Không hoàn tiền do: Quy định nhà hàng (hủy sau 24h).';
+      default: return '';
+    }
+  };
+
   const getInitials = () => {
     if (!user || !user.name) return '?';
     return user.name
@@ -246,16 +447,28 @@ function MyReservationsPage() {
                 <div key={reservation.id} className="reservation-card">
                   <div className="reservation-header">
                     <div className="restaurant-info">
-                      {reservation.restaurantImage ? (
-                        <img src={reservation.restaurantImage} alt={reservation.restaurantName} className="restaurant-image" />
-                      ) : (
-                        <div className="restaurant-image-placeholder">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M17 9V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"></path>
-                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                          </svg>
-                        </div>
-                      )}
+                      {reservation.restaurantImage && typeof reservation.restaurantImage === 'string' && reservation.restaurantImage.trim() !== '' ? (
+                        <img
+                          src={reservation.restaurantImage}
+                          alt={reservation.restaurantName}
+                          className="restaurant-image"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'flex';
+                          }}
+                        />
+                      ) : null}
+                      <div
+                        className="restaurant-image-placeholder"
+                        style={{
+                          display: reservation.restaurantImage && typeof reservation.restaurantImage === 'string' && reservation.restaurantImage.trim() !== '' ? 'none' : 'flex'
+                        }}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M17 9V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"></path>
+                          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        </svg>
+                      </div>
                       <div className="restaurant-details">
                         <h3>{reservation.restaurantName || 'Nhà hàng'}</h3>
                         <div className="restaurant-address">
@@ -321,6 +534,19 @@ function MyReservationsPage() {
                         </div>
                         <div className="info-value reservation-code">{reservation.code || reservation.id}</div>
                       </div>
+
+                      {reservation.depositAmount > 0 && (
+                        <div className="info-item">
+                          <div className="info-label">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <line x1="12" y1="1" x2="12" y2="23"></line>
+                              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                            </svg>
+                            Tiền cọc
+                          </div>
+                          <div className="info-value">{reservation.depositAmount.toLocaleString('vi-VN')}đ</div>
+                        </div>
+                      )}
                     </div>
                     
                     {reservation.specialRequests && (
@@ -340,30 +566,57 @@ function MyReservationsPage() {
                         <div className="special-requests-text">{reservation.specialRequests}</div>
                       </div>
                     )}
+
+                    {reservation.status === 'cancelled' && reservation.depositAmount > 0 && reservation.refundStatus && (
+                      <div className="refund-status">
+                        <div className="info-label">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="12" y1="1" x2="12" y2="23"></line>
+                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                          </svg>
+                          Trạng thái hoàn tiền
+                        </div>
+                        <div className="info-value">{getRefundText(reservation.refundStatus)}</div>
+                      </div>
+                    )}
                   </div>
                   
                   <div className="reservation-footer">
-                    {reservation.status === 'pending' || reservation.status === 'confirmed' ? (
+                    {reservation.status === 'confirmed' && (
                       <button 
                         className="btn-cancel"
-                        onClick={() => handleCancelReservation(reservation.id)}
+                        onClick={() => openCancelModal(reservation.id)}
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <circle cx="12" cy="12" r="10"></circle>
                           <line x1="15" y1="9" x2="9" y2="15"></line>
                           <line x1="9" y1="9" x2="15" y2="15"></line>
                         </svg>
-                        Hủy đặt bàn
+                        Hủy đặt bàn {reservation.depositAmount > 0 ? 'và hoàn tiền' : ''}
                       </button>
-                    ) : reservation.status === 'completed' ? (
-                      <Link to={`/review/${reservation.restaurantId}`} className="btn-review">
+                    )}
+                    {reservation.status === 'completed' && (
+                      <Link to={`/restaurants/${reservation.restaurantId}?tab=reviews`} className="btn-review">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                         </svg>
                         Đánh giá
                       </Link>
-                    ) : null}
-                    
+                    )}
+                    {(reservation.status === 'completed' || reservation.status === 'cancelled') && (
+                      <button 
+                        className="btn-delete"
+                        onClick={() => deleteReservation(reservation.id)}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="3 6 5 6 21 6"></polyline>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                          <line x1="10" y1="11" x2="10" y2="17"></line>
+                          <line x1="14" y1="11" x2="14" y2="17"></line>
+                        </svg>
+                        Xóa
+                      </button>
+                    )}
                     <Link to={`/restaurants/${reservation.restaurantId}`} className="btn-view-restaurant">
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
@@ -379,7 +632,24 @@ function MyReservationsPage() {
         </div>
       </div>
       
-      {/* Toast notification */}
+      {cancelModal.show && (
+        <div className="modal-overlay" onClick={closeCancelModal}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <h2>Chọn lý do hủy đặt bàn</h2>
+            <select value={cancelModal.reason} onChange={handleReasonChange} className="reason-select">
+              <option value="">Chọn lý do</option>
+              <option value="Đổi ý">Đổi ý</option>
+              <option value="Lịch trình bận">Lịch trình bận</option>
+              <option value="Vấn đề khác">Vấn đề khác</option>
+            </select>
+            <div className="modal-actions">
+              <button className="btn-secondary" onClick={closeCancelModal}>Hủy</button>
+              <button className="btn-primary" onClick={confirmCancel}>Xác nhận hủy</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {toast.show && (
         <div className={`toast-notification ${toast.type}`}>
           <div className="toast-icon">
@@ -403,4 +673,4 @@ function MyReservationsPage() {
   );
 }
 
-export default MyReservationsPage; 
+export default MyReservationsPage;

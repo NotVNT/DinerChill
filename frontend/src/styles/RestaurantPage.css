@@ -1,358 +1,646 @@
+/* Main container */
 .restaurant-page {
-    max-width: 1200px;
-    margin: 20px auto;
-    padding: 0 16px;
+  padding: 40px 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Page header */
+.page-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.page-header h1 {
+  font-size: 36px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.page-header p {
+  font-size: 14px;
+  color: #666;
+}
+
+/* Search and filter section */
+.search-filter-section {
+  background: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 30px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e31837;
+}
+
+.search-section {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.search-wrapper {
+  display: flex;
+  align-items: stretch;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 25px;
+  overflow: hidden;
+  width: 100%;
+  max-width: 800px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  height: 44px;
+}
+
+.location-select-wrapper {
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  border-right: 1px solid #ddd;
+  background-color: #fff;
+  border-top-left-radius: 25px;
+  border-bottom-left-radius: 25px;
+}
+
+.location-icon {
+  margin-right: 5px;
+  font-size: 16px;
+  color: #e31837;
+}
+
+.location-select {
+  border: none;
+  background: none;
+  padding: 10px 5px;
+  font-size: 16px;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  cursor: pointer;
+  background: url('data:image/svg+xml;utf8,<svg fill="black" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>')
+    no-repeat right 5px center;
+  background-size: 12px;
+  padding-right: 25px;
+  height: 100%;
+  line-height: normal;
+}
+
+.location-select:focus {
+  outline: none;
+}
+
+.search-input-wrapper {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 10px;
+  color: #888;
+  font-size: 16px;
+}
+
+.search-input-wrapper input {
+  width: 100%;
+  border: none;
+  padding: 0 10px 0 35px; /* Thêm padding-left để chừa chỗ cho icon */
+  font-size: 16px;
+  outline: none;
+  height: 100%;
+  line-height: normal;
+  color: #333;
+}
+
+.search-input-wrapper input::placeholder {
+  color: #999;
+}
+
+.search-button {
+  background-color: #e31837;
+  color: white;
+  border: none;
+  padding: 0 20px;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 0 25px 25px 0;
+  transition: background-color 0.2s;
+  height: 100%;
+  line-height: normal;
+  display: flex;
+  align-items: center;
+}
+
+.search-button:hover {
+  background-color: #c91632;
+}
+
+.suggestions-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  max-height: 300px;
+  overflow-y: auto;
+  animation: slideDown 0.2s ease-out; /* Thêm hiệu ứng hiện dropdown */
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
   }
-  
-  /* Header section */
-  .header-section {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    gap: 20px;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
-  
-  .dropdowns {
-    display: flex;
-    gap: 10px;
+}
+
+.suggestions-section {
+  padding: 10px;
+}
+
+.suggestions-section h4 {
+  margin: 0 0 5px;
+  font-size: 14px;
+  color: #666;
+}
+
+.keyword-suggestions,
+.restaurant-suggestions {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.suggestion-item {
+  padding: 5px 10px;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: background-color 0.2s;
+}
+
+.suggestion-item:hover {
+  background-color: #f0f0f0;
+}
+
+.restaurant-suggestion-item {
+  display: flex;
+  align-items: center;
+  padding: 5px 10px;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: background-color 0.2s;
+}
+
+.restaurant-suggestion-item:hover {
+  background-color: #f0f0f0;
+}
+
+.restaurant-suggestion-image {
+  width: 40px;
+  height: 40px;
+  border-radius: 5px;
+  margin-right: 10px;
+}
+
+.restaurant-suggestion-details {
+  flex: 1;
+}
+
+.restaurant-suggestion-details h5 {
+  margin: 0;
+  font-size: 14px;
+  color: #333;
+}
+
+.restaurant-suggestion-meta {
+  display: flex;
+  gap: 10px;
+  font-size: 12px;
+  color: #666;
+}
+
+.stars {
+  color: #f5a623;
+}
+
+.rating-value {
+  margin-left: 5px;
+}
+
+.cuisine {
+  margin-left: 5px;
+}
+
+.distance {
+  margin-left: 5px;
+}
+
+/* Filter section */
+.filter-section {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 15px;
+  padding: 0 10px;
+}
+
+.filter-select {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 14px;
+  outline: none;
+  cursor: pointer;
+  background: #fff;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background: url('data:image/svg+xml;utf8,<svg fill="black" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>')
+    no-repeat right 5px center;
+  background-size: 12px;
+  padding-right: 25px;
+  min-width: 150px;
+}
+
+.filter-button,
+.reset-button {
+  padding: 8px 20px;
+  border: none;
+  border-radius: 5px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.filter-button {
+  background-color: #e31837;
+  color: white;
+}
+
+.filter-button:hover {
+  background-color: #c91632;
+}
+
+.reset-button {
+  background-color: #666;
+  color: white;
+  margin-left: 10px;
+}
+
+.reset-button:hover {
+  background-color: #555;
+}
+
+/* Filter tabs (Ẩn vì không sử dụng - có thể xóa nếu không cần) */
+.filter-box {
+  display: none;
+}
+
+/* Results and filter summary */
+.results-info {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.filter-summary {
+  font-size: 14px;
+  color: #e31837;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* Restaurant list */
+.restaurant-list,
+.restaurants-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 25px;
+  margin-bottom: 40px;
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
   }
-  
-  .dropdown {
-    padding: 8px 12px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    font-size: 16px;
-    cursor: pointer;
-    background-color: white;
+  to {
+    opacity: 1;
   }
-  
-  .dropdown:hover {
-    background-color: #f5f5f5;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.page-button,
+.nav-button {
+  padding: 8px 16px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background-color: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.page-button:hover,
+.nav-button:hover {
+  background-color: #f0f0f0;
+}
+
+.page-button.active {
+  background-color: #e31837;
+  color: white;
+  border-color: #e31837;
+}
+
+.nav-button:disabled {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+  color: #999;
+}
+
+/* Recently viewed section */
+.recently-viewed {
+  margin-top: 40px;
+}
+
+.recently-viewed h2 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* Loading, error, and no results */
+.loading,
+.error-message,
+.no-results {
+  text-align: center;
+  font-size: 16px;
+  color: #666;
+}
+
+.loading {
+  color: #e31837;
+}
+
+.error-message {
+  color: #e31837;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .restaurant-page {
+    padding: 20px 8px;
   }
-  
-  .search-bar {
-    display: flex;
-    gap: 10px;
-    flex: 1;
-    max-width: 400px;
-    position: relative;
+
+  .page-header h1 {
+    font-size: 28px;
   }
-  
-  .search-container {
-    flex: 1;
-    position: relative;
-  }
-  
-  .search-bar input {
-    width: 100%;
-    padding: 8px 12px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    font-size: 16px;
-  }
-  
-  .search-bar input:focus {
-    outline: none;
-    border-color: #e31837;
-  }
-  
-  .suggestions-dropdown {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background-color: white;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    z-index: 10;
-    max-height: 400px;
-    overflow-y: auto;
-    margin-top: 5px;
-    padding: 10px;
-  }
-  
-  .suggestions-section {
-    margin-bottom: 15px;
-  }
-  
-  .suggestions-section h4 {
-    font-size: 14px;
-    font-weight: bold;
-    color: #333;
-    margin-bottom: 8px;
-    text-transform: uppercase;
-  }
-  
-  .keyword-suggestions {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-  
-  .suggestion-item {
-    padding: 8px 10px;
-    cursor: pointer;
-    font-size: 14px;
-    color: #333;
-    border-radius: 3px;
-  }
-  
-  .suggestion-item:hover {
-    background-color: #f5f5f5;
-  }
-  
-  .restaurant-suggestions {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-  
-  .restaurant-suggestion-item {
-    display: flex;
-    align-items: center;
-    padding: 10px;
-    cursor: pointer;
-    border-bottom: 1px solid #eee;
-    border-radius: 3px;
-  }
-  
-  .restaurant-suggestion-item:last-child {
-    border-bottom: none;
-  }
-  
-  .restaurant-suggestion-item:hover {
-    background-color: #f5f5f5;
-  }
-  
-  .restaurant-suggestion-image {
-    width: 50px;
-    height: 50px;
-    object-fit: cover;
-    border-radius: 5px;
-    margin-right: 10px;
-  }
-  
-  .restaurant-suggestion-details {
-    flex: 1;
-  }
-  
-  .restaurant-suggestion-details h5 {
-    font-size: 14px;
-    font-weight: 600;
-    margin: 0 0 5px;
-    color: #333;
-  }
-  
-  .restaurant-suggestion-meta {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+
+  .page-header p {
     font-size: 12px;
-    color: #666;
   }
-  
-  .restaurant-suggestion-meta .stars {
-    color: #f5c518;
+
+  .search-filter-section {
+    padding: 15px;
   }
-  
-  .restaurant-suggestion-meta .rating-value {
-    margin-left: 4px;
+
+  .search-wrapper {
+    max-width: 100%;
+    height: 40px;
   }
-  
-  .restaurant-suggestion-meta .cuisine {
-    color: #888;
+
+  .location-select-wrapper {
+    padding: 0 8px;
   }
-  
-  .restaurant-suggestion-meta .distance {
-    color: #888;
+
+  .location-icon {
+    font-size: 14px;
   }
-  
+
+  .location-select {
+    font-size: 14px;
+    padding-right: 20px;
+    background-size: 10px;
+  }
+
+  .search-icon {
+    font-size: 14px;
+    left: 8px;
+  }
+
+  .search-input-wrapper input {
+    font-size: 14px;
+    padding-left: 30px; /* Điều chỉnh cho icon nhỏ hơn */
+  }
+
   .search-button {
-    padding: 8px 16px;
-    background-color: #e31837;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    font-size: 16px;
-    cursor: pointer;
-  }
-  
-  .search-button:hover {
-    background-color: #c91632;
-  }
-  
-  /* Category section */
-  .category-section {
-    padding: 10px 0;
-    border-bottom: 1px solid #e0e0e0;
-    margin-bottom: 20px;
-  }
-  
-  .categories {
-    display: flex;
-    gap: 15px;
-    overflow-x: auto;
-    white-space: nowrap;
-  }
-  
-  .category {
-    text-decoration: none;
-    color: #333;
-    background: none;
-    border: none;
-    cursor: pointer;
-  }
-  
-  .category-label {
-    padding: 8px 16px;
+    padding: 0 15px;
     font-size: 14px;
-    border-radius: 20px;
-    background-color: #f5f5f5;
-    transition: background-color 0.2s;
   }
-  
-  .category:hover .category-label,
-  .category.active .category-label {
-    background-color: #e31837;
-    color: white;
+
+  .suggestions-dropdown {
+    max-height: 250px;
   }
-  
-  /* Danh sách nhà hàng */
-  .restaurants-list h2,
-  .recently-viewed h2 {
-    font-size: 24px;
-    margin-bottom: 20px;
-    color: #333;
+
+  .suggestions-section {
+    padding: 8px;
   }
-  
+
+  .suggestions-section h4 {
+    font-size: 12px;
+  }
+
+  .suggestion-item {
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+
+  .restaurant-suggestion-item {
+    padding: 4px 8px;
+  }
+
+  .restaurant-suggestion-image {
+    width: 35px;
+    height: 35px;
+  }
+
+  .restaurant-suggestion-details h5 {
+    font-size: 12px;
+  }
+
+  .restaurant-suggestion-meta {
+    font-size: 10px;
+    gap: 8px;
+  }
+
+  .filter-section {
+    gap: 8px;
+  }
+
+  .filter-select {
+    min-width: 100px;
+    padding: 6px 10px;
+    font-size: 12px;
+    padding-right: 20px;
+    background-size: 10px;
+  }
+
+  .filter-button,
+  .reset-button {
+    padding: 6px 15px;
+    font-size: 12px;
+  }
+
+  .results-info,
+  .filter-summary {
+    font-size: 12px;
+  }
+
+  .restaurant-list,
   .restaurants-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 15px;
   }
-  
-  /* Phân trang */
+
   .pagination {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin: 20px 0;
+    gap: 8px;
   }
-  
-  .pagination button {
-    padding: 8px 12px;
-    border: none;
-    border-radius: 50%;
-    font-size: 14px;
-    cursor: pointer;
-    background-color: #f5f5f5;
-    color: #333;
+
+  .page-button,
+  .nav-button {
+    padding: 6px 12px;
+    font-size: 12px;
   }
-  
-  .pagination button.active {
-    background-color: #e31837;
-    color: white;
+
+  .recently-viewed h2 {
+    font-size: 20px;
   }
-  
-  .pagination button:hover {
-    background-color: #ddd;
-  }
-  
-  /* Section "Đã xem gần đây" */
-  .recently-viewed {
-    margin-top: 40px;
-  }
-  
-  /* Style cho loading và error */
+
   .loading,
   .error-message,
   .no-results {
-    text-align: center;
-    font-size: 16px;
-    color: #666;
-    padding: 20px;
+    font-size: 14px;
   }
-  
-  /* Responsive */
-  @media (max-width: 768px) {
-    .restaurant-page {
-      padding: 0 8px;
-    }
-  
-    .header-section {
-      flex-direction: column;
-      gap: 10px;
-    }
-  
-    .dropdowns {
-      width: 100%;
-      justify-content: space-between;
-    }
-  
-    .dropdown {
-      font-size: 14px;
-      flex: 1;
-    }
-  
-    .search-bar {
-      width: 100%;
-      max-width: none;
-    }
-  
-    .search-bar input {
-      font-size: 14px;
-    }
-  
-    .suggestions-dropdown {
-      max-height: 300px;
-    }
-  
-    .suggestion-item {
-      padding: 6px 8px;
-      font-size: 12px;
-    }
-  
-    .restaurant-suggestion-item {
-      padding: 8px;
-    }
-  
-    .restaurant-suggestion-image {
-      width: 40px;
-      height: 40px;
-    }
-  
-    .restaurant-suggestion-details h5 {
-      font-size: 12px;
-    }
-  
-    .restaurant-suggestion-meta {
-      font-size: 10px;
-      gap: 6px;
-    }
-  
-    .search-button {
-      font-size: 14px;
-    }
-  
-    .category-label {
-      padding: 6px 12px;
-      font-size: 12px;
-    }
-  
-    .restaurants-list h2,
-    .recently-viewed h2 {
-      font-size: 20px;
-    }
-  
-    .restaurants-grid {
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 10px;
-    }
-  
-    .pagination button {
-      padding: 6px 10px;
-      font-size: 12px;
-    }
+}
+
+/* Responsive cho màn hình nhỏ hơn (dưới 480px) */
+@media (max-width: 480px) {
+  .restaurant-page {
+    padding: 15px 5px;
   }
+
+  .page-header h1 {
+    font-size: 24px;
+  }
+
+  .page-header p {
+    font-size: 11px;
+  }
+
+  .search-filter-section {
+    padding: 10px;
+  }
+
+  .search-wrapper {
+    height: 36px;
+  }
+
+  .location-select-wrapper {
+    padding: 0 5px;
+  }
+
+  .location-icon {
+    font-size: 12px;
+  }
+
+  .location-select {
+    font-size: 12px;
+    padding-right: 15px;
+    background-size: 8px;
+  }
+
+  .search-icon {
+    font-size: 12px;
+    left: 5px;
+  }
+
+  .search-input-wrapper input {
+    font-size: 12px;
+    padding-left: 25px;
+  }
+
+  .search-button {
+    padding: 0 10px;
+    font-size: 12px;
+  }
+
+  .filter-section {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .filter-select {
+    min-width: 100%;
+    font-size: 12px;
+    padding: 6px 8px;
+  }
+
+  .filter-button,
+  .reset-button {
+    width: 100%;
+    padding: 8px;
+    font-size: 12px;
+  }
+
+  .reset-button {
+    margin-left: 0;
+    margin-top: 8px;
+  }
+
+  .restaurant-list,
+  .restaurants-grid {
+    grid-template-columns: 1fr; /* Một cột trên màn hình nhỏ */
+    gap: 10px;
+  }
+
+  .pagination {
+    gap: 5px;
+  }
+
+  .page-button,
+  .nav-button {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+
+  .recently-viewed h2 {
+    font-size: 18px;
+  }
+
+  .loading,
+  .error-message,
+  .no-results {
+    font-size: 12px;
+  }
+}
