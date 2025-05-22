@@ -1,6 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
-import SearchBar from '../components/SearchBar';
 import FilterBox from '../components/FilterBox';
 import RestaurantCard from '../components/RestaurantCard';
 import { useApp } from '../context/AppContext';
@@ -247,9 +246,6 @@ function HomePage() {
           </div>
         </div>
       )}
-      <div className="search-container">
-        <SearchBar location="Hồ Chí Minh" supportPhone="1900 6005" />
-      </div>
       <div className="filter-container">
         <div className="top-filters-wrapper">
           <button className="scroll-arrow scroll-left" onClick={scrollFiltersLeft}>

@@ -120,7 +120,7 @@ export function AppProvider({ children }) {
     }
   }, [recentlyViewed]);
 
-  const addToRecentlyViewed = (restaurant) => {
+  const addToRecentlyViewed = useCallback((restaurant) => {
     if (!restaurant || !restaurant.id) return;
     setRecentlyViewed(prev => {
       const updated = [...prev];
@@ -130,16 +130,16 @@ export function AppProvider({ children }) {
       if (updated.length > 10) updated.pop();
       return updated;
     });
-  };
+  }, []);
 
-  const removeFromRecentlyViewed = (restaurantId) => {
+  const removeFromRecentlyViewed = useCallback((restaurantId) => {
     setRecentlyViewed(prev => prev.filter(item => item.id !== restaurantId));
-  };
+  }, []);
 
-  const clearRecentlyViewed = () => {
+  const clearRecentlyViewed = useCallback(() => {
     setRecentlyViewed([]);
     localStorage.removeItem('recentlyViewed');
-  };
+  }, []);
 
   const applyFilters = useCallback((data) => {
     let filteredData = [...(data || [])];

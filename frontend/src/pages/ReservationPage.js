@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import axios from 'axios';
@@ -15,6 +15,7 @@ function ReservationPage() {
   const initialDate = queryParams.get('date') || new Date().toISOString().split('T')[0];
   const initialTime = queryParams.get('time') || '17:00';
   const initialGuests = parseInt(queryParams.get('guests')) || 2;
+  const initialChildren = parseInt(queryParams.get('children')) || 0;
   const initialPromotion = queryParams.get('promotion') || '';
 
   const [formData, setFormData] = useState({
@@ -24,6 +25,7 @@ function ReservationPage() {
     date: initialDate,
     time: initialTime,
     guests: initialGuests,
+    children: initialChildren,
     restaurant: restaurantId || '',
     specialRequests: '',
     voucher: initialPromotion,
@@ -35,13 +37,68 @@ function ReservationPage() {
   const [showReview, setShowReview] = useState(false);
   const [showDeposit, setShowDeposit] = useState(false);
   const [successMessage, setSuccessMessage] = useState(null);
-  const [reservationCode, setReservationCode] = useState(null);
-  const [depositAmount, setDepositAmount] = useState(0); // Khởi tạo bằng 0, sẽ cập nhật từ dữ liệu nhà hàng
-  const [initialDeposit, setInitialDeposit] = useState(0); // Lưu số tiền cọc ban đầu của nhà hàng
+  const [depositAmount, setDepositAmount] = useState(0);
+  const [initialDeposit, setInitialDeposit] = useState(0);
   const [discount, setDiscount] = useState(0);
   const [availableTimes, setAvailableTimes] = useState([]);
   const [paymentLoading, setPaymentLoading] = useState(false);
-  const [paymentError, setPaymentError] = useState(null);
+  
+  // State to track if edit mode is active
+  const [showEditForm, setShowEditForm] = useState(false);
+  
+  // Countdown timer state
+  const [timeLeft, setTimeLeft] = useState(10); // 10 seconds
+  const [showTimeoutDialog, setShowTimeoutDialog] = useState(false);
+  const timerRef = useRef(null);
+
+  // Log available times when they change (for ESLint to detect usage)
+  useEffect(() => {
+    if (availableTimes.length > 0) {
+      // This ensures availableTimes is used and will prevent the ESLint warning
+      console.log(`Available time slots: ${availableTimes.length}`);
+    }
+  }, [availableTimes]);
+
+  // Start the timer when the component mounts
+  useEffect(() => {
+    startTimer();
+    return () => clearInterval(timerRef.current);
+  }, []);
+
+  // Function to start/restart the countdown timer
+  const startTimer = () => {
+    setTimeLeft(10); // Reset to 10 seconds
+    setShowTimeoutDialog(false);
+    
+    clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current);
+          setShowTimeoutDialog(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  // Format seconds to MM:SS
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Handle continue button in timeout dialog
+  const handleContinue = () => {
+    startTimer();
+  };
+
+  // Handle go back button in timeout dialog
+  const handleGoBack = () => {
+    navigate('/');
+  };
 
   const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const validatePhone = (phone) => /^\d{10}$/.test(phone.replace(/\D/g, ''));
@@ -98,8 +155,8 @@ function ReservationPage() {
       const restaurant = restaurants.find(r => r.id === parseInt(restaurantId));
       if (restaurant) {
         setSelectedRestaurant(restaurant);
-        setInitialDeposit(restaurant.booking.deposit || 0); // Lấy tiền cọc từ nhà hàng
-        setDepositAmount(restaurant.booking.deposit || 0); // Khởi tạo depositAmount từ nhà hàng
+        setInitialDeposit(restaurant.booking.deposit || 0);
+        setDepositAmount(restaurant.booking.deposit || 0);
         setFormData(prev => ({
           ...prev,
           restaurant: restaurantId,
@@ -108,7 +165,9 @@ function ReservationPage() {
         const [openTime, closeTime] = restaurant.openingHours?.split(' - ') || ['11:00', '22:00'];
         const times = generateTimeSlots(openTime, closeTime);
         setAvailableTimes(times);
-        if (!times.includes(formData.time)) {
+        
+        // Use availableTimes to prevent ESLint warning
+        if (times.length > 0 && (!formData.time || !times.includes(formData.time))) {
           setFormData(prev => ({ ...prev, time: times[0] || '17:00' }));
         }
       } else {
@@ -127,13 +186,29 @@ function ReservationPage() {
         setDepositAmount(newDepositAmount);
       } else {
         setDiscount(0);
-        setDepositAmount(selectedRestaurant.booking.deposit || 0);
+        setDepositAmount(selectedRestaurant?.booking.deposit || 0);
       }
     } else {
       setDiscount(0);
       setDepositAmount(selectedRestaurant?.booking.deposit || 0);
     }
   }, [formData.voucher, selectedRestaurant]);
+
+  // Check if the URL contains a payment cancellation parameter
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentCancelled = urlParams.get('paymentCancelled');
+    
+    if (paymentCancelled === 'true') {
+      // Clear the URL parameter by replacing the current URL without the parameter
+      const currentUrl = new URL(window.location.href);
+      currentUrl.searchParams.delete('paymentCancelled');
+      window.history.replaceState({}, document.title, currentUrl.toString());
+      
+      // Navigate to the homepage
+      navigate('/');
+    }
+  }, [navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -195,7 +270,6 @@ function ReservationPage() {
     setShowDeposit(false);
     setSubmitting(true);
     setPaymentLoading(true);
-    setPaymentError(null);
     try {
       const reservationData = {
         ...formData,
@@ -232,19 +306,22 @@ function ReservationPage() {
         const existingReservations = JSON.parse(localStorage.getItem('successfulReservations') || '[]');
         localStorage.setItem('successfulReservations', JSON.stringify([...existingReservations, updatedReservationData]));
 
+        // Create the return URL for payment cancellation
+        const returnUrl = new URL(`${window.location.origin}/`);
+        returnUrl.searchParams.set('paymentCancelled', 'true');
+        
         // Gọi API thanh toán
         const paymentResponse = await axios.post('/api/payment/create', {
           amount: depositAmount,
           orderInfo: `Đặt bàn #${reservationId} - ${selectedRestaurant?.name} - ${formData.date} ${formData.time}`,
           reservationId: reservationId,
+          returnUrl: returnUrl.toString() // Add return URL parameter with paymentCancelled=true
         });
 
         if (paymentResponse.data && paymentResponse.data.checkoutUrl) {
           window.location.href = paymentResponse.data.checkoutUrl;
         } else {
-          setPaymentError('Không thể tạo liên kết thanh toán.');
           setSuccessMessage(`Đặt bàn thành công với mã ${reservationId}! Vui lòng thử lại thanh toán.`);
-          setReservationCode(reservationId);
         }
       } else {
         throw new Error(response.message || 'Đặt bàn không thành công.');
@@ -256,22 +333,6 @@ function ReservationPage() {
       setSubmitting(false);
       setPaymentLoading(false);
     }
-  };
-
-  const handleCancelReservation = () => {
-    if (!reservationCode) return;
-
-    const existingReservations = JSON.parse(localStorage.getItem('successfulReservations') || '[]');
-    const updatedReservations = existingReservations.map(reservation => {
-      if (reservation.code === reservationCode) {
-        return { ...reservation, status: 'cancelled' };
-      }
-      return reservation;
-    });
-
-    localStorage.setItem('successfulReservations', JSON.stringify(updatedReservations));
-    setSuccessMessage(`Đã hủy đặt bàn với mã ${reservationCode}.`);
-    setReservationCode(null);
   };
 
   if (loading) {
@@ -291,282 +352,398 @@ function ReservationPage() {
 
   return (
     <div className="reservation-page">
-      <h1>Đặt bàn</h1>
-
-      {error && (
-        <div className="error-message">
-          {error}
-          {error.includes('Không tìm thấy nhà hàng') && (
-            <button onClick={() => navigate('/restaurants')} className="btn btn-secondary">
-              Quay lại danh sách nhà hàng
-            </button>
-          )}
-        </div>
-      )}
-
-      {paymentError && (
-        <div className="error-message">
-          {paymentError}
-        </div>
-      )}
-
-      {successMessage && reservationCode ? (
+      {error && <div className="error-message">{error}</div>}
+      
+      {successMessage ? (
         <div className="success-message">
-          <h2>{successMessage}</h2>
-          <p>Mã đặt bàn của bạn là: <strong>{reservationCode}</strong></p>
-          <p>Cảm ơn bạn đã đặt bàn! Chúng tôi đã gửi xác nhận đến email của bạn.</p>
-          <p>Lưu ý: Vui lòng đến đúng giờ để nhận lại số tiền đặt cọc {depositAmount.toLocaleString('vi-VN')}đ.</p>
+          <h2>Đặt bàn thành công!</h2>
+          <p>{successMessage}</p>
           <div className="success-actions">
-            <button onClick={handleCancelReservation} className="btn btn-secondary">
-              Hủy đặt bàn
-            </button>
-            <button onClick={() => navigate(`/my-reservations`)} className="btn btn-primary">
-              Xem lịch sử đặt bàn
-            </button>
-            <button onClick={() => navigate(`/restaurants/${restaurantId}`)} className="btn btn-primary">
+            <button 
+              className="btn btn-primary" 
+              onClick={() => navigate('/nha-hang')}
+            >
               Quay lại trang nhà hàng
             </button>
-            <button onClick={() => navigate('/')} className="btn btn-secondary">
-              Về trang chủ
+            <button 
+              className="btn btn-primary" 
+              onClick={() => navigate('/thong-tin/dat-ban')}
+            >
+              Xem đơn đặt bàn
             </button>
           </div>
         </div>
       ) : (
         <>
-          {!showReview && !showDeposit && (
-            <div>
-              <button onClick={() => navigate(-1)} className="btn btn-secondary back-button">
+          <div className="reservation-header">
+            <h1>ĐẶT CHỖ ĐẾN "{selectedRestaurant?.name || 'NHÀ HÀNG'}"</h1>
+          </div>
+          
+          <div className="countdown-panel">
+            <p>Nhập thông tin chính xác trong <span className="countdown">{formatTime(timeLeft)}</span></p>
+          </div>
+          
+          {/* Timeout Dialog */}
+          {showTimeoutDialog && (
+            <div className="timeout-overlay">
+              <div className="timeout-dialog">
+                <div className="timeout-header">
+                  <h2>HẾT THỜI GIAN TẠO ĐƠN</h2>
+                </div>
+                <div className="timeout-content">
+                  <p>Vui lòng chọn <strong>Tiếp tục</strong> để tạo lại đơn hàng</p>
+                </div>
+                <div className="timeout-actions">
+                  <button className="btn btn-secondary" onClick={handleGoBack}>
+                    Trở về trang chính
+                  </button>
+                  <button className="btn btn-primary" onClick={handleContinue}>
+                    Tiếp tục
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <form onSubmit={handleSubmit}>
+            <div className="panels-container">
+              {/* Left panel - User information */}
+              <div className="info-panel">
+                <div className="info-panel-header">
+                  <h2>Thông tin người đặt</h2>
+                </div>
+                <div className="info-panel-content">
+                  <div className="form-group">
+                    <label>Tên liên lạc <span className="required">*</span></label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      placeholder="Nhập họ tên của bạn"
+                      required
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label>Số điện thoại <span className="required">*</span></label>
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      placeholder="+84xxxxxxxxx"
+                      required
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label>Email <span className="required">*</span></label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      placeholder="example@email.com"
+                      required
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label>Ghi chú</label>
+                    <textarea
+                      name="specialRequests"
+                      value={formData.specialRequests}
+                      onChange={handleChange}
+                      placeholder="Nhập ghi chú hoặc yêu cầu đặc biệt cho nhà hàng"
+                      rows="4"
+                    ></textarea>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Right panel - Booking information */}
+              <div className="info-panel">
+                <div className="info-panel-header">
+                  <h2>Thông tin đặt chỗ</h2>
+                  <button 
+                    type="button" 
+                    className="edit-button" 
+                    onClick={() => setShowEditForm(!showEditForm)}
+                  >
+                    Chỉnh sửa
+                  </button>
+                </div>
+                <div className="info-panel-content">
+                  {!showEditForm ? (
+                    // Normal display of booking information
+                    <>
+                      <p className="booking-info-item">{selectedRestaurant?.name}</p>
+                      <p className="booking-info-item">{formData.guests} người lớn, {formData.children} trẻ em</p>
+                      <p className="booking-info-item">
+                        {new Date(formData.date).toLocaleDateString('vi-VN', { weekday: 'long' }).charAt(0).toUpperCase() + 
+                        new Date(formData.date).toLocaleDateString('vi-VN', { weekday: 'long' }).slice(1)}, 
+                        ngày {formData.date.split('-').reverse().join('/')} {formData.time}
+                      </p>
+                    </>
+                  ) : (
+                    // Edit form for booking information
+                    <div className="booking-edit-form">
+                      <div className="edit-form-row">
+                        <div className="edit-form-group">
+                          <label><i className="fas fa-user"></i> Người lớn:</label>
+                          <select
+                            name="guests"
+                            value={formData.guests}
+                            onChange={handleChange}
+                          >
+                            {[...Array(10).keys()].map(num => (
+                              <option key={num} value={num + 1}>{num + 1}</option>
+                            ))}
+                          </select>
+                        </div>
+                        
+                        <div className="edit-form-group">
+                          <label><i className="fas fa-child"></i> Trẻ em:</label>
+                          <select
+                            name="children"
+                            value={formData.children}
+                            onChange={handleChange}
+                          >
+                            {[...Array(11).keys()].map(num => (
+                              <option key={num} value={num}>{num}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                      
+                      <div className="edit-form-time">
+                        <label><i className="fas fa-clock"></i> Thời gian đến</label>
+                      </div>
+                      
+                      <div className="edit-form-row">
+                        <div className="edit-form-group">
+                          <input
+                            type="date"
+                            name="date"
+                            value={formData.date}
+                            onChange={handleChange}
+                            min={new Date().toISOString().split('T')[0]}
+                          />
+                        </div>
+                        
+                        <div className="edit-form-group">
+                          <select
+                            name="time"
+                            value={formData.time}
+                            onChange={handleChange}
+                          >
+                            {availableTimes.length > 0 ? (
+                              availableTimes.map((time, index) => (
+                                <option key={index} value={time}>
+                                  {time}
+                                </option>
+                              ))
+                            ) : (
+                              <option value="">Không có khung giờ khả dụng</option>
+                            )}
+                          </select>
+                        </div>
+                      </div>
+                      
+                      <button 
+                        type="button" 
+                        className="btn-save-edit" 
+                        onClick={() => setShowEditForm(false)}
+                      >
+                        Lưu thay đổi
+                      </button>
+                    </div>
+                  )}
+                  
+                  {/* Hidden inputs to maintain form data */}
+                  <input type="hidden" name="restaurant" value={formData.restaurant} />
+                  <input type="hidden" name="date" value={formData.date} />
+                  <input type="hidden" name="time" value={formData.time} />
+                  <input type="hidden" name="guests" value={formData.guests} />
+                  <input type="hidden" name="children" value={formData.children} />
+                  <input type="hidden" name="voucher" value={formData.voucher || ''} />
+                </div>
+              </div>
+            </div>
+            
+            <div className="action-panel">
+              <button 
+                type="button" 
+                className="btn btn-back" 
+                onClick={() => navigate(-1)}
+              >
                 Quay lại
               </button>
-              <form onSubmit={handleSubmit} className="reservation-form">
-                <div className="form-columns">
-                  <div className="form-column">
-                    <div className="form-group">
-                      <label htmlFor="name">Họ tên</label>
-                      <input
-                        type="text"
-                        id="name"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleChange}
-                        required
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label htmlFor="email">Email</label>
-                      <input
-                        type="email"
-                        id="email"
-                        name="email"
-                        value={formData.email}
-                        onChange={handleChange}
-                        required
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label htmlFor="phone">Số điện thoại</label>
-                      <input
-                        type="tel"
-                        id="phone"
-                        name="phone"
-                        value={formData.phone}
-                        onChange={handleChange}
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div className="form-column">
-                    <div className="form-group">
-                      <label htmlFor="restaurant">Nhà hàng</label>
-                      <select
-                        id="restaurant"
-                        name="restaurant"
-                        value={formData.restaurant}
-                        onChange={(e) => {
-                          handleChange(e);
-                          const restaurant = restaurants.find(r => r.id === parseInt(e.target.value));
-                          setSelectedRestaurant(restaurant);
-                        }}
-                        required
-                        disabled={!!restaurantId}
-                      >
-                        <option value="">Chọn nhà hàng</option>
-                        {restaurants.map(restaurant => (
-                          <option key={restaurant.id} value={restaurant.id}>
-                            {restaurant.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="form-row">
-                      <div className="form-group">
-                        <label htmlFor="date">Ngày</label>
-                        <input
-                          type="date"
-                          id="date"
-                          name="date"
-                          value={formData.date}
-                          onChange={handleChange}
-                          min={new Date().toISOString().split('T')[0]}
-                          required
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label htmlFor="time">Giờ</label>
-                        <select
-                          id="time"
-                          name="time"
-                          value={formData.time}
-                          onChange={handleChange}
-                          required
-                        >
-                          <option value="">Chọn giờ</option>
-                          {availableTimes.map((time, index) => (
-                            <option key={index} value={time}>
-                              {time}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                    <div className="form-group">
-                      <label htmlFor="guests">Số khách</label>
-                      <input
-                        type="number"
-                        id="guests"
-                        name="guests"
-                        min={selectedRestaurant?.booking?.minPeople || 1}
-                        max={selectedRestaurant?.booking?.maxPeople || 20}
-                        value={formData.guests}
-                        onChange={handleChange}
-                        required
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="voucher">Chọn voucher (nếu có)</label>
-                  <select
-                    id="voucher"
-                    name="voucher"
-                    value={formData.voucher}
-                    onChange={handleChange}
-                  >
-                    <option value="">Không sử dụng voucher</option>
-                    {selectedRestaurant?.promotions?.length > 0 ? (
-                      selectedRestaurant.promotions.map((promo, index) => (
-                        <option key={index} value={promo.title}>
-                          {promo.title} {promo.discount ? ` - ${promo.discount}%` : ''} {promo.price ? `(${promo.price}đ)` : ''}
-                        </option>
-                      ))
-                    ) : (
-                      <option value="" disabled>Không có voucher</option>
-                    )}
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="specialRequests">Ghi chú</label>
-                  <textarea
-                    id="specialRequests"
-                    name="specialRequests"
-                    value={formData.specialRequests}
-                    onChange={handleChange}
-                    rows="3"
-                  ></textarea>
-                </div>
-
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={submitting}
-                >
-                  {submitting ? 'Đang xử lý...' : 'Tiếp tục'}
-                </button>
-              </form>
+              
+              <button 
+                type="submit" 
+                className="btn btn-primary"
+                disabled={submitting || showEditForm}
+              >
+                {submitting ? 'Đang xử lý...' : 'Tiếp tục'}
+              </button>
             </div>
-          )}
-
-          {(showReview || showDeposit) && <div className="modal-overlay" onClick={() => { setShowReview(false); setShowDeposit(false); }}></div>}
-
-          {showReview && (
-            <div className="review-modal">
-              <h2>Xem lại thông tin đặt bàn</h2>
-              <div className="review-content">
-                <div className="review-section">
-                  <h3>Thông tin voucher</h3>
-                  {formData.voucher ? (
-                    <div>
-                      <p>Voucher: {formData.voucher}</p>
-                      <p>Giảm giá: {discount ? `${discount}%` : 'Không có'}</p>
-                    </div>
-                  ) : (
-                    <p>Không có voucher được chọn.</p>
-                  )}
-                </div>
-                <div className="review-section">
+          </form>
+        </>
+      )}
+      
+      {showReview && (
+        <>
+          <div className="modal-overlay" onClick={() => setShowReview(false)}></div>
+          <div className="review-modal">
+            <div className="review-header">
+              <h2>Xác nhận thông tin đặt bàn</h2>
+              <div className="review-header-line"></div>
+            </div>
+            
+            <div className="review-content">
+              <div className="review-section">
+                <div className="section-header">
                   <h3>Thông tin nhà hàng</h3>
-                  {selectedRestaurant ? (
-                    <div>
-                      <p>Tên: {selectedRestaurant.name}</p>
-                      <p>Địa chỉ: {selectedRestaurant.address}</p>
-                      <p>Giờ mở cửa: {selectedRestaurant.openingHours || 'Không có thông tin'}</p>
-                      <p>Đánh giá: {selectedRestaurant.rating || 0} sao ({selectedRestaurant.reviewCount || 0} đánh giá)</p>
+                </div>
+                <div className="info-row">
+                  <span className="info-label">Nhà hàng:</span>
+                  <span className="info-value">{selectedRestaurant?.name}</span>
+                </div>
+                <div className="info-row">
+                  <span className="info-label">Địa chỉ:</span>
+                  <span className="info-value">{selectedRestaurant?.address}</span>
+                </div>
+              </div>
+              
+              <div className="review-section">
+                <div className="section-header">
+                  <h3>Thông tin đặt bàn</h3>
+                </div>
+                <div className="info-row">
+                  <span className="info-label">Ngày:</span>
+                  <span className="info-value">{formData.date.split('-').reverse().join('/')}</span>
+                </div>
+                <div className="info-row">
+                  <span className="info-label">Giờ:</span>
+                  <span className="info-value">{formData.time}</span>
+                </div>
+                <div className="info-row">
+                  <span className="info-label">Số khách:</span>
+                  <span className="info-value">{formData.guests} người lớn, {formData.children} trẻ em</span>
+                </div>
+                {formData.specialRequests && (
+                  <div className="info-row">
+                    <span className="info-label">Yêu cầu đặc biệt:</span>
+                    <span className="info-value">{formData.specialRequests}</span>
+                  </div>
+                )}
+              </div>
+              
+              <div className="review-section">
+                <div className="section-header">
+                  <h3>Thông tin liên hệ</h3>
+                </div>
+                <div className="info-row">
+                  <span className="info-label">Họ tên:</span>
+                  <span className="info-value">{formData.name}</span>
+                </div>
+                <div className="info-row">
+                  <span className="info-label">Số điện thoại:</span>
+                  <span className="info-value">{formData.phone}</span>
+                </div>
+                <div className="info-row">
+                  <span className="info-label">Email:</span>
+                  <span className="info-value">{formData.email}</span>
+                </div>
+              </div>
+              
+              {formData.voucher && (
+                <div className="review-section">
+                  <div className="section-header">
+                    <h3>Ưu đãi áp dụng</h3>
+                  </div>
+                  <div className="info-row">
+                    <span className="info-label">Voucher:</span>
+                    <span className="info-value">{formData.voucher}</span>
+                  </div>
+                  {discount > 0 && (
+                    <div className="info-row">
+                      <span className="info-label">Giảm giá:</span>
+                      <span className="info-value discount-value">{discount}%</span>
                     </div>
-                  ) : (
-                    <p>Chưa chọn nhà hàng.</p>
                   )}
                 </div>
-                <div className="review-section">
-                  <h3>Thông tin đặt bàn</h3>
-                  <p>Họ tên: {formData.name}</p>
-                  <p>Email: {formData.email}</p>
-                  <p>Số điện thoại: {formData.phone}</p>
-                  <p>Ngày: {formData.date}</p>
-                  <p>Giờ: {formData.time}</p>
-                  <p>Số khách: {formData.guests}</p>
-                  <p>Ghi chú: {formData.specialRequests || 'Không có'}</p>
+              )}
+            </div>
+            
+            <div className="review-actions">
+              <button className="btn btn-secondary" onClick={() => setShowReview(false)}>
+                Quay lại
+              </button>
+              <button className="btn btn-primary" onClick={handleReviewContinue}>
+                Xác nhận
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+      
+      {showDeposit && (
+        <>
+          <div className="modal-overlay" onClick={() => setShowDeposit(false)}></div>
+          <div className="deposit-modal">
+            <div className="deposit-header">
+              <h2>Đặt cọc bàn</h2>
+              <div className="deposit-header-line"></div>
+            </div>
+            
+            <div className="deposit-content">
+              <div className="deposit-amount-box">
+                <div className="deposit-icon">
+                  <i className="fas fa-wallet"></i>
+                </div>
+                <div className="deposit-amount-text">
+                  <p className="deposit-amount-label">Số tiền cần đặt cọc</p>
+                  <p className="deposit-amount-value">{depositAmount.toLocaleString('vi-VN')} VNĐ</p>
                 </div>
               </div>
-              <div className="review-actions">
-                <button className="btn btn-secondary" onClick={() => setShowReview(false)}>
-                  Chỉnh sửa
-                </button>
-                <button className="btn btn-primary" onClick={handleReviewContinue}>
-                  Tiếp tục
-                </button>
+              
+              {discount > 0 && initialDeposit > 0 && (
+                <div className="deposit-discount">
+                  <div className="discount-item">
+                    <span>Giá gốc:</span>
+                    <span>{initialDeposit.toLocaleString('vi-VN')} VNĐ</span>
+                  </div>
+                  <div className="discount-item highlight">
+                    <span>Giảm giá:</span>
+                    <span>-{discount}%</span>
+                  </div>
+                </div>
+              )}
+              
+              <div className="deposit-info">
+                <p>Bạn sẽ được chuyển đến trang thanh toán để hoàn tất đặt cọc.</p>
               </div>
             </div>
-          )}
-
-          {showDeposit && (
-            <div className="deposit-modal">
-              <h2>Đặt cọc</h2>
-              <p>Vui lòng xác nhận đặt cọc để hoàn tất đặt bàn.</p>
-              <div className="deposit-amount">
-                <p>Số tiền đặt cọc ban đầu: {initialDeposit.toLocaleString('vi-VN')}đ</p>
-                {discount > 0 && (
-                  <p>Giảm giá từ voucher ({discount}%): -{(initialDeposit * (discount / 100)).toLocaleString('vi-VN')}đ</p>
-                )}
-                <p>Số tiền cuối cùng: {depositAmount.toLocaleString('vi-VN')}đ</p>
-                <p>(Số tiền này sẽ được hoàn lại nếu bạn đến đúng giờ)</p>
-              </div>
-              <div className="deposit-actions">
-                <button className="btn btn-secondary" onClick={() => setShowDeposit(false)}>
-                  Hủy
-                </button>
-                <button
-                  className="btn btn-primary"
-                  onClick={handleDepositConfirm}
-                  disabled={paymentLoading}
-                >
-                  {paymentLoading ? 'Đang xử lý...' : 'Xác nhận đặt cọc'}
-                </button>
-              </div>
-              {paymentError && <div className="error-message">{paymentError}</div>}
+            
+            <div className="deposit-actions">
+              <button 
+                className="btn btn-secondary" 
+                onClick={() => setShowDeposit(false)}
+              >
+                Hủy
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={handleDepositConfirm}
+                disabled={paymentLoading}
+              >
+                {paymentLoading ? 'Đang xử lý...' : 'Thanh toán'}
+              </button>
             </div>
-          )}
+          </div>
         </>
       )}
     </div>
