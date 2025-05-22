@@ -16,6 +16,7 @@ function RestaurantDetailPage() {
   const [userLocation, setUserLocation] = useState(null);
   const [formData, setFormData] = useState({
     guests: 2,
+    children: 0,
     date: new Date().toISOString().split('T')[0],
     time: '',
   });
@@ -53,7 +54,10 @@ function RestaurantDetailPage() {
           if (!data) throw new Error(`Không thể lấy dữ liệu nhà hàng từ API với ID: ${id}`);
         }
         setRestaurant(data);
-        addToRecentlyViewed(data);
+        
+        if (data && data.id) {
+          addToRecentlyViewed(data);
+        }
 
         const { openTime, closeTime } = data || {};
         if (
@@ -79,7 +83,7 @@ function RestaurantDetailPage() {
     };
 
     fetchRestaurant();
-  }, [id, addToRecentlyViewed]); // Loại bỏ useMockData khỏi danh sách phụ thuộc
+  }, [id, addToRecentlyViewed]);
 
   useEffect(() => {
     const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
@@ -89,25 +93,34 @@ function RestaurantDetailPage() {
 
   useEffect(() => {
     let isMounted = true;
-    if (navigator.geolocation && !userLocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          if (isMounted) {
-            const { latitude, longitude } = position.coords;
-            setUserLocation(`${latitude},${longitude}`);
+    
+    const getUserLocation = () => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            if (isMounted) {
+              const { latitude, longitude } = position.coords;
+              setUserLocation(`${latitude},${longitude}`);
+            }
+          },
+          (err) => {
+            console.log('Không thể lấy vị trí người dùng:', err.message);
+            if (isMounted) setUserLocation('');
           }
-        },
-        (err) => {
-          console.log('Không thể lấy vị trí người dùng:', err.message);
-          if (isMounted) setUserLocation(null);
-        }
-      );
-    } else {
-      console.log('Trình duyệt không hỗ trợ định vị.');
-      if (isMounted) setUserLocation(null);
+        );
+      } else {
+        console.log('Trình duyệt không hỗ trợ định vị.');
+        if (isMounted) setUserLocation('');
+      }
+    };
+    
+    if (userLocation === null) {
+      getUserLocation();
     }
+    
     return () => { isMounted = false; };
-  }, [userLocation]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const generateTimeSlots = (openTime, closeTime) => {
     const times = [];
@@ -211,6 +224,7 @@ function RestaurantDetailPage() {
         date: formData.date,
         time: formData.time,
         guests: formData.guests.toString(),
+        children: formData.children.toString(),
       }).toString();
       navigate(`/reservation?${query}`);
     } catch (err) {
@@ -275,6 +289,7 @@ function RestaurantDetailPage() {
         date: formData.date,
         time: formData.time,
         guests: formData.guests.toString(),
+        children: formData.children.toString(),
         promotion: promo.title || '',
       }).toString();
       console.log('Navigating with query:', query);
@@ -331,12 +346,28 @@ function RestaurantDetailPage() {
     }
   };
 
+  const handleGoBack = () => {
+    navigate(-1); // Navigate back to previous page in history
+  };
+
   if (loading) {
-    return <div className="loading">Đang tải thông tin nhà hàng...</div>;
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+        <p>Đang tải thông tin nhà hàng...</p>
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="error-message">{error}</div>;
+    return (
+      <div className="error-container">
+        <p className="error-message">{error}</p>
+        <button className="btn" onClick={() => navigate('/nha-hang')}>
+          Quay lại danh sách nhà hàng
+        </button>
+      </div>
+    );
   }
 
   if (!restaurant) {
@@ -364,6 +395,12 @@ function RestaurantDetailPage() {
           {notification}
         </div>
       )}
+
+      <div className="back-button-container">
+        <button className="back-button" onClick={handleGoBack}>
+          <i className="back-icon">←</i> Quay về
+        </button>
+      </div>
 
       <div className="restaurant-banner">
         <img
@@ -505,55 +542,80 @@ function RestaurantDetailPage() {
         {showReservationForm && (
           <section id="booking-section" className="content-section fixed-booking">
             <div className="booking-header">
-              <h2>Đặt chỗ</h2>
+              <h2>Đặt chỗ (Để có chỗ trước khi đến)</h2>
               <button className="close-reservation-btn" onClick={() => setShowReservationForm(false)}>
                 <i className="fas fa-times"></i>
               </button>
             </div>
             <div className="booking-card">
-              <div className="form-group">
-                <i className="fas fa-users"></i>
-                <label>Số người:</label>
-                <input
-                  type="number"
-                  name="guests"
-                  min="1"
-                  value={formData.guests}
-                  onChange={handleFormChange}
-                />
+              <p className="reservation-subtitle">Đặt bàn giữ chỗ</p>
+              
+              <div className="form-row">
+                <div className="form-group-half">
+                  <label><i className="fas fa-user"></i> Người lớn:</label>
+                  <select
+                    name="guests"
+                    value={formData.guests}
+                    onChange={handleFormChange}
+                  >
+                    {[...Array(10).keys()].map(num => (
+                      <option key={num} value={num + 1}>{num + 1}</option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div className="form-group-half">
+                  <label><i className="fas fa-child"></i> Trẻ em:</label>
+                  <select
+                    name="children"
+                    value={formData.children}
+                    onChange={handleFormChange}
+                  >
+                    {[...Array(11).keys()].map(num => (
+                      <option key={num} value={num}>{num}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
-              <div className="form-group">
-                <i className="fas fa-calendar-alt"></i>
-                <label>Ngày:</label>
-                <input
-                  type="date"
-                  name="date"
-                  value={formData.date}
-                  onChange={handleFormChange}
-                  min={new Date().toISOString().split('T')[0]}
-                />
+              
+              <div className="form-group-time">
+                <div className="time-label">
+                  <i className="fas fa-clock"></i> Thời gian đến
+                </div>
               </div>
-              <div className="form-group">
-                <i className="fas fa-clock"></i>
-                <label>Giờ:</label>
-                <select
-                  name="time"
-                  value={formData.time}
-                  onChange={handleFormChange}
-                >
-                  {availableTimes.length > 0 ? (
-                    availableTimes.map((time, index) => (
-                      <option key={index} value={time}>
-                        {time}
-                      </option>
-                    ))
-                  ) : (
-                    <option value="">Không có khung giờ khả dụng</option>
-                  )}
-                </select>
+              
+              <div className="form-row">
+                <div className="form-group-half">
+                  <input
+                    type="date"
+                    name="date"
+                    value={formData.date}
+                    onChange={handleFormChange}
+                    min={new Date().toISOString().split('T')[0]}
+                  />
+                </div>
+                
+                <div className="form-group-half">
+                  <select
+                    name="time"
+                    value={formData.time}
+                    onChange={handleFormChange}
+                  >
+                    {availableTimes.length > 0 ? (
+                      availableTimes.map((time, index) => (
+                        <option key={index} value={time}>
+                          {time}
+                        </option>
+                      ))
+                    ) : (
+                      <option value="">Không có khung giờ khả dụng</option>
+                    )}
+                  </select>
+                </div>
               </div>
-              <button className="btn btn-book-now" onClick={handleBookNow} disabled={!formData.time}>
-                Đặt ngay
+              
+              <button className="btn-reserve-now" onClick={handleBookNow} disabled={!formData.time}>
+                Đặt chỗ ngay
               </button>
             </div>
           </section>
