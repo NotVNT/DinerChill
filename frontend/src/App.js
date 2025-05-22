@@ -135,13 +135,13 @@ function App() {
               </main>
               <Footer />
             </div>
+          } />
 
           {/* Restaurant Owner Dashboard Routes */}
           <Route path="/dashboard/*" element={
             <ProtectedRoute>
               <RestaurantOwnerDashboard />
             </ProtectedRoute>
-
           } />
           
           {/* Public and Protected Routes - sử dụng AppLayout */}
