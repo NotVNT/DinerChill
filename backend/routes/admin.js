@@ -454,8 +454,9 @@ router.get('/reservations', authenticateAdmin, async (req, res) => {
     console.log('Admin API: Getting reservations with associations');
     const reservations = await Reservation.findAll({
       include: [
-        { model: User, attributes: ['id', 'firstName', 'lastName', 'email'] },
-        { model: Restaurant, attributes: ['id', 'name'] }
+        { model: User, as: 'user', attributes: ['id', 'name', 'email', 'phone'] },
+        { model: Restaurant, as: 'restaurant', attributes: ['id', 'name'] },
+        { model: Table, as: 'table', attributes: ['id', 'tableNumber', 'tableCode'], required: false }
       ],
       order: [['date', 'DESC'], ['time', 'ASC']]
     });
@@ -469,6 +470,55 @@ router.get('/reservations', authenticateAdmin, async (req, res) => {
       message: 'Đã xảy ra lỗi khi lấy danh sách đặt bàn',
       error: error.message 
     });
+  }
+});
+
+// Update reservation
+router.put('/reservations/:id', authenticateAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const reservation = await Reservation.findByPk(id);
+    
+    if (!reservation) {
+      return res.status(404).json({ message: 'Không tìm thấy thông tin đặt bàn' });
+    }
+    
+    // Cập nhật thông tin đặt bàn
+    await reservation.update(req.body);
+    
+    // Trả về thông tin đặt bàn đã cập nhật kèm theo thông tin liên quan
+    const updatedReservation = await Reservation.findByPk(id, {
+      include: [
+        { model: User, as: 'user', attributes: ['id', 'name', 'email', 'phone'] },
+        { model: Restaurant, as: 'restaurant', attributes: ['id', 'name'] },
+        { model: Table, as: 'table', attributes: ['id', 'tableNumber', 'tableCode'], required: false }
+      ]
+    });
+    
+    res.json(updatedReservation);
+  } catch (error) {
+    console.error('Error updating reservation:', error);
+    res.status(500).json({ message: 'Đã xảy ra lỗi khi cập nhật thông tin đặt bàn' });
+  }
+});
+
+// Delete reservation
+router.delete('/reservations/:id', authenticateAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const reservation = await Reservation.findByPk(id);
+    
+    if (!reservation) {
+      return res.status(404).json({ message: 'Không tìm thấy thông tin đặt bàn' });
+    }
+    
+    // Xóa đặt bàn
+    await reservation.destroy();
+    
+    res.json({ message: 'Đã xóa đặt bàn thành công' });
+  } catch (error) {
+    console.error('Error deleting reservation:', error);
+    res.status(500).json({ message: 'Đã xảy ra lỗi khi xóa đặt bàn' });
   }
 });
 

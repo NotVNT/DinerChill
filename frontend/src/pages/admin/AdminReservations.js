@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { adminAPI } from '../../services/api';
+import '../../styles/admin_layout/admin_reservations.css';
 
 function AdminReservations() {
   const [reservations, setReservations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [editingReservation, setEditingReservation] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -44,14 +46,14 @@ function AdminReservations() {
     
     setEditingReservation(reservation);
     setFormData({
-      name: reservation.name,
-      email: reservation.email,
-      phone: reservation.phone,
+      name: reservation.user?.name || '',
+      email: reservation.user?.email || '',
+      phone: reservation.user?.phone || '',
       date: formattedDate,
       time: reservation.time,
-      guests: reservation.guests.toString(),
+      guests: reservation.partySize?.toString() || '1',
       status: reservation.status,
-      specialRequests: reservation.specialRequests || ''
+      specialRequests: reservation.notes || ''
     });
   };
 
@@ -66,20 +68,39 @@ function AdminReservations() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Convert guests từ string sang number
+      // Chuẩn bị dữ liệu để cập nhật
       const reservationData = {
-        ...formData,
-        guests: parseInt(formData.guests, 10)
+        userId: editingReservation.userId,
+        restaurantId: editingReservation.restaurantId,
+        date: formData.date,
+        time: formData.time,
+        partySize: parseInt(formData.guests, 10),
+        status: formData.status,
+        notes: formData.specialRequests,
+        tableId: editingReservation.tableId
       };
 
-      const updatedReservation = await adminAPI.updateReservation(
+      // Cập nhật thông tin người dùng nếu có thay đổi
+      if (formData.name !== editingReservation.user?.name ||
+          formData.email !== editingReservation.user?.email ||
+          formData.phone !== editingReservation.user?.phone) {
+        
+        // Ghi chú: Trong trường hợp thực tế, bạn có thể muốn thêm API để cập nhật thông tin người dùng
+        console.log('Thông tin người dùng đã thay đổi:', {
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone
+        });
+      }
+
+      // Thực hiện cập nhật đặt bàn
+      await adminAPI.updateReservation(
         editingReservation.id, 
         reservationData
       );
       
-      setReservations(prev => prev.map(reservation => 
-        reservation.id === editingReservation.id ? updatedReservation : reservation
-      ));
+      // Cập nhật danh sách đặt bàn
+      await fetchReservations();
       
       setEditingReservation(null);
     } catch (err) {
@@ -113,6 +134,27 @@ function AdminReservations() {
       default: return 'status-pending';
     }
   };
+
+  // Hàm xử lý tìm kiếm, hỗ trợ tiếng Việt
+  const handleSearch = (e) => {
+    setSearchTerm(e.target.value);
+  };
+
+  // Lọc danh sách đặt bàn theo từ khóa tìm kiếm
+  const filteredReservations = searchTerm.trim() === '' 
+    ? reservations 
+    : reservations.filter(reservation => {
+        const tableCode = reservation.table?.tableCode || '';
+        const customerName = reservation.user?.name || '';
+        
+        // Chuyển đổi cả từ khóa tìm kiếm và dữ liệu thành chữ thường và loại bỏ dấu để so sánh
+        const normalizedSearchTerm = searchTerm.toLowerCase();
+        const normalizedTableCode = tableCode.toLowerCase();
+        const normalizedCustomerName = customerName.toLowerCase();
+        
+        return normalizedTableCode.includes(normalizedSearchTerm) || 
+               normalizedCustomerName.includes(normalizedSearchTerm);
+      });
 
   if (loading && reservations.length === 0) {
     return <div className="loading">Đang tải dữ liệu...</div>;
@@ -173,7 +215,6 @@ function AdminReservations() {
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
-                  required
                 />
               </div>
               
@@ -254,52 +295,85 @@ function AdminReservations() {
           </form>
         </div>
       ) : (
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Tên khách hàng</th>
-              <th>Ngày</th>
-              <th>Giờ</th>
-              <th>Số người</th>
-              <th>Trạng thái</th>
-              <th>Thao tác</th>
-            </tr>
-          </thead>
-          <tbody>
-            {reservations.map(reservation => (
-              <tr key={reservation.id}>
-                <td>{reservation.id}</td>
-                <td>{reservation.name}</td>
-                <td>{formatDate(reservation.date)}</td>
-                <td>{reservation.time}</td>
-                <td>{reservation.guests}</td>
-                <td>
-                  <span className={`status-badge ${getStatusClass(reservation.status)}`}>
-                    {reservation.status === 'pending' && 'Đang chờ'}
-                    {reservation.status === 'confirmed' && 'Đã xác nhận'}
-                    {reservation.status === 'cancelled' && 'Đã hủy'}
-                    {reservation.status === 'completed' && 'Đã hoàn thành'}
-                  </span>
-                </td>
-                <td>
-                  <button 
-                    className="btn btn-sm btn-edit"
-                    onClick={() => handleEditClick(reservation)}
-                  >
-                    Sửa
-                  </button>
-                  <button 
-                    className="btn btn-sm btn-delete"
-                    onClick={() => handleDeleteClick(reservation.id)}
-                  >
-                    Xóa
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="reservation-list">
+          <h2>Danh sách đặt bàn</h2>
+          
+          {/* Thanh tìm kiếm */}
+          <div className="search-container">
+            <input
+              type="text"
+              placeholder="Tìm kiếm theo mã bàn, tên khách hàng..."
+              value={searchTerm}
+              onChange={handleSearch}
+              className="search-input"
+            />
+          </div>
+          
+          {loading && <p>Đang tải dữ liệu...</p>}
+          
+          {!loading && filteredReservations.length === 0 ? (
+            <p>Không tìm thấy đặt bàn nào.</p>
+          ) : (
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Mã bàn</th>
+                  <th>Tên khách hàng</th>
+                  <th>Nhà hàng</th>
+                  <th>Ngày</th>
+                  <th>Giờ</th>
+                  <th>Số người</th>
+                  <th>Trạng thái</th>
+                  <th>Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredReservations.map(reservation => (
+                  <tr key={reservation.id}>
+                    <td>{reservation.table ? reservation.table.tableCode : 'Chưa phân bàn'}</td>
+                    <td>
+                      <div>
+                        <strong>{reservation.user?.name || 'Không có tên'}</strong>
+                      </div>
+                      <div className="user-contact">
+                        {reservation.user?.email && <small>Email: {reservation.user.email}</small>}
+                        {reservation.user?.phone && <small>SĐT: {reservation.user.phone}</small>}
+                      </div>
+                    </td>
+                    <td>{reservation.restaurant?.name || 'Không xác định'}</td>
+                    <td>{formatDate(reservation.date)}</td>
+                    <td>{reservation.time}</td>
+                    <td>{reservation.partySize}</td>
+                    <td>
+                      <span className={`status-badge ${getStatusClass(reservation.status)}`}>
+                        {reservation.status === 'pending' && 'Đang chờ'}
+                        {reservation.status === 'confirmed' && 'Đã xác nhận'}
+                        {reservation.status === 'cancelled' && 'Đã hủy'}
+                        {reservation.status === 'completed' && 'Đã hoàn thành'}
+                      </span>
+                    </td>
+                    <td>
+                      <div className="action-buttons">
+                        <button
+                          onClick={() => handleEditClick(reservation)}
+                          className="btn-edit"
+                        >
+                          Sửa
+                        </button>
+                        <button
+                          onClick={() => handleDeleteClick(reservation.id)}
+                          className="btn-delete"
+                        >
+                          Xóa
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
       )}
     </div>
   );

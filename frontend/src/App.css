@@ -857,3 +857,5 @@ main {
 @media (max-width: 768px) {
   /* Admin Payments responsive styles have been moved to frontend/src/styles/admin_layout/admin_payment.css */
 }
+
+/* Styles for Admin Reservations have been moved to frontend/src/styles/admin_layout/admin_reservations.css */
