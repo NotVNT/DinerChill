@@ -26,7 +26,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       onDelete: 'CASCADE'
     },
-    image_url: {
+    image_path: {
       type: DataTypes.STRING(255),
       allowNull: false
     },

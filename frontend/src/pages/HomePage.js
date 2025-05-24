@@ -3,8 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import FilterBox from '../components/FilterBox';
 import RestaurantCard from '../components/RestaurantCard';
 import { useApp } from '../context/AppContext';
-import { restaurantAPI } from '../services/api';
-import { mockdata, useMockData } from '../components/mockData';
+import { restaurantsAPI } from '../services/api';
 import '../styles/HomePage.css';
 
 function HomePage() {
@@ -26,29 +25,17 @@ function HomePage() {
   });
 
   const {
-    hotRestaurants,
-    hotProducts,
-    partyRestaurants,
-    famousLocations,
-    seafoodRestaurants,
-    chineseRestaurants,
-    popularCuisines,
-    monthlyFavorites,
-    amenitiesRestaurants,
-    luxuryRestaurants,
-    trustedRestaurants,
-    touristRestaurants,
-    lunchSuggestions,
-    newOnDinerChill,
-    newsAndBlog,
     recentlyViewed,
     clearRecentlyViewed,
-    loading,
-    error,
   } = useApp();
 
   const filterRef = useRef(null);
   const [allRestaurants, setAllRestaurants] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [hotDeals, setHotDeals] = useState([]);
+  const [seafoodRestaurants, setSeafoodRestaurants] = useState([]);
+  const [partyRestaurants, setPartyRestaurants] = useState([]);
 
   const [displayCounts, setDisplayCounts] = useState({
     hotDeals: 4,
@@ -75,22 +62,37 @@ function HomePage() {
 
     const fetchRestaurants = async () => {
       try {
-        let data;
-        if (useMockData) {
-          data = mockdata;
-          if (!data || data.length === 0) {
-            throw new Error('Không có dữ liệu mẫu nào.');
-          }
-        } else {
-          data = await restaurantAPI.getAll();
-          if (!data || data.length === 0) {
-            throw new Error('Không có dữ liệu từ API.');
-          }
+        setLoading(true);
+        const data = await restaurantsAPI.getAll();
+        if (!data || data.length === 0) {
+          throw new Error('Không có dữ liệu từ API.');
         }
+        console.log('Fetched restaurants from API:', data);
+        
         setAllRestaurants(data);
+        
+        // Phân loại nhà hàng
+        const dealsData = data.filter(item => item.promotions?.length > 0);
+        setHotDeals(dealsData);
+        
+        const seafoodData = data.filter(r => 
+          r.cuisineType?.toLowerCase().includes('hải sản') || 
+          r.description?.toLowerCase().includes('hải sản')
+        );
+        setSeafoodRestaurants(seafoodData);
+        
+        const partyData = data.filter(r => 
+          r.description?.toLowerCase().includes('tiệc') || 
+          r.name?.toLowerCase().includes('tiệc')
+        );
+        setPartyRestaurants(partyData);
+        
+        setLoading(false);
       } catch (err) {
         console.error('Lỗi khi tải danh sách nhà hàng:', err);
+        setError(err.message || 'Lỗi khi tải dữ liệu');
         setAllRestaurants([]);
+        setLoading(false);
       }
     };
 
@@ -165,8 +167,10 @@ function HomePage() {
   };
 
   const renderSection = (title, subtitle, link, queryParams, dataList, className, category) => {
-    const displayedData = dataList.slice(0, displayCounts[category]);
-    const hasMoreData = dataList.length > displayedData.length;
+    // Fallback to allRestaurants if the specific category list is empty
+    const finalDataList = dataList && dataList.length > 0 ? dataList : allRestaurants;
+    const displayedData = finalDataList.slice(0, displayCounts[category]);
+    const hasMoreData = finalDataList.length > displayedData.length;
 
     return (
       <div className={`section-wrapper ${className}`}>
@@ -190,7 +194,7 @@ function HomePage() {
         </div>
         {hasMoreData && (
           <button
-            onClick={() => handleLoadMore(category, dataList)}
+            onClick={() => handleLoadMore(category, finalDataList)}
             className="load-more-btn"
             disabled={loading}
           >
@@ -225,8 +229,19 @@ function HomePage() {
     );
   };
 
-  if (loading && !hotRestaurants.length && !allRestaurants.length) return <div>Đang tải...</div>;
-  if (error) return <div>Lỗi: {error}</div>;
+  if (loading) return (
+    <div className="loading-container">
+      <div className="loading-spinner"></div>
+      <p>Đang tải dữ liệu nhà hàng...</p>
+    </div>
+  );
+  
+  if (error) return (
+    <div className="error-container">
+      <p>Lỗi: {error}</p>
+      <button className="btn" onClick={() => window.location.reload()}>Thử lại</button>
+    </div>
+  );
 
   return (
     <div className="home-page">
@@ -350,177 +365,47 @@ function HomePage() {
       </div>
 
       {renderSection(
-        'Ưu đãi Hot',
-        'Khám phá các nhà hàng và sản phẩm đang có ưu đãi hấp dẫn ngay',
-        '/deals',
-        'promotion=Ưu đãi',
-        [...hotRestaurants, ...hotProducts].filter(item => item.promotions?.length > 0),
-        'hot-deals-section',
+        'Nhà hàng',
+        'Khám phá tất cả các nhà hàng trên DinerChill',
+        '/restaurants',
+        '',
+        allRestaurants,
+        'all-restaurants-section',
         'hotDeals'
       )}
 
-      {renderSection(
-        'Nhà hàng hải sản ngon nhất',
-        'Tham khảo ngay các nhà hàng hải sản được yêu thích!',
-        '/restaurants',
-        'cuisine=Hải sản&minRating=4',
-        seafoodRestaurants.length > 0
-          ? seafoodRestaurants
-          : allRestaurants.filter(r => r.cuisine?.toLowerCase() === 'hải sản' && r.rating >= 4),
-        'seafood-restaurants-section',
-        'seafoodRestaurants'
-      )}
+      {allRestaurants.length > 0 && (
+        <>
+          {hotDeals.length > 0 && renderSection(
+            'Ưu đãi Hot',
+            'Khám phá các nhà hàng và sản phẩm đang có ưu đãi hấp dẫn ngay',
+            '/deals',
+            'promotion=Ưu đãi',
+            hotDeals,
+            'hot-deals-section',
+            'hotDeals'
+          )}
 
-      {renderSection(
-        'Ăn món Trung ngon ở đâu?',
-        'Top quán Trung ngon được DinerChill lựa chọn!',
-        '/restaurants',
-        'cuisine=Trung Hoa&minRating=4',
-        chineseRestaurants.length > 0
-          ? chineseRestaurants
-          : allRestaurants.filter(r => r.cuisine?.toLowerCase() === 'trung hoa' && r.rating >= 4),
-        'chinese-restaurants-section',
-        'chineseRestaurants'
-      )}
+          {seafoodRestaurants.length > 0 && renderSection(
+            'Nhà hàng hải sản ngon nhất',
+            'Tham khảo ngay các nhà hàng hải sản được yêu thích!',
+            '/restaurants',
+            'cuisine=Hải sản&minRating=4',
+            seafoodRestaurants,
+            'seafood-restaurants-section',
+            'seafoodRestaurants'
+          )}
 
-      {renderSection(
-        'Phong cách ẩm thực phổ biến',
-        'Khám phá các loại ẩm thực đa dạng với ưu đãi hấp dẫn',
-        '/restaurants',
-        'minRating=4.5&cuisines=Việt Nam,Trung Hoa,Nhật Bản,Quốc tế',
-        popularCuisines.length > 0
-          ? popularCuisines
-          : allRestaurants
-              .filter(r => r.rating >= 4.5 && ['Việt Nam', 'Trung Hoa', 'Nhật Bản', 'Quốc tế'].includes(r.cuisine))
-              .sort((a, b) => b.rating - a.rating)
-              .slice(0, 5),
-        'popular-cuisines-section',
-        'popularCuisines'
-      )}
-
-      {renderSection(
-        'Nhà hàng phù hợp đặt tiệc',
-        'Ưu đãi đa dạng giúp bạn dễ dàng lựa chọn địa điểm tiệc',
-        '/restaurants',
-        'suitableFor=tiệc&minCapacity=50',
-        partyRestaurants.length > 0
-          ? partyRestaurants
-          : allRestaurants.filter(r => r.suitableFor?.toLowerCase().includes('tiệc') && r.capacity >= 50),
-        'party-restaurants-section',
-        'partyRestaurants'
-      )}
-
-      {renderSection(
-        'Địa danh nổi tiếng',
-        'Khám phá các địa điểm ẩm thực nổi bật tại Tp.HCM',
-        '/restaurants',
-        'area=Quận 1&minRating=4.5',
-        famousLocations.length > 0
-          ? famousLocations
-          : allRestaurants
-              .filter(r => r.address?.toLowerCase().includes('quận 1') && r.rating >= 4.5)
-              .sort((a, b) => b.rating - a.rating),
-        'famous-locations-section',
-        'famousLocations'
-      )}
-
-      {renderSection(
-        'Dành cho du khách',
-        'Thưởng thức đặc sản Sài Gòn tại các nhà hàng nổi bật',
-        '/restaurants',
-        'suitableFor=khách du lịch&minRating=4',
-        touristRestaurants.length > 0
-          ? touristRestaurants
-          : allRestaurants.filter(r => r.suitableFor?.toLowerCase().includes('khách du lịch') && r.rating >= 4),
-        'tourist-restaurants-section',
-        'touristRestaurants'
-      )}
-
-      {renderSection(
-        'Trưa nay ăn gì?',
-        'Lựa chọn nhanh các sản phẩm ăn trưa qua DinerChill',
-        '/restaurants',
-        'suitableFor=nhân viên văn phòng&openTime=11:00',
-        lunchSuggestions.length > 0
-          ? lunchSuggestions
-          : allRestaurants.filter(r => r.suitableFor?.toLowerCase().includes('nhân viên văn phòng') && r.openingHours?.includes('11:00')),
-        'lunch-suggestions-section',
-        'lunchSuggestions'
-      )}
-
-      {renderSection(
-        'Top nhà hàng cao cấp',
-        'Khám phá không gian sang trọng với ưu đãi tốt',
-        '/restaurants',
-        'minPriceRange=500000&ambiance=sang trọng',
-        luxuryRestaurants.length > 0
-          ? luxuryRestaurants
-          : allRestaurants.filter(r => r.priceRange?.toLowerCase().includes('trên 500k') && r.ambiance?.toLowerCase().includes('sang trọng')),
-        'luxury-restaurants-section',
-        'luxuryRestaurants'
-      )}
-
-      {renderSection(
-        'Đặt chỗ uy tín',
-        'Gợi ý nhà hàng ngon, chất lượng qua DinerChill',
-        '/restaurants',
-        'minRating=4.5&minReviews=100',
-        trustedRestaurants.length > 0
-          ? trustedRestaurants
-          : allRestaurants
-              .filter(r => r.rating >= 4.5 && r.reviewCount >= 100)
-              .sort((a, b) => b.rating - a.rating),
-        'trusted-restaurants-section',
-        'trustedRestaurants'
-      )}
-
-      {renderSection(
-        'Yêu thích nhất hàng tháng',
-        'Nhà hàng được đặt chỗ nhiều nhất trong tháng',
-        '/restaurants',
-        'minRating=4&minReviews=50',
-        monthlyFavorites.length > 0
-          ? monthlyFavorites
-          : allRestaurants
-              .filter(r => r.rating >= 4 && r.reviewCount >= 50)
-              .sort((a, b) => b.reviewCount - a.reviewCount)
-              .slice(0, 5),
-        'monthly-favorites-section',
-        'monthlyFavorites'
-      )}
-
-      {renderSection(
-        'Tìm nhà hàng theo tiện ích',
-        'Lựa chọn nhà hàng dựa trên các tiện ích đặc biệt',
-        '/restaurants',
-        'amenities=wifi,airConditioning',
-        amenitiesRestaurants.length > 0
-          ? amenitiesRestaurants
-          : allRestaurants.filter(r => r.amenities?.wifi && r.amenities?.airConditioning),
-        'amenities-restaurants-section',
-        'amenitiesRestaurants'
-      )}
-
-      {renderSection(
-        'Mới nhất trên DinerChill',
-        'Khám phá các nhà hàng mới nhất trên nền tảng',
-        '/restaurants',
-        'sortBy=createdAt&order=desc',
-        newOnDinerChill.length > 0
-          ? newOnDinerChill
-          : allRestaurants.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5),
-        'new-on-DinerChill-section',
-        'newOnDinerChill'
-      )}
-
-      {renderSection(
-        'Tin tức & Blog',
-        'Cập nhật thông tin hữu ích về ẩm thực và mẹo vặt',
-        '/blog',
-        '',
-        newsAndBlog,
-        'news-and-blog-section',
-        'newsAndBlog'
+          {partyRestaurants.length > 0 && renderSection(
+            'Nhà hàng phù hợp đặt tiệc',
+            'Ưu đãi đa dạng giúp bạn dễ dàng lựa chọn địa điểm tiệc',
+            '/restaurants',
+            'suitableFor=tiệc&minCapacity=50',
+            partyRestaurants,
+            'party-restaurants-section',
+            'partyRestaurants'
+          )}
+        </>
       )}
 
       {renderRecentlyViewed()}

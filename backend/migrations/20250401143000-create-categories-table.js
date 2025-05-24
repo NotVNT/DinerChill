@@ -18,7 +18,11 @@ module.exports = {
         type: Sequelize.TEXT,
         allowNull: true
       },
-      imageUrl: {
+      imagePath: {
+        type: Sequelize.STRING,
+        allowNull: true
+      },
+      fileName: {
         type: Sequelize.STRING,
         allowNull: true
       },

@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { getById as getRestaurantById, updateRestaurant } from '../services/restaurantAPI';
-import { mockdata, useMockData } from '../components/mockData';
+import { restaurantsAPI } from '../services/api';
 import '../styles/RestaurantDetailPage.css';
 
 function RestaurantDetailPage() {
@@ -45,14 +44,9 @@ function RestaurantDetailPage() {
     const fetchRestaurant = async () => {
       try {
         setLoading(true);
-        let data;
-        if (useMockData) {
-          data = mockdata.find((item) => item.id === parseInt(id));
-          if (!data) throw new Error(`Không tìm thấy nhà hàng với ID: ${id} trong dữ liệu mẫu`);
-        } else {
-          data = await getRestaurantById(id);
-          if (!data) throw new Error(`Không thể lấy dữ liệu nhà hàng từ API với ID: ${id}`);
-        }
+        const data = await restaurantsAPI.getById(id);
+        if (!data) throw new Error(`Không thể lấy dữ liệu nhà hàng từ API với ID: ${id}`);
+        
         setRestaurant(data);
         
         if (data && data.id) {
@@ -75,6 +69,7 @@ function RestaurantDetailPage() {
           console.warn('openTime hoặc closeTime không hợp lệ:', { openTime, closeTime });
         }
       } catch (err) {
+        console.error('Lỗi tìm nhà hàng:', err);
         setError(err.message);
         setRestaurant(null);
       } finally {
@@ -318,9 +313,7 @@ function RestaurantDetailPage() {
       
       try {
         const updatedReviews = [...(restaurant.reviews || []), newReview];
-        if (!useMockData) {
-          await updateRestaurant(id, { ...restaurant, reviews: updatedReviews });
-        }
+        await restaurantsAPI.updateRestaurant(id, { ...restaurant, reviews: updatedReviews });
         setRestaurant((prev) => ({
           ...prev,
           reviews: updatedReviews,
@@ -350,6 +343,55 @@ function RestaurantDetailPage() {
     navigate(-1); // Navigate back to previous page in history
   };
 
+  // Function to get proper image URL based on available fields
+  const getImageUrl = (image) => {
+    if (!image) return '';
+    
+    // If it's an object with image_path
+    if (typeof image === 'object' && image.image_path) {
+      const path = image.image_path;
+      
+      // If already a full URL
+      if (path.startsWith('http')) {
+        return path;
+      }
+      
+      // Handle uploads directory paths
+      if (path.includes('uploads/') || path.includes('uploads\\')) {
+        // Normalize path to use forward slashes for URLs
+        const normalizedPath = path.replace(/\\/g, '/');
+        return `${process.env.REACT_APP_API_URL}/${normalizedPath}`;
+      }
+      
+      // If a relative path, use the API URL
+      return `${process.env.REACT_APP_API_URL}/${path}`;
+    }
+    
+    // If it's a relative path string
+    if (typeof image === 'string') {
+      // If already a full URL
+      if (image.startsWith('http')) {
+        return image;
+      }
+      
+      // Handle uploads directory paths
+      if (image.includes('uploads/') || image.includes('uploads\\')) {
+        // Normalize path to use forward slashes for URLs
+        const normalizedPath = image.replace(/\\/g, '/');
+        return `${process.env.REACT_APP_API_URL}/${normalizedPath}`;
+      }
+      
+      // If a relative path, use the API URL
+      if (image.startsWith('/') || image.includes('/')) {
+        return `${process.env.REACT_APP_API_URL}/${image.replace(/^\/?/, '')}`;
+      }
+      
+      return image;
+    }
+    
+    return '';
+  };
+
   if (loading) {
     return (
       <div className="loading-container">
@@ -363,15 +405,31 @@ function RestaurantDetailPage() {
     return (
       <div className="error-container">
         <p className="error-message">{error}</p>
-        <button className="btn" onClick={() => navigate('/nha-hang')}>
-          Quay lại danh sách nhà hàng
-        </button>
+        <div className="error-actions">
+          <button className="btn" onClick={() => navigate('/restaurants')}>
+            Quay lại danh sách nhà hàng
+          </button>
+          <button className="btn" onClick={() => window.location.reload()}>
+            Thử lại
+          </button>
+        </div>
+        <div className="error-help">
+          <p>Có thể nhà hàng này đã bị xóa hoặc chưa được tạo trong hệ thống.</p>
+          <p>Vui lòng kiểm tra ID nhà hàng hoặc liên hệ quản trị viên.</p>
+        </div>
       </div>
     );
   }
 
   if (!restaurant) {
-    return <div className="error-message">Không tìm thấy nhà hàng này. ID: {id}</div>;
+    return (
+      <div className="error-container">
+        <p className="error-message">Không tìm thấy nhà hàng này. ID: {id}</p>
+        <button className="btn" onClick={() => navigate('/restaurants')}>
+          Quay lại danh sách nhà hàng
+        </button>
+      </div>
+    );
   }
 
   const promotions = restaurant.promotions || [];
@@ -689,19 +747,30 @@ function RestaurantDetailPage() {
         <section id="images-section" className="content-section">
           <h2>Hình ảnh</h2>
           <div className="image-grid">
-            {visibleImages.map((img, index) => (
-              <div
-                key={index}
-                className="image-item"
-                onClick={() => handleImageClick(index, 'images')}
-              >
-                <img src={img.image_url} alt={`${restaurant.name} - Ảnh ${index + 1}`} className="grid-image" />
-              </div>
-            ))}
+            {visibleImages.map((img, index) => {
+              const imageSrc = getImageUrl(img);
+              return (
+                <div
+                  key={index}
+                  className="image-item"
+                  onClick={() => handleImageClick(index, 'images')}
+                >
+                  <img 
+                    src={imageSrc} 
+                    alt={`${restaurant.name} - Ảnh ${index + 1}`} 
+                    className="grid-image" 
+                  />
+                </div>
+              );
+            })}
             {remainingImagesCount > 0 && (
               <div className="image-item remaining" onClick={() => handleImageClick(0, 'images')}>
                 <div className="remaining-count">+{remainingImagesCount}</div>
-                <img src={images[8].image_url} alt={`${restaurant.name} - Ảnh bổ sung`} className="grid-image" />
+                <img 
+                  src={getImageUrl(images[8])} 
+                  alt={`${restaurant.name} - Ảnh bổ sung`} 
+                  className="grid-image" 
+                />
               </div>
             )}
           </div>
@@ -721,7 +790,7 @@ function RestaurantDetailPage() {
                       ? menuImages[currentModalImageIndex]
                       : selectedImageSource === 'details'
                       ? detailImages[currentModalImageIndex]
-                      : images[currentModalImageIndex].image_url
+                      : getImageUrl(images[currentModalImageIndex])
                   }
                   alt="Hình ảnh"
                   className="modal-image"

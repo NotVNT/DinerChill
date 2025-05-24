@@ -72,12 +72,17 @@ function AdminRestaurants() {
     
     if (restaurant.images && Array.isArray(restaurant.images) && restaurant.images.length > 0) {
       // Sử dụng trường images từ quan hệ với bảng restaurant_images
-      initialImages = restaurant.images.map((image) => ({
-        id: `db-${image.id}`,
-        url: image.image_url,
-        preview: image.image_url,
-        dbId: image.id // Lưu ID từ database để có thể xóa sau này
-      }));
+      initialImages = restaurant.images.map((image) => {
+        // Get correct URL for the image
+        const imageUrl = getImageUrl(image);
+        
+        return {
+          id: `db-${image.id}`,
+          url: imageUrl,
+          preview: imageUrl,
+          dbId: image.id // Lưu ID từ database để có thể xóa sau này
+        };
+      });
     } else if (restaurant.image) {
       initialImages = [{
         id: 'existing-0',
@@ -197,16 +202,16 @@ function AdminRestaurants() {
         console.log('No image files selected for new restaurant');
       }
       
-      // Nếu đang chỉnh sửa, thêm các URLs của hình ảnh đã tồn tại
+      // Nếu đang chỉnh sửa, thêm các IDs của hình ảnh đã tồn tại
       if (editingRestaurant && editingRestaurant.id) {
-        // Lọc ra các ảnh đã lưu trên cloud (có URL bắt đầu bằng http)
-        const existingCloudImages = formData.images
-          .filter(img => img.url && (img.url.startsWith('http') || img.url.startsWith('https')))
-          .map(img => img.url);
+        // Lọc ra các ảnh đã lưu trong database (có dbId)
+        const existingImages = formData.images
+          .filter(img => img.dbId)
+          .map(img => img.dbId.toString());
         
-        if (existingCloudImages.length > 0) {
-          formDataToSend.append('existingCloudImages', JSON.stringify(existingCloudImages));
-          console.log('Existing cloud images:', existingCloudImages.length);
+        if (existingImages.length > 0) {
+          formDataToSend.append('existingImages', JSON.stringify(existingImages));
+          console.log('Existing images:', existingImages.length);
         }
       }
       
@@ -440,6 +445,54 @@ function AdminRestaurants() {
     window.dispatchEvent(notificationEvent);
   };
 
+  // Function to get image URL from either old or new format
+  const getImageUrl = (image) => {
+    if (!image) return null;
+
+    // If it's an object with image_path
+    if (typeof image === 'object' && image.image_path) {
+      const path = image.image_path;
+      
+      // If already a full URL
+      if (path.startsWith('http')) {
+        return path;
+      }
+      
+      // Handle uploads directory paths
+      if (path.includes('uploads/') || path.includes('uploads\\')) {
+        // Normalize path to use forward slashes for URLs
+        const normalizedPath = path.replace(/\\/g, '/');
+        return `${process.env.REACT_APP_API_URL}/${normalizedPath}`;
+      }
+      
+      // If a relative path, use the API URL
+      return `${process.env.REACT_APP_API_URL}/${path}`;
+    }
+    
+    // If it's a relative path string
+    if (typeof image === 'string') {
+      // If already a full URL
+      if (image.startsWith('http')) {
+        return image;
+      }
+      
+      // Handle uploads directory paths
+      if (image.includes('uploads/') || image.includes('uploads\\')) {
+        // Normalize path to use forward slashes for URLs
+        const normalizedPath = image.replace(/\\/g, '/');
+        return `${process.env.REACT_APP_API_URL}/${normalizedPath}`;
+      }
+      
+      // If a relative path, use the API URL
+      if (image.startsWith('/') || image.includes('/')) {
+        return `${process.env.REACT_APP_API_URL}/${image.replace(/^\/?/, '')}`;
+      }
+      
+      return image;
+    }
+    
+    return null;
+  };
 
   return (
     <div className="admin-restaurants">
@@ -893,15 +946,18 @@ function AdminRestaurants() {
                 {/* Restaurant Images Gallery */}
                 <div className="restaurant-images-gallery">
                   {viewingRestaurant.images && viewingRestaurant.images.length > 0 ? (
-                    viewingRestaurant.images.map((image, index) => (
-                      <div key={index} className="gallery-image-item">
-                        <img 
-                          src={image.image_url} 
-                          alt={`${viewingRestaurant.name} - Ảnh ${index + 1}`} 
-                          className="gallery-image" 
-                        />
-                      </div>
-                    ))
+                    viewingRestaurant.images.map((image, index) => {
+                      const imageSrc = getImageUrl(image);
+                      return (
+                        <div key={index} className="gallery-image-item">
+                          <img 
+                            src={imageSrc} 
+                            alt={`${viewingRestaurant.name} - Ảnh ${index + 1}`} 
+                            className="gallery-image" 
+                          />
+                        </div>
+                      );
+                    })
                   ) : (
                     <div className="no-image-placeholder">
                       <i className="fa fa-image"></i>

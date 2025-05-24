@@ -1,39 +1,63 @@
 const express = require('express');
 const router = express.Router();
 const { models } = require('../models');
-const { upload } = require('../utils/cloudinary');
 const authMiddleware = require('../middleware/auth');
-const { cloudinary, uploadImage } = require('../utils/cloudinary');
 const fs = require('fs');
 const multer = require('multer');
+const path = require('path');
 
-// Setup temporary storage for file uploads
-const tempStorage = multer.diskStorage({
+// Helper function to normalize path for web URLs
+function normalizeFilePath(filePath) {
+  // Convert Windows backslashes to forward slashes for web URLs
+  return filePath.replace(/\\/g, '/');
+}
+
+// Setup storage for file uploads
+const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, './uploads/');
+    const uploadDir = './uploads/';
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
   },
   filename: function (req, file, cb) {
-    cb(null, new Date().toISOString().replace(/:/g, '-') + file.originalname);
+    const uniqueFilename = new Date().toISOString().replace(/:/g, '-') + '-' + file.originalname;
+    cb(null, uniqueFilename);
   }
 });
 
-// Create temporary upload middleware for handling multipart form data
-const tempUpload = multer({ 
-  storage: tempStorage,
+// Create upload middleware for handling multipart form data
+const upload = multer({ 
+  storage: storage,
   limits: {
     fileSize: 1024 * 1024 * 5 // 5MB limit
   }
 });
 
-// Make sure upload directory exists
-if (!fs.existsSync('./uploads')) {
-  fs.mkdirSync('./uploads', { recursive: true });
-}
-
 // Get all restaurants
 router.get('/', async (req, res) => {
   try {
-    const restaurants = await models.Restaurant.findAll();
+    const restaurants = await models.Restaurant.findAll({
+      include: [
+        {
+          model: models.RestaurantImage, 
+          as: 'images',
+        }
+      ]
+    });
+    
+    // Normalize paths for web URLs
+    for (const restaurant of restaurants) {
+      if (restaurant.images && restaurant.images.length > 0) {
+        for (const image of restaurant.images) {
+          if (image.image_path) {
+            image.image_path = normalizeFilePath(image.image_path);
+          }
+        }
+      }
+    }
+    
     res.json(restaurants);
   } catch (error) {
     console.error('Error fetching restaurants:', error);
@@ -44,10 +68,28 @@ router.get('/', async (req, res) => {
 // Get a specific restaurant
 router.get('/:id', async (req, res) => {
   try {
-    const restaurant = await models.Restaurant.findByPk(req.params.id);
+    const restaurant = await models.Restaurant.findByPk(req.params.id, {
+      include: [
+        {
+          model: models.RestaurantImage, 
+          as: 'images',
+        }
+      ]
+    });
+    
     if (!restaurant) {
       return res.status(404).json({ message: 'Restaurant not found' });
     }
+    
+    // Normalize paths for web URLs
+    if (restaurant.images && restaurant.images.length > 0) {
+      for (const image of restaurant.images) {
+        if (image.image_path) {
+          image.image_path = normalizeFilePath(image.image_path);
+        }
+      }
+    }
+    
     res.json(restaurant);
   } catch (error) {
     console.error('Error fetching restaurant:', error);
@@ -56,7 +98,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // Create a new restaurant with image upload
-router.post('/', authMiddleware, tempUpload.single('image'), async (req, res) => {
+router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
   try {
     const { name, cuisine_type, address, description } = req.body;
     
@@ -65,84 +107,76 @@ router.post('/', authMiddleware, tempUpload.single('image'), async (req, res) =>
       return res.status(400).json({ message: 'Name, cuisine type, and address are required fields' });
     }
 
-    let imageData = null;
-    
-    // Handle image upload to Cloudinary if file was provided
-    if (req.file) {
-      try {
-        imageData = await uploadImage(req.file);
-        // Delete temporary file after upload
-        fs.unlinkSync(req.file.path);
-      } catch (uploadError) {
-        console.error('Failed to upload image:', uploadError);
-        // Clean up temp file if upload fails
-        if (req.file && fs.existsSync(req.file.path)) {
-          fs.unlinkSync(req.file.path);
-        }
-        return res.status(500).json({ message: 'Failed to upload image', error: uploadError.message });
-      }
-    }
-
-    // Create the restaurant with image URL if available
+    // Create the restaurant
     const restaurant = await models.Restaurant.create({
       name,
       cuisine_type,
       address,
       description,
-      image_url: imageData ? imageData.url : null,
-      image_public_id: imageData ? imageData.public_id : null,
-      owner_id: req.user.id // If using authentication
+      owner_id: req.user.id
     });
+
+    // Save image to database if file was provided
+    if (req.file) {
+      try {
+        const imagePath = normalizeFilePath(req.file.path);
+        // Store image information in restaurant_image table
+        await models.RestaurantImage.create({
+          restaurant_id: restaurant.id,
+          image_path: imagePath
+        });
+      } catch (imageError) {
+        console.error('Failed to save image information:', imageError);
+        return res.status(500).json({ message: 'Failed to save image information', error: imageError.message });
+      }
+    }
 
     res.status(201).json(restaurant);
   } catch (error) {
     console.error('Error creating restaurant:', error);
-    // Clean up temp file if any error occurs
-    if (req.file && fs.existsSync(req.file.path)) {
-      fs.unlinkSync(req.file.path);
-    }
     res.status(500).json({ message: 'Failed to create restaurant', error: error.message });
   }
 });
 
 // Update restaurant
-router.put('/:id', authMiddleware, tempUpload.single('image'), async (req, res) => {
+router.put('/:id', authMiddleware, upload.single('image'), async (req, res) => {
   try {
     const { name, cuisine_type, address, description } = req.body;
     const restaurant = await models.Restaurant.findByPk(req.params.id);
     
     if (!restaurant) {
-      // Clean up temp file if restaurant not found
-      if (req.file && fs.existsSync(req.file.path)) {
-        fs.unlinkSync(req.file.path);
-      }
       return res.status(404).json({ message: 'Restaurant not found' });
     }
 
     // Handle image update if provided
     if (req.file) {
       try {
-        // Delete previous image from Cloudinary if exists
-        if (restaurant.image_public_id) {
-          await cloudinary.uploader.destroy(restaurant.image_public_id);
+        // Find existing restaurant image
+        const existingImage = await models.RestaurantImage.findOne({
+          where: { restaurant_id: restaurant.id }
+        });
+
+        // If there's an existing image, delete the file and update the record
+        if (existingImage) {
+          // Delete the old file if it exists
+          if (fs.existsSync(existingImage.image_path)) {
+            fs.unlinkSync(existingImage.image_path);
+          }
+          
+          // Update the existing image record
+          await existingImage.update({
+            image_path: normalizeFilePath(req.file.path)
+          });
+        } else {
+          // Create a new image record
+          await models.RestaurantImage.create({
+            restaurant_id: restaurant.id,
+            image_path: normalizeFilePath(req.file.path)
+          });
         }
-        
-        // Upload new image
-        const imageData = await uploadImage(req.file);
-        
-        // Update image fields
-        restaurant.image_url = imageData.url;
-        restaurant.image_public_id = imageData.public_id;
-        
-        // Delete temporary file
-        fs.unlinkSync(req.file.path);
-      } catch (uploadError) {
-        console.error('Failed to update image:', uploadError);
-        // Clean up temp file if upload fails
-        if (req.file && fs.existsSync(req.file.path)) {
-          fs.unlinkSync(req.file.path);
-        }
-        return res.status(500).json({ message: 'Failed to update image', error: uploadError.message });
+      } catch (imageError) {
+        console.error('Failed to update image:', imageError);
+        return res.status(500).json({ message: 'Failed to update image', error: imageError.message });
       }
     }
 
@@ -156,10 +190,6 @@ router.put('/:id', authMiddleware, tempUpload.single('image'), async (req, res) 
     res.json(restaurant);
   } catch (error) {
     console.error('Error updating restaurant:', error);
-    // Clean up temp file if any error occurs
-    if (req.file && fs.existsSync(req.file.path)) {
-      fs.unlinkSync(req.file.path);
-    }
     res.status(500).json({ message: 'Failed to update restaurant', error: error.message });
   }
 });
@@ -173,11 +203,22 @@ router.delete('/:id', authMiddleware, async (req, res) => {
       return res.status(404).json({ message: 'Restaurant not found' });
     }
 
-    // Delete image from Cloudinary if exists
-    if (restaurant.image_public_id) {
-      await cloudinary.uploader.destroy(restaurant.image_public_id);
+    // Find and delete associated image
+    const image = await models.RestaurantImage.findOne({
+      where: { restaurant_id: restaurant.id }
+    });
+
+    if (image) {
+      // Delete the physical file
+      if (fs.existsSync(image.image_path)) {
+        fs.unlinkSync(image.image_path);
+      }
+      
+      // Delete the database record
+      await image.destroy();
     }
 
+    // Delete the restaurant
     await restaurant.destroy();
     res.json({ message: 'Restaurant deleted successfully' });
   } catch (error) {

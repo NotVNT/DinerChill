@@ -5,63 +5,58 @@ const authenticateAdmin = require('../middleware/authenticate').authenticateAdmi
 const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
-const cloudinary = require('../config/cloudinary');
 const { Sequelize } = require('sequelize');
 const { Op } = require('sequelize');
 
-// Setup temporary storage for file uploads
-const tempStorage = multer.diskStorage({
+// Helper function to normalize path for web URLs
+function normalizeFilePath(filePath) {
+  // Convert Windows backslashes to forward slashes for web URLs
+  return filePath.replace(/\\/g, '/');
+}
+
+// Setup storage for file uploads
+const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     // Ensure uploads directory exists
-    if (!fs.existsSync('./uploads')) {
-      fs.mkdirSync('./uploads', { recursive: true });
+    const uploadDir = './uploads/';
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
     }
-    cb(null, './uploads/');
+    cb(null, uploadDir);
   },
   filename: function (req, file, cb) {
-    cb(null, Date.now() + path.extname(file.originalname));
+    const uniqueFilename = new Date().toISOString().replace(/:/g, '-') + '-' + file.originalname;
+    cb(null, uniqueFilename);
   }
 });
 
 // Create upload middleware
 const upload = multer({ 
-  storage: tempStorage,
+  storage: storage,
   limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
 });
-
-// Function to upload a single file to Cloudinary
-const uploadToCloudinary = async (file) => {
-  try {
-    // Upload file to Cloudinary
-    const result = await cloudinary.uploader.upload(file.path, {
-      folder: 'dinerchill/restaurants'
-    });
-    
-    // Delete temporary file after upload
-    fs.unlinkSync(file.path);
-    
-    return {
-      url: result.secure_url,
-      publicId: result.public_id
-    };
-  } catch (error) {
-    console.error('Error uploading to Cloudinary:', error);
-    throw new Error('Error uploading image to cloud');
-  }
-};
-
-// Function to upload multiple files to Cloudinary
-const uploadMultipleToCloudinary = async (files) => {
-  const uploadPromises = files.map(file => uploadToCloudinary(file));
-  return Promise.all(uploadPromises);
-};
 
 // Get all restaurants with include images
 router.get('/restaurants', authenticateAdmin, async (req, res) => {
   try {
     const restaurants = await Restaurant.findAll({
-      include: [{ model: RestaurantImage, as: 'images' }]
+      include: [{ 
+        model: RestaurantImage, 
+        as: 'images'
+      }]
     });
+    
+    // Normalize paths for web URLs
+    for (const restaurant of restaurants) {
+      if (restaurant.images && restaurant.images.length > 0) {
+        for (const image of restaurant.images) {
+          if (image.image_path) {
+            image.image_path = normalizeFilePath(image.image_path);
+          }
+        }
+      }
+    }
+    
     res.json(restaurants);
   } catch (error) {
     console.error('Error getting restaurants:', error);
@@ -98,29 +93,21 @@ router.post('/restaurants', authenticateAdmin, upload.array('restaurantImages', 
       status: status || 'active'
     });
 
-    // Upload hình ảnh lên Cloudinary nếu có
+    // Lưu hình ảnh vào uploads và tạo bản ghi trong database
     if (req.files && req.files.length > 0) {
       try {
-        const uploadResults = await uploadMultipleToCloudinary(req.files);
-        
         // Lưu thông tin hình ảnh vào database
-        const imagePromises = uploadResults.map(result => {
+        const imagePromises = req.files.map(file => {
           return RestaurantImage.create({
             restaurant_id: newRestaurant.id,
-            image_url: result.url
+            image_path: normalizeFilePath(file.path)
           });
         });
         
         await Promise.all(imagePromises);
       } catch (uploadError) {
-        console.error('Error uploading images:', uploadError);
-        // Xóa các file tạm nếu có lỗi
-        req.files.forEach(file => {
-          if (fs.existsSync(file.path)) {
-            fs.unlinkSync(file.path);
-          }
-        });
-        // Note: We continue with restaurant creation even if image upload fails
+        console.error('Error saving images:', uploadError);
+        // Note: We continue with restaurant creation even if image saving fails
       }
     }
 
@@ -133,14 +120,6 @@ router.post('/restaurants', authenticateAdmin, upload.array('restaurantImages', 
     res.status(201).json(restaurantWithImages);
   } catch (error) {
     console.error('Lỗi khi tạo nhà hàng:', error);
-    // Xóa các file tạm nếu có lỗi
-    if (req.files) {
-      req.files.forEach(file => {
-        if (fs.existsSync(file.path)) {
-          fs.unlinkSync(file.path);
-        }
-      });
-    }
     res.status(500).json({ message: 'Lỗi server khi tạo nhà hàng: ' + error.message });
   }
 });
@@ -153,23 +132,15 @@ router.put('/restaurants/:id', authenticateAdmin, upload.array('restaurantImages
       name, cuisineType, address, description, 
       openingTime, closingTime, phone, email, 
       priceRange, capacity, deleteImageIds, status,
-      existingCloudImages, closureReason
+      existingImages, closureReason
     } = req.body;
 
-    console.log('Update restaurant request received:', { id, existingCloudImages, status, closureReason });
+    console.log('Update restaurant request received:', { id, existingImages, status, closureReason });
 
     // Tìm nhà hàng theo id
     const restaurant = await Restaurant.findByPk(id);
     
     if (!restaurant) {
-      // Xóa file tạm nếu không tìm thấy nhà hàng
-      if (req.files) {
-        req.files.forEach(file => {
-          if (fs.existsSync(file.path)) {
-            fs.unlinkSync(file.path);
-          }
-        });
-      }
       return res.status(404).json({ message: 'Không tìm thấy nhà hàng' });
     }
 
@@ -180,15 +151,15 @@ router.put('/restaurants/:id', authenticateAdmin, upload.array('restaurantImages
     
     console.log(`Found ${currentImages.length} existing images for restaurant ${id}`);
 
-    // If existingCloudImages is provided, determine which images to keep
-    if (existingCloudImages) {
+    // If existingImages is provided, determine which images to keep
+    if (existingImages) {
       try {
         let imagesToKeep = [];
         
-        if (typeof existingCloudImages === 'string') {
-          imagesToKeep = JSON.parse(existingCloudImages);
-        } else if (Array.isArray(existingCloudImages)) {
-          imagesToKeep = existingCloudImages;
+        if (typeof existingImages === 'string') {
+          imagesToKeep = JSON.parse(existingImages);
+        } else if (Array.isArray(existingImages)) {
+          imagesToKeep = existingImages;
         }
         
         console.log('Images to keep:', imagesToKeep);
@@ -196,14 +167,21 @@ router.put('/restaurants/:id', authenticateAdmin, upload.array('restaurantImages
         // Delete images that are not in the "keep" list
         if (Array.isArray(imagesToKeep)) {
           for (const image of currentImages) {
-            if (!imagesToKeep.includes(image.image_url)) {
-              console.log(`Deleting image: ${image.id} (${image.image_url})`);
+            if (!imagesToKeep.includes(image.id.toString())) {
+              console.log(`Deleting image: ${image.id}`);
+              
+              // Delete the physical file
+              if (fs.existsSync(image.image_path)) {
+                fs.unlinkSync(image.image_path);
+              }
+              
+              // Delete the database record
               await image.destroy();
             }
           }
         }
       } catch (error) {
-        console.error('Error processing existing cloud images:', error);
+        console.error('Error processing existing images:', error);
       }
     }
     
@@ -219,6 +197,22 @@ router.put('/restaurants/:id', authenticateAdmin, upload.array('restaurantImages
         }
         
         if (idsToDelete.length > 0) {
+          // Find images to delete first
+          const imagesToDelete = await RestaurantImage.findAll({
+            where: {
+              id: idsToDelete,
+              restaurant_id: id
+            }
+          });
+          
+          // Delete physical files
+          for (const image of imagesToDelete) {
+            if (fs.existsSync(image.image_path)) {
+              fs.unlinkSync(image.image_path);
+            }
+          }
+          
+          // Delete database records
           await RestaurantImage.destroy({
             where: {
               id: idsToDelete,
@@ -231,28 +225,20 @@ router.put('/restaurants/:id', authenticateAdmin, upload.array('restaurantImages
       }
     }
 
-    // Upload hình ảnh mới lên Cloudinary nếu có
+    // Lưu hình ảnh mới vào uploads và database
     if (req.files && req.files.length > 0) {
       try {
-        const uploadResults = await uploadMultipleToCloudinary(req.files);
-        
         // Lưu thông tin hình ảnh vào database
-        const imagePromises = uploadResults.map(result => {
+        const imagePromises = req.files.map(file => {
           return RestaurantImage.create({
             restaurant_id: id,
-            image_url: result.url
+            image_path: normalizeFilePath(file.path)
           });
         });
         
         await Promise.all(imagePromises);
       } catch (uploadError) {
-        console.error('Error uploading images:', uploadError);
-        // Xóa các file tạm nếu có lỗi
-        req.files.forEach(file => {
-          if (fs.existsSync(file.path)) {
-            fs.unlinkSync(file.path);
-          }
-        });
+        console.error('Error saving images:', uploadError);
       }
     }
 
@@ -280,14 +266,6 @@ router.put('/restaurants/:id', authenticateAdmin, upload.array('restaurantImages
     res.json(updatedRestaurant);
   } catch (error) {
     console.error('Lỗi khi cập nhật nhà hàng:', error);
-    // Xóa các file tạm nếu có lỗi
-    if (req.files) {
-      req.files.forEach(file => {
-        if (fs.existsSync(file.path)) {
-          fs.unlinkSync(file.path);
-        }
-      });
-    }
     res.status(500).json({ message: 'Lỗi server khi cập nhật nhà hàng: ' + error.message });
   }
 });
@@ -317,7 +295,13 @@ router.delete('/restaurants/:id', authenticateAdmin, async (req, res) => {
 // Get all categories
 router.get('/categories', authenticateAdmin, async (req, res) => {
   try {
-    const categories = await Category.findAll();
+    const categories = await Category.findAll({
+      attributes: { 
+        exclude: ['imagePath', 'fileName'] // Exclude new columns until migration is applied
+      }
+    });
+    
+    // Just return the categories without transformation until migration is applied
     res.json(categories);
   } catch (error) {
     console.error('Error fetching categories:', error);
@@ -325,7 +309,7 @@ router.get('/categories', authenticateAdmin, async (req, res) => {
   }
 });
 
-// Create a new category
+// Add a new category
 router.post('/categories', authenticateAdmin, upload.single('image'), async (req, res) => {
   try {
     const { name, description } = req.body;
@@ -335,40 +319,26 @@ router.post('/categories', authenticateAdmin, upload.single('image'), async (req
       return res.status(400).json({ message: 'Tên danh mục là bắt buộc' });
     }
 
-    let imageUrl = null;
+    let imagePath = null;
+    let fileName = null;
     
-    // If image file is uploaded, process it
+    // If image file is uploaded, save it
     if (req.file) {
-      try {
-        const uploadResult = await uploadToCloudinary(req.file);
-        imageUrl = uploadResult.url;
-      } catch (uploadError) {
-        console.error('Error uploading image:', uploadError);
-        // Clean up any temp file
-        if (req.file && fs.existsSync(req.file.path)) {
-          fs.unlinkSync(req.file.path);
-        }
-        return res.status(500).json({ message: 'Không thể tải lên hình ảnh' });
-      }
-    } else if (req.body.imageUrl) {
-      // If imageUrl is provided in the body
-      imageUrl = req.body.imageUrl;
+      imagePath = req.file.path;
+      fileName = req.file.filename;
     }
 
     // Create new category
     const newCategory = await Category.create({
       name,
       description: description || '',
-      imageUrl
+      imagePath,
+      fileName
     });
 
     res.status(201).json(newCategory);
   } catch (error) {
     console.error('Error creating category:', error);
-    // Clean up any temp file if there's an error
-    if (req.file && fs.existsSync(req.file.path)) {
-      fs.unlinkSync(req.file.path);
-    }
     res.status(500).json({ message: 'Không thể tạo danh mục mới' });
   }
 });
@@ -382,47 +352,35 @@ router.put('/categories/:id', authenticateAdmin, upload.single('image'), async (
     // Find the category
     const category = await Category.findByPk(categoryId);
     if (!category) {
-      // Clean up any temp file
-      if (req.file && fs.existsSync(req.file.path)) {
-        fs.unlinkSync(req.file.path);
-      }
       return res.status(404).json({ message: 'Không tìm thấy danh mục' });
     }
 
-    let imageUrl = category.imageUrl;
+    let imagePath = category.imagePath;
+    let fileName = category.fileName;
     
     // If image file is uploaded, process it
     if (req.file) {
-      try {
-        const uploadResult = await uploadToCloudinary(req.file);
-        imageUrl = uploadResult.url;
-      } catch (uploadError) {
-        console.error('Error uploading image:', uploadError);
-        // Clean up any temp file
-        if (req.file && fs.existsSync(req.file.path)) {
-          fs.unlinkSync(req.file.path);
-        }
-        return res.status(500).json({ message: 'Không thể tải lên hình ảnh' });
+      // Delete old file if it exists
+      if (category.imagePath && fs.existsSync(category.imagePath)) {
+        fs.unlinkSync(category.imagePath);
       }
-    } else if (req.body.imageUrl) {
-      // If imageUrl is provided in the body
-      imageUrl = req.body.imageUrl;
+      
+      // Update with new file info
+      imagePath = req.file.path;
+      fileName = req.file.filename;
     }
 
     // Update the category
     await category.update({
       name: name || category.name,
       description: description !== undefined ? description : category.description,
-      imageUrl
+      imagePath,
+      fileName
     });
 
     res.json(category);
   } catch (error) {
     console.error('Error updating category:', error);
-    // Clean up any temp file if there's an error
-    if (req.file && fs.existsSync(req.file.path)) {
-      fs.unlinkSync(req.file.path);
-    }
     res.status(500).json({ message: 'Không thể cập nhật danh mục' });
   }
 });
@@ -436,6 +394,11 @@ router.delete('/categories/:id', authenticateAdmin, async (req, res) => {
     const category = await Category.findByPk(categoryId);
     if (!category) {
       return res.status(404).json({ message: 'Không tìm thấy danh mục' });
+    }
+
+    // Delete the image file if it exists
+    if (category.imagePath && fs.existsSync(category.imagePath)) {
+      fs.unlinkSync(category.imagePath);
     }
 
     // Delete the category
