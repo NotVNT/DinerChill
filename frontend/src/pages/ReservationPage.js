@@ -3,9 +3,10 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import axios from 'axios';
 import '../styles/ReservationPage.css';
+import { restaurantsAPI } from '../services/api';
 
 function ReservationPage() {
-  const { restaurants, loading, addReservation, addReservationHistory } = useApp();
+  const { user, addReservation, addReservationHistory } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -19,9 +20,9 @@ function ReservationPage() {
   const initialPromotion = queryParams.get('promotion') || '';
 
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
+    name: user?.name || '',
+    email: user?.email || '',
+    phone: user?.phone || '',
     date: initialDate,
     time: initialTime,
     guests: initialGuests,
@@ -32,6 +33,7 @@ function ReservationPage() {
   });
 
   const [selectedRestaurant, setSelectedRestaurant] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [showReview, setShowReview] = useState(false);
@@ -103,13 +105,12 @@ function ReservationPage() {
   const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const validatePhone = (phone) => /^\d{10}$/.test(phone.replace(/\D/g, ''));
 
-  const isValidTime = (date, time, openingHours) => {
-    if (!date || !time || !openingHours) return true;
+  const isValidTime = (date, time, openingTime, closingTime) => {
+    if (!date || !time || !openingTime || !closingTime) return true;
     try {
-      const [open, close] = openingHours.split(' - ').map(t => t.trim());
       const reservationTime = new Date(`${date} ${time}`).getTime();
-      const [openHour, openMin] = open.split(':').map(Number);
-      const [closeHour, closeMin] = close.split(':').map(Number);
+      const [openHour, openMin] = openingTime.split(':').map(Number);
+      const [closeHour, closeMin] = closingTime.split(':').map(Number);
       const openTime = new Date(date).setHours(openHour, openMin, 0, 0);
       const closeTime = new Date(date).setHours(closeHour, closeMin, 0, 0);
       return reservationTime >= openTime && reservationTime <= closeTime;
@@ -141,58 +142,77 @@ function ReservationPage() {
       }
     }
 
-    const lastTime = times[times.length - 1];
-    const [lastHour, lastMinute] = lastTime.split(':').map(Number);
-    if (lastHour > closeHour || (lastHour === closeHour && lastMinute > closeMinute)) {
-      times.pop();
-    }
-
     return times;
   };
 
+  // Fetch restaurant data by ID
   useEffect(() => {
-    if (restaurantId && restaurants.length > 0) {
-      const restaurant = restaurants.find(r => r.id === parseInt(restaurantId));
-      if (restaurant) {
-        setSelectedRestaurant(restaurant);
-        setInitialDeposit(restaurant.booking.deposit || 0);
-        setDepositAmount(restaurant.booking.deposit || 0);
-        setFormData(prev => ({
-          ...prev,
-          restaurant: restaurantId,
-          voucher: queryParams.get('promotion') || prev.voucher,
-        }));
-        const [openTime, closeTime] = restaurant.openingHours?.split(' - ') || ['11:00', '22:00'];
-        const times = generateTimeSlots(openTime, closeTime);
-        setAvailableTimes(times);
-        
-        // Use availableTimes to prevent ESLint warning
-        if (times.length > 0 && (!formData.time || !times.includes(formData.time))) {
-          setFormData(prev => ({ ...prev, time: times[0] || '17:00' }));
-        }
-      } else {
-        setError('Không tìm thấy nhà hàng với ID này.');
+    const fetchRestaurant = async () => {
+      if (!restaurantId) {
+        setLoading(false);
+        return;
       }
-    }
-  }, [restaurantId, restaurants, queryParams, formData.time]);
 
+      try {
+        setLoading(true);
+        const restaurant = await restaurantsAPI.getById(restaurantId);
+        
+        if (restaurant) {
+          setSelectedRestaurant(restaurant);
+          setFormData(prev => ({
+            ...prev,
+            restaurant: restaurantId,
+            voucher: queryParams.get('promotion') || prev.voucher,
+          }));
+          
+          // Set deposit - using a default value if not available
+          const deposit = 100000; // Default deposit amount
+          setInitialDeposit(deposit);
+          setDepositAmount(deposit);
+          
+          // Generate time slots based on opening and closing time
+          if (restaurant.openingTime && restaurant.closingTime) {
+            const times = generateTimeSlots(restaurant.openingTime, restaurant.closingTime);
+            setAvailableTimes(times);
+            
+            if (times.length > 0 && (!formData.time || !times.includes(formData.time))) {
+              setFormData(prev => ({ ...prev, time: times[0] || '17:00' }));
+            }
+          } else {
+            // Default time slots if restaurant hours are not available
+            const defaultTimes = generateTimeSlots('10:00', '22:00');
+            setAvailableTimes(defaultTimes);
+            
+            if (defaultTimes.length > 0 && (!formData.time || !defaultTimes.includes(formData.time))) {
+              setFormData(prev => ({ ...prev, time: defaultTimes[0] || '17:00' }));
+            }
+          }
+        } else {
+          setError('Không tìm thấy nhà hàng với ID này.');
+        }
+      } catch (err) {
+        console.error('Error fetching restaurant:', err);
+        setError('Không thể tải thông tin nhà hàng. Vui lòng thử lại sau.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRestaurant();
+  }, [restaurantId, queryParams, formData.time]);
+
+  // Calculate discount if promotion is applied
   useEffect(() => {
     if (selectedRestaurant && formData.voucher) {
-      const promotion = selectedRestaurant.promotions?.find(promo => promo.title === formData.voucher);
-      if (promotion && promotion.discount) {
-        setDiscount(promotion.discount);
-        const initialDepositAmount = selectedRestaurant.booking.deposit || 0;
-        const newDepositAmount = initialDepositAmount * (1 - promotion.discount / 100);
-        setDepositAmount(newDepositAmount);
-      } else {
-        setDiscount(0);
-        setDepositAmount(selectedRestaurant?.booking.deposit || 0);
-      }
+      // Default discount logic - in a real app, this would come from your promotions data
+      setDiscount(10); // Default 10% discount
+      const newDepositAmount = initialDeposit * (1 - 10 / 100);
+      setDepositAmount(newDepositAmount);
     } else {
       setDiscount(0);
-      setDepositAmount(selectedRestaurant?.booking.deposit || 0);
+      setDepositAmount(initialDeposit);
     }
-  }, [formData.voucher, selectedRestaurant]);
+  }, [formData.voucher, selectedRestaurant, initialDeposit]);
 
   // Check if the URL contains a payment cancellation parameter
   useEffect(() => {
@@ -216,19 +236,6 @@ function ReservationPage() {
       ...prevState,
       [name]: value,
     }));
-    if (name === 'restaurant' && value) {
-      const restaurant = restaurants.find(r => r.id === parseInt(value));
-      setSelectedRestaurant(restaurant);
-      setInitialDeposit(restaurant.booking.deposit || 0); // Cập nhật tiền cọc ban đầu
-      setDepositAmount(restaurant.booking.deposit || 0); // Cập nhật depositAmount khi chọn nhà hàng
-      const [openTime, closeTime] = restaurant.openingHours?.split(' - ') || ['11:00', '22:00'];
-      const times = generateTimeSlots(openTime, closeTime);
-      setAvailableTimes(times);
-      if (!times.includes(formData.time)) {
-        setFormData(prev => ({ ...prev, time: times[0] || '17:00' }));
-      }
-      setError(null);
-    }
   };
 
   const validateForm = () => {
@@ -237,10 +244,10 @@ function ReservationPage() {
     if (!validatePhone(formData.phone)) return 'Số điện thoại phải là 10 chữ số.';
     if (!formData.date) return 'Vui lòng chọn ngày.';
     if (!formData.time) return 'Vui lòng chọn giờ.';
-    if (!isValidTime(formData.date, formData.time, selectedRestaurant?.openingHours)) {
+    if (!selectedRestaurant) return 'Không tìm thấy thông tin nhà hàng.';
+    if (!isValidTime(formData.date, formData.time, selectedRestaurant.openingTime, selectedRestaurant.closingTime)) {
       return 'Thời gian đặt bàn không nằm trong giờ mở cửa.';
     }
-    if (!formData.restaurant) return 'Vui lòng chọn nhà hàng.';
     if (formData.guests < 1 || formData.guests > 20) return 'Số khách phải từ 1 đến 20.';
     return null;
   };
@@ -271,15 +278,29 @@ function ReservationPage() {
     setSubmitting(true);
     setPaymentLoading(true);
     try {
+      // Prepare reservation data according to your model
       const reservationData = {
-        ...formData,
+        userId: user?.id || 1, // Default to 1 if no user ID available
+        restaurantId: parseInt(restaurantId),
+        date: formData.date,
+        time: formData.time,
+        partySize: formData.guests,
+        status: 'pending',
+        notes: formData.specialRequests
+      };
+
+      // For tracking in the UI
+      const uiReservationData = {
+        ...reservationData,
         restaurantName: selectedRestaurant?.name,
         restaurantAddress: selectedRestaurant?.address,
-        restaurantImage: selectedRestaurant?.image,
         discountApplied: discount,
         finalDeposit: depositAmount,
       };
+
+      // Add reservation through API
       const response = await addReservation(reservationData);
+      
       if (response.success) {
         const reservationId = response.id || `RES-${Date.now()}`;
         const updatedReservationData = {
@@ -287,22 +308,21 @@ function ReservationPage() {
           restaurantId: parseInt(restaurantId),
           restaurantName: selectedRestaurant?.name,
           restaurantAddress: selectedRestaurant?.address,
-          restaurantImage: selectedRestaurant?.image,
           date: formData.date,
           time: formData.time,
-          guests: formData.guests,
+          partySize: formData.guests,
           status: 'confirmed',
           code: reservationId,
-          specialRequests: formData.specialRequests,
+          notes: formData.specialRequests,
         };
 
-        // Lưu vào reservation history
+        // Save to reservation history
         await addReservationHistory({
           ...updatedReservationData,
           timestamp: new Date().toISOString(),
         });
 
-        // Lưu vào localStorage
+        // Save to localStorage
         const existingReservations = JSON.parse(localStorage.getItem('successfulReservations') || '[]');
         localStorage.setItem('successfulReservations', JSON.stringify([...existingReservations, updatedReservationData]));
 
@@ -310,18 +330,23 @@ function ReservationPage() {
         const returnUrl = new URL(`${window.location.origin}/`);
         returnUrl.searchParams.set('paymentCancelled', 'true');
         
-        // Gọi API thanh toán
-        const paymentResponse = await axios.post('/api/payment/create', {
-          amount: depositAmount,
-          orderInfo: `Đặt bàn #${reservationId} - ${selectedRestaurant?.name} - ${formData.date} ${formData.time}`,
-          reservationId: reservationId,
-          returnUrl: returnUrl.toString() // Add return URL parameter with paymentCancelled=true
-        });
+        // Call payment API
+        try {
+          const paymentResponse = await axios.post('/api/payment/create', {
+            amount: depositAmount,
+            orderInfo: `Đặt bàn #${reservationId} - ${selectedRestaurant?.name} - ${formData.date} ${formData.time}`,
+            reservationId: reservationId,
+            returnUrl: returnUrl.toString()
+          });
 
-        if (paymentResponse.data && paymentResponse.data.checkoutUrl) {
-          window.location.href = paymentResponse.data.checkoutUrl;
-        } else {
-          setSuccessMessage(`Đặt bàn thành công với mã ${reservationId}! Vui lòng thử lại thanh toán.`);
+          if (paymentResponse.data && paymentResponse.data.checkoutUrl) {
+            window.location.href = paymentResponse.data.checkoutUrl;
+          } else {
+            setSuccessMessage(`Đặt bàn thành công với mã ${reservationId}! Vui lòng thử lại thanh toán.`);
+          }
+        } catch (paymentError) {
+          console.error('Payment error:', paymentError);
+          setSuccessMessage(`Đặt bàn thành công với mã ${reservationId}! Thanh toán không thành công, vui lòng thử lại sau.`);
         }
       } else {
         throw new Error(response.message || 'Đặt bàn không thành công.');
@@ -337,17 +362,6 @@ function ReservationPage() {
 
   if (loading) {
     return <div className="loading">Đang tải dữ liệu...</div>;
-  }
-
-  if (!restaurants || restaurants.length === 0) {
-    return (
-      <div className="error-message">
-        Không có nhà hàng nào để hiển thị.
-        <button onClick={() => navigate('/restaurants')} className="btn btn-secondary">
-          Quay lại danh sách nhà hàng
-        </button>
-      </div>
-    );
   }
 
   return (
