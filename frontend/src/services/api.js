@@ -286,14 +286,10 @@ export const restaurantsAPI = {
       
       console.log(`Đang tìm nhà hàng với ID: ${id}`);
       
-      // Try different possible API endpoints
+      // Simplify endpoint list to focus on most likely working endpoints
       const endpoints = [
-        `/restaurants/${id}`,           // Standard REST endpoint
-        `/restaurant/${id}`,            // Singular form
-        `/dinerchill-restaurants/${id}`, // With app prefix
-        `/api/restaurants/${id}`,       // With api prefix
-        `/api/restaurant/${id}`,        // With api prefix, singular
-        `/api/dinerchill-restaurants/${id}` // With api and app prefix
+        `/restaurants/${id}`,
+        `/admin/restaurants/${id}`
       ];
 
       // Try each endpoint until one works
@@ -301,50 +297,27 @@ export const restaurantsAPI = {
         try {
           console.log(`Thử kết nối API endpoint: ${endpoint}`);
           const response = await fetchAPI(endpoint);
-          console.log(`Endpoint ${endpoint} hoạt động! Đã tìm thấy nhà hàng ID ${id}`);
-          return response;
+          if (response) {
+            console.log(`Endpoint ${endpoint} hoạt động! Đã tìm thấy nhà hàng ID ${id}`);
+            
+            // If we got a response but it doesn't include images, try to fetch them separately
+            if (!response.images || response.images.length === 0) {
+              try {
+                const imagesResponse = await fetchAPI(`/restaurants/${id}/images`);
+                if (imagesResponse && Array.isArray(imagesResponse)) {
+                  response.images = imagesResponse;
+                }
+              } catch (imgErr) {
+                console.log('Không thể lấy thêm hình ảnh:', imgErr.message);
+              }
+            }
+            
+            return response;
+          }
         } catch (err) {
           console.log(`Endpoint ${endpoint} không hoạt động:`, err.message || err);
           // Continue to the next endpoint
         }
-      }
-
-      // Try non-authenticated admin endpoints
-      try {
-        console.log('Thử lấy dữ liệu từ API admin công khai');
-        const response = await fetchAPI(`/admin/restaurants/${id}`);
-        console.log('API admin công khai hoạt động!');
-        return response;
-      } catch (adminErr) {
-        console.log('API admin công khai thất bại:', adminErr.message || adminErr);
-      }
-
-      // Try authenticated admin API as last resort
-      try {
-        console.log('Thử lấy dữ liệu từ API admin xác thực');
-        const response = await fetchWithAuth(`/admin/restaurants/${id}`);
-        console.log('API admin xác thực hoạt động!');
-        return response;
-      } catch (adminAuthErr) {
-        console.error('API admin xác thực cũng thất bại:', adminAuthErr.message || adminAuthErr);
-      }
-
-      // Try base URL API (no path prefix)
-      try {
-        console.log('Thử kết nối trực tiếp với base URL API');
-        const url = `${API_BASE_URL.replace('/api', '')}/restaurants/${id}`;
-        console.log(`Gọi API URL trực tiếp: ${url}`);
-        const response = await fetch(url);
-        
-        if (!response.ok) {
-          throw new Error(`Lỗi ${response.status}: ${response.statusText}`);
-        }
-        
-        const data = await response.json();
-        console.log('Kết nối trực tiếp thành công!');
-        return data;
-      } catch (directErr) {
-        console.error('Kết nối trực tiếp thất bại:', directErr.message || directErr);
       }
 
       // All attempts failed, throw error with detailed message

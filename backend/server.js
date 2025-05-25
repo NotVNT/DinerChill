@@ -752,6 +752,55 @@ app.use('/api/table', tableRoutes);
 app.use('/api/review', reviewRoutes);
 app.use('/api/payment', paymentRoutes);
 
+// Add this route after the existing restaurant routes
+app.get('/api/restaurants/:id/images', async (req, res) => {
+  try {
+    const restaurantId = parseInt(req.params.id);
+    const { RestaurantImage } = require('./models');
+    
+    // Find all images for the restaurant
+    const images = await RestaurantImage.findAll({
+      where: { restaurant_id: restaurantId }
+    });
+    
+    if (!images || images.length === 0) {
+      return res.status(404).json({ message: 'Không tìm thấy hình ảnh cho nhà hàng này' });
+    }
+    
+    res.json(images);
+  } catch (err) {
+    console.error('Error fetching restaurant images:', err);
+    res.status(500).json({ message: 'Đã xảy ra lỗi server khi lấy hình ảnh nhà hàng' });
+  }
+});
+
+// Add this route to get a single restaurant with all its images
+app.get('/api/restaurants/:id', async (req, res) => {
+  try {
+    const restaurantId = parseInt(req.params.id);
+    const { Restaurant, RestaurantImage } = require('./models');
+    
+    // Find restaurant with its images
+    const restaurant = await Restaurant.findByPk(restaurantId, {
+      include: [
+        {
+          model: RestaurantImage,
+          as: 'images'
+        }
+      ]
+    });
+    
+    if (!restaurant) {
+      return res.status(404).json({ message: `Không thể tìm thấy nhà hàng với ID: ${restaurantId}` });
+    }
+    
+    res.json(restaurant);
+  } catch (err) {
+    console.error('Error fetching restaurant details:', err);
+    res.status(500).json({ message: 'Đã xảy ra lỗi server khi lấy thông tin nhà hàng' });
+  }
+});
+
 // Hàm khởi động server với port cụ thể
 const startServer = (port) => {
   const server = app.listen(port, async () => {

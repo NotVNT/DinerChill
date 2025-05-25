@@ -45,7 +45,7 @@ function RestaurantDetailPage() {
       try {
         setLoading(true);
         const data = await restaurantsAPI.getById(id);
-        if (!data) throw new Error(`Không thể lấy dữ liệu nhà hàng từ API với ID: ${id}`);
+        if (!data) throw new Error(`Không thể tìm thấy nhà hàng với ID: ${id}`);
         
         setRestaurant(data);
         
@@ -53,20 +53,14 @@ function RestaurantDetailPage() {
           addToRecentlyViewed(data);
         }
 
-        const { openTime, closeTime } = data || {};
-        if (
-          typeof openTime === 'string' &&
-          typeof closeTime === 'string' &&
-          openTime.match(/^\d{2}:\d{2}$/) &&
-          closeTime.match(/^\d{2}:\d{2}$/)
-        ) {
-          const times = generateTimeSlots(openTime, closeTime);
+        // Generate time slots based on opening and closing time
+        if (data.openingTime && data.closingTime) {
+          const times = generateTimeSlots(data.openingTime, data.closingTime);
           setAvailableTimes(times);
           setFormData((prev) => ({ ...prev, time: times[0] || '' }));
         } else {
           setAvailableTimes([]);
           setFormData((prev) => ({ ...prev, time: '' }));
-          console.warn('openTime hoặc closeTime không hợp lệ:', { openTime, closeTime });
         }
       } catch (err) {
         console.error('Lỗi tìm nhà hàng:', err);
@@ -137,12 +131,6 @@ function RestaurantDetailPage() {
         currentMinute = 0;
         currentHour += 1;
       }
-    }
-
-    const lastTime = times[times.length - 1];
-    const [lastHour, lastMinute] = lastTime.split(':').map(Number);
-    if (lastHour > closeHour || (lastHour === closeHour && lastMinute > closeMinute)) {
-      times.pop();
     }
 
     return times;
@@ -225,6 +213,7 @@ function RestaurantDetailPage() {
     } catch (err) {
       console.error('Lỗi khi chuyển hướng:', err);
       setNotification('Có lỗi khi chuyển hướng đến trang đặt bàn. Vui lòng thử lại.');
+      setTimeout(() => setNotification(null), 2000);
     }
   };
 
@@ -340,53 +329,17 @@ function RestaurantDetailPage() {
   };
 
   const handleGoBack = () => {
-    navigate(-1); // Navigate back to previous page in history
+    navigate(-1);
   };
 
-  // Function to get proper image URL based on available fields
+  // Function to get proper image URL
   const getImageUrl = (image) => {
     if (!image) return '';
     
-    // If it's an object with image_path
     if (typeof image === 'object' && image.image_path) {
-      const path = image.image_path;
-      
-      // If already a full URL
-      if (path.startsWith('http')) {
-        return path;
-      }
-      
-      // Handle uploads directory paths
-      if (path.includes('uploads/') || path.includes('uploads\\')) {
-        // Normalize path to use forward slashes for URLs
-        const normalizedPath = path.replace(/\\/g, '/');
-        return `${process.env.REACT_APP_API_URL}/${normalizedPath}`;
-      }
-      
-      // If a relative path, use the API URL
-      return `${process.env.REACT_APP_API_URL}/${path}`;
-    }
-    
-    // If it's a relative path string
-    if (typeof image === 'string') {
-      // If already a full URL
-      if (image.startsWith('http')) {
-        return image;
-      }
-      
-      // Handle uploads directory paths
-      if (image.includes('uploads/') || image.includes('uploads\\')) {
-        // Normalize path to use forward slashes for URLs
-        const normalizedPath = image.replace(/\\/g, '/');
-        return `${process.env.REACT_APP_API_URL}/${normalizedPath}`;
-      }
-      
-      // If a relative path, use the API URL
-      if (image.startsWith('/') || image.includes('/')) {
-        return `${process.env.REACT_APP_API_URL}/${image.replace(/^\/?/, '')}`;
-      }
-      
-      return image;
+      return image.image_path.startsWith('http') 
+        ? image.image_path 
+        : `${process.env.REACT_APP_API_URL || ''}/${image.image_path.replace(/^\/?/, '')}`;
     }
     
     return '';
@@ -413,10 +366,6 @@ function RestaurantDetailPage() {
             Thử lại
           </button>
         </div>
-        <div className="error-help">
-          <p>Có thể nhà hàng này đã bị xóa hoặc chưa được tạo trong hệ thống.</p>
-          <p>Vui lòng kiểm tra ID nhà hàng hoặc liên hệ quản trị viên.</p>
-        </div>
       </div>
     );
   }
@@ -424,7 +373,7 @@ function RestaurantDetailPage() {
   if (!restaurant) {
     return (
       <div className="error-container">
-        <p className="error-message">Không tìm thấy nhà hàng này. ID: {id}</p>
+        <p className="error-message">Không tìm thấy nhà hàng với ID: {id}</p>
         <button className="btn" onClick={() => navigate('/restaurants')}>
           Quay lại danh sách nhà hàng
         </button>
@@ -443,8 +392,11 @@ function RestaurantDetailPage() {
   const images = restaurant.images || [];
   const visibleImages = images.slice(0, 9);
   const remainingImagesCount = images.length - 9;
-  const menuImages = (restaurant.menu || []).map(item => item.image);
-  const detailImages = restaurant.detailImages || [];
+
+  // Get first image for banner if available
+  const bannerImage = restaurant.images && restaurant.images.length > 0 
+    ? getImageUrl(restaurant.images[0]) 
+    : '';
 
   return (
     <div className="restaurant-detail-page">
@@ -462,14 +414,14 @@ function RestaurantDetailPage() {
 
       <div className="restaurant-banner">
         <img
-          src={restaurant.image}
+          src={bannerImage}
           alt={restaurant.name}
           className="banner-image"
+          onError={(e) => { e.target.src = '/placeholder-restaurant.jpg'; }}
         />
         <div className="banner-overlay">
           <h1>{restaurant.name}</h1>
           <p>{restaurant.address || 'Địa chỉ không có'}</p>
-          <p>Đánh giá: {restaurant.rating || 0} sao ({restaurant.reviewCount || 0} đánh giá)</p>
           <div className="banner-actions">
             <button className="btn btn-outline" onClick={handleFavorite}>
               <i className={`fas fa-heart ${isFavorite ? 'favorite-active' : ''}`}></i>
@@ -490,40 +442,18 @@ function RestaurantDetailPage() {
           <h2>Thông tin tóm tắt</h2>
           <div className="summary-card">
             <p><i className="fas fa-map-marker-alt"></i> Địa chỉ: {restaurant.address || 'Chưa cập nhật'}</p>
-            <p><i className="fas fa-utensils"></i> Loại hình: {restaurant.cuisine || 'Chưa cập nhật'}</p>
+            <p><i className="fas fa-utensils"></i> Loại hình: {restaurant.cuisineType || 'Chưa cập nhật'}</p>
             <p><i className="fas fa-money-bill-wave"></i> Giá: {restaurant.priceRange || 'Chưa cập nhật'}</p>
-            <p><i className="fas fa-clock"></i> Giờ mở cửa: {restaurant.openTime || 'Chưa cập nhật'} - {restaurant.closeTime || 'Chưa cập nhật'}</p>
+            <p><i className="fas fa-clock"></i> Giờ mở cửa: {restaurant.openingTime || 'Chưa cập nhật'} - {restaurant.closingTime || 'Chưa cập nhật'}</p>
+            <p><i className="fas fa-phone"></i> Điện thoại: {restaurant.phone || 'Chưa cập nhật'}</p>
+            <p><i className="fas fa-envelope"></i> Email: {restaurant.email || 'Chưa cập nhật'}</p>
           </div>
         </section>
 
-        <section id="content-summary-section" className="content-section">
-          <h2>Tổng quan</h2>
-          <div className="content-summary-card">
-            <p><strong>Phù hợp:</strong> {restaurant.suitableFor || 'Chưa cập nhật'}</p>
-            <p><strong>Món đặc sắc:</strong> {restaurant.signatureDish || 'Chưa cập nhật'}</p>
-            <p><strong>Không gian:</strong> {restaurant.ambiance || 'Chưa cập nhật'}</p>
-            <p><strong>Chỗ để xe:</strong> {restaurant.parking || 'Chưa cập nhật'}</p>
-            <p><strong>Điểm đặc trưng:</strong> {restaurant.highlight || 'Chưa cập nhật'}</p>
-          </div>
-        </section>
-
-        <section id="rules-section" className="content-section">
-          <h2>Quy định</h2>
-          <div className="rules-card">
-            {Array.isArray(restaurant.rules) && (restaurant.rules.length > 0) ? (
-              restaurant.rules.map((rule, index) => (
-                <p key={index}>{rule}</p>
-              ))
-            ) : (
-              <p>Chưa có quy định nào được cung cấp.</p>
-            )}
-          </div>
-        </section>
-
-        <section id="parking-section" className="content-section">
-          <h2>Đỗ xe</h2>
-          <div className="parking-card">
-            <p>{restaurant.parkingDetails || 'Chưa có thông tin về chỗ để xe.'}</p>
+        <section id="description-section" className="content-section">
+          <h2>Mô tả</h2>
+          <div className="description-card">
+            <p>{restaurant.description || 'Chưa có thông tin mô tả.'}</p>
           </div>
         </section>
 
@@ -581,103 +511,131 @@ function RestaurantDetailPage() {
           </div>
         </section>
 
-        <section id="details-section" className="content-section">
-          <h2>{restaurant.name} - {restaurant.address}</h2>
-          <div className="details-card">
-            <p>{restaurant.introduction || 'Chưa có thông tin giới thiệu.'}</p>
-            {(restaurant.detailImages || []).map((img, index) => (
-              <img
+        <section id="images-section" className="content-section">
+          <h2>Hình ảnh</h2>
+          <div className="image-grid">
+            {visibleImages.map((img, index) => (
+              <div
                 key={index}
-                src={img}
-                alt={`${restaurant.name} - Hình minh họa ${index + 1}`}
-                className="detail-image"
-                onClick={() => handleImageClick(index, 'details')}
-              />
+                className="image-item"
+                onClick={() => handleImageClick(index, 'images')}
+              >
+                <img 
+                  src={getImageUrl(img)} 
+                  alt={`${restaurant.name} - Ảnh ${index + 1}`} 
+                  className="grid-image"
+                  onError={(e) => { e.target.src = '/placeholder-image.jpg'; }}
+                />
+              </div>
             ))}
+            {remainingImagesCount > 0 && (
+              <div className="image-item remaining" onClick={() => handleImageClick(0, 'images')}>
+                <div className="remaining-count">+{remainingImagesCount}</div>
+                <img 
+                  src={getImageUrl(images[8])} 
+                  alt={`${restaurant.name} - Ảnh bổ sung`} 
+                  className="grid-image" 
+                />
+              </div>
+            )}
           </div>
         </section>
 
-        {showReservationForm && (
-          <section id="booking-section" className="content-section fixed-booking">
-            <div className="booking-header">
-              <h2>Đặt chỗ (Để có chỗ trước khi đến)</h2>
-              <button className="close-reservation-btn" onClick={() => setShowReservationForm(false)}>
-                <i className="fas fa-times"></i>
+        {selectedImage && restaurant.images && restaurant.images.length > 0 && (
+          <>
+            <div className="modal-overlay" onClick={closeImageModal}></div>
+            <div className="modal image-modal">
+              <button className="modal-prev" onClick={prevImage}>
+                <i className="fas fa-chevron-left"></i>
+              </button>
+              <div className="modal-content">
+                <img
+                  src={getImageUrl(restaurant.images[currentModalImageIndex])}
+                  alt="Hình ảnh"
+                  className="modal-image"
+                  onError={(e) => { e.target.src = '/placeholder-image.jpg'; }}
+                />
+                <button className="close-modal" onClick={closeImageModal}>×</button>
+              </div>
+              <button className="modal-next" onClick={nextImage}>
+                <i className="fas fa-chevron-right"></i>
               </button>
             </div>
-            <div className="booking-card">
-              <p className="reservation-subtitle">Đặt bàn giữ chỗ</p>
-              
-              <div className="form-row">
-                <div className="form-group-half">
-                  <label><i className="fas fa-user"></i> Người lớn:</label>
-                  <select
-                    name="guests"
-                    value={formData.guests}
-                    onChange={handleFormChange}
-                  >
-                    {[...Array(10).keys()].map(num => (
-                      <option key={num} value={num + 1}>{num + 1}</option>
-                    ))}
-                  </select>
-                </div>
-                
-                <div className="form-group-half">
-                  <label><i className="fas fa-child"></i> Trẻ em:</label>
-                  <select
-                    name="children"
-                    value={formData.children}
-                    onChange={handleFormChange}
-                  >
-                    {[...Array(11).keys()].map(num => (
-                      <option key={num} value={num}>{num}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              
-              <div className="form-group-time">
-                <div className="time-label">
-                  <i className="fas fa-clock"></i> Thời gian đến
-                </div>
-              </div>
-              
-              <div className="form-row">
-                <div className="form-group-half">
-                  <input
-                    type="date"
-                    name="date"
-                    value={formData.date}
-                    onChange={handleFormChange}
-                    min={new Date().toISOString().split('T')[0]}
-                  />
-                </div>
-                
-                <div className="form-group-half">
-                  <select
-                    name="time"
-                    value={formData.time}
-                    onChange={handleFormChange}
-                  >
-                    {availableTimes.length > 0 ? (
-                      availableTimes.map((time, index) => (
-                        <option key={index} value={time}>
-                          {time}
-                        </option>
-                      ))
-                    ) : (
-                      <option value="">Không có khung giờ khả dụng</option>
-                    )}
-                  </select>
-                </div>
-              </div>
-              
-              <button className="btn-reserve-now" onClick={handleBookNow} disabled={!formData.time}>
-                Đặt chỗ ngay
-              </button>
-            </div>
-          </section>
+          </>
         )}
+
+        <section id="booking-section" className="content-section">
+          <h2>Đặt bàn</h2>
+          <div className="booking-card">
+            <div className="form-row">
+              <div className="form-group-half">
+                <label><i className="fas fa-user"></i> Người lớn:</label>
+                <select
+                  name="guests"
+                  value={formData.guests}
+                  onChange={handleFormChange}
+                >
+                  {[...Array(10).keys()].map(num => (
+                    <option key={num} value={num + 1}>{num + 1}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <div className="form-group-half">
+                <label><i className="fas fa-child"></i> Trẻ em:</label>
+                <select
+                  name="children"
+                  value={formData.children}
+                  onChange={handleFormChange}
+                >
+                  {[...Array(11).keys()].map(num => (
+                    <option key={num} value={num}>{num}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            
+            <div className="form-row">
+              <div className="form-group-half">
+                <label><i className="fas fa-calendar"></i> Ngày:</label>
+                <input
+                  type="date"
+                  name="date"
+                  value={formData.date}
+                  onChange={handleFormChange}
+                  min={new Date().toISOString().split('T')[0]}
+                />
+              </div>
+              
+              <div className="form-group-half">
+                <label><i className="fas fa-clock"></i> Giờ:</label>
+                <select
+                  name="time"
+                  value={formData.time}
+                  onChange={handleFormChange}
+                >
+                  {availableTimes.length > 0 ? (
+                    availableTimes.map((time, index) => (
+                      <option key={index} value={time}>
+                        {time}
+                      </option>
+                    ))
+                  ) : (
+                    <option value="">Không có khung giờ khả dụng</option>
+                  )}
+                </select>
+              </div>
+            </div>
+            
+            <button 
+              className="btn-reserve-now" 
+              onClick={handleBookNow} 
+              disabled={!formData.time}
+            >
+              Đặt chỗ ngay
+            </button>
+          </div>
+        </section>
 
         <section id="promotions-section" className="content-section">
           <h2>Ưu đãi</h2>
@@ -725,81 +683,6 @@ function RestaurantDetailPage() {
                   </button>
                 </div>
               </div>
-            </div>
-          </>
-        )}
-
-        <section id="menu-section" className="content-section">
-          <h2>Thực đơn</h2>
-          <div className="menu-carousel">
-            {(restaurant.menu || []).map((item, index) => (
-              <div
-                className="menu-item"
-                key={index}
-                onClick={() => handleImageClick(index, 'menu')}
-              >
-                <img src={item.image} alt={`${restaurant.name} - Thực đơn ${index + 1}`} className="menu-image" />
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section id="images-section" className="content-section">
-          <h2>Hình ảnh</h2>
-          <div className="image-grid">
-            {visibleImages.map((img, index) => {
-              const imageSrc = getImageUrl(img);
-              return (
-                <div
-                  key={index}
-                  className="image-item"
-                  onClick={() => handleImageClick(index, 'images')}
-                >
-                  <img 
-                    src={imageSrc} 
-                    alt={`${restaurant.name} - Ảnh ${index + 1}`} 
-                    className="grid-image" 
-                  />
-                </div>
-              );
-            })}
-            {remainingImagesCount > 0 && (
-              <div className="image-item remaining" onClick={() => handleImageClick(0, 'images')}>
-                <div className="remaining-count">+{remainingImagesCount}</div>
-                <img 
-                  src={getImageUrl(images[8])} 
-                  alt={`${restaurant.name} - Ảnh bổ sung`} 
-                  className="grid-image" 
-                />
-              </div>
-            )}
-          </div>
-        </section>
-
-        {selectedImage && (
-          <>
-            <div className="modal-overlay" onClick={closeImageModal}></div>
-            <div className="modal image-modal">
-              <button className="modal-prev" onClick={prevImage}>
-                <i className="fas fa-chevron-left"></i>
-              </button>
-              <div className="modal-content">
-                <img
-                  src={
-                    selectedImageSource === 'menu'
-                      ? menuImages[currentModalImageIndex]
-                      : selectedImageSource === 'details'
-                      ? detailImages[currentModalImageIndex]
-                      : getImageUrl(images[currentModalImageIndex])
-                  }
-                  alt="Hình ảnh"
-                  className="modal-image"
-                />
-                <button className="close-modal" onClick={closeImageModal}>×</button>
-              </div>
-              <button className="modal-next" onClick={nextImage}>
-                <i className="fas fa-chevron-right"></i>
-              </button>
             </div>
           </>
         )}
