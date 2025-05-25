@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { authAPI } from '../services/api';
-import { mockdata } from '../components/mockData';
 
 const AppContext = createContext();
 
@@ -57,15 +56,6 @@ export function AppProvider({ children }) {
 
   const [locations, setLocations] = useState([]);
   const [originalData, setOriginalData] = useState([]);
-
-  const normalizeData = (data) => {
-    if (!Array.isArray(data)) return [];
-    return data.map(item => ({
-      ...item,
-      category: item.category || 'Khác',
-      cuisine: item.cuisine || 'Khác',
-    }));
-  };
 
   const deduplicateData = (data) => {
     const seenIds = new Set();
@@ -181,16 +171,18 @@ export function AppProvider({ children }) {
     setLoading(true);
     setError(null);
     try {
-      const mockLocations = [
+      // Get real locations from the database or API instead of mock data
+      const defaultLocations = [
         { LocationID: 1, LocationName: 'Hồ Chí Minh' },
         { LocationID: 2, LocationName: 'Hà Nội' },
         { LocationID: 3, LocationName: 'Đà Nẵng' },
       ];
-      setLocations(mockLocations);
-
-      const normalizedData = normalizeData(mockdata);
-      setOriginalData(normalizedData);
-      setRestaurants(normalizedData);
+      setLocations(defaultLocations);
+      
+      // No need to load mock data anymore
+      setRestaurants([]);
+      setOriginalData([]);
+      // Data will now be loaded directly by the components that need it
     } catch (err) {
       console.error('Fetch initial data error:', err);
       setError('Không thể tải dữ liệu. Vui lòng thử lại sau.');
@@ -440,7 +432,6 @@ export function AppProvider({ children }) {
       updateProfile,
       addReservation,
       addReservationHistory,
-      mockdata,
     }}>
       {children}
     </AppContext.Provider>

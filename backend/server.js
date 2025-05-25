@@ -16,21 +16,24 @@ const passport = require('./config/passport');
 const authRoutes = require('./routes/auth');
 const promotionRoutes = require('./routes/promotion');
 const tableRoutes = require('./routes/table');
-const reviewRoutes = require('./routes/review');
 const paymentRoutes = require('./routes/payment');
 const { sequelize } = require('./models');
 
 // Đọc biến môi trường từ file .env
 dotenv.config();
 
-// Tạo thư mục uploads nếu chưa tồn tại
+// Create uploads directory if it doesn't exist
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-// Serve static files from uploads directory
-app.use('/uploads', express.static(uploadsDir));
+// Serve static files from uploads directory with proper CORS headers
+app.use('/uploads', (req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  next();
+}, express.static(uploadsDir));
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dinerchillsecretkey';
 
@@ -749,8 +752,69 @@ app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/promotion', promotionRoutes);
 app.use('/api/table', tableRoutes);
-app.use('/api/review', reviewRoutes);
 app.use('/api/payment', paymentRoutes);
+
+// Add restaurant routes
+const restaurantRoutes = require('./routes/restaurant');
+app.use('/api/restaurants', restaurantRoutes);
+
+// Explicitly disable review functionality
+app.post('/api/restaurants/:id/reviews', (req, res) => {
+  res.status(404).json({ message: 'Review functionality has been removed' });
+});
+
+app.get('/api/restaurants/:id/reviews', (req, res) => {
+  res.status(404).json({ message: 'Review functionality has been removed' });
+});
+
+// Add this route after the existing restaurant routes
+app.get('/api/restaurants/:id/images', async (req, res) => {
+  try {
+    const restaurantId = parseInt(req.params.id);
+    const { RestaurantImage } = require('./models');
+    
+    // Find all images for the restaurant
+    const images = await RestaurantImage.findAll({
+      where: { restaurant_id: restaurantId }
+    });
+    
+    if (!images || images.length === 0) {
+      return res.status(404).json({ message: 'Không tìm thấy hình ảnh cho nhà hàng này' });
+    }
+    
+    res.json(images);
+  } catch (err) {
+    console.error('Error fetching restaurant images:', err);
+    res.status(500).json({ message: 'Đã xảy ra lỗi server khi lấy hình ảnh nhà hàng' });
+  }
+});
+
+// Add this route to get a single restaurant with all its images
+app.get('/api/restaurants/:id', async (req, res) => {
+  try {
+    const restaurantId = parseInt(req.params.id);
+    const { Restaurant, RestaurantImage } = require('./models');
+    
+    // Find restaurant with its images
+    const restaurant = await Restaurant.findByPk(restaurantId, {
+      include: [
+        {
+          model: RestaurantImage,
+          as: 'images'
+        }
+      ]
+    });
+    
+    if (!restaurant) {
+      return res.status(404).json({ message: `Không thể tìm thấy nhà hàng với ID: ${restaurantId}` });
+    }
+    
+    res.json(restaurant);
+  } catch (err) {
+    console.error('Error fetching restaurant details:', err);
+    res.status(500).json({ message: 'Đã xảy ra lỗi server khi lấy thông tin nhà hàng' });
+  }
+});
 
 // Hàm khởi động server với port cụ thể
 const startServer = (port) => {

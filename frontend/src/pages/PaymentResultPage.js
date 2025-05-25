@@ -7,6 +7,7 @@ const PaymentResultPage = () => {
   const [loading, setLoading] = useState(true);
   const [paymentStatus, setPaymentStatus] = useState(null);
   const [error, setError] = useState(null);
+  const [isCancelled, setIsCancelled] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -16,6 +17,15 @@ const PaymentResultPage = () => {
         // Get orderCode from URL parameters
         const urlParams = new URLSearchParams(location.search);
         const orderCode = urlParams.get('orderCode');
+        const cancelled = urlParams.get('cancelled');
+        const status = urlParams.get('status');
+        
+        // Check if payment was cancelled
+        if (cancelled === 'true' || status === 'CANCELLED') {
+          setIsCancelled(true);
+          setLoading(false);
+          return;
+        }
         
         if (!orderCode) {
           setError('Không tìm thấy mã đơn hàng');
@@ -45,10 +55,27 @@ const PaymentResultPage = () => {
   const handleBackToHome = () => {
     navigate('/');
   };
+
+  const handleBackToRestaurants = () => {
+    navigate('/');
+  };
   
   const renderPaymentResult = () => {
     if (loading) {
       return <div className="loading-spinner">Đang tải thông tin thanh toán...</div>;
+    }
+
+    if (isCancelled) {
+      return (
+        <div className="payment-cancelled">
+          <i className="fas fa-times-circle"></i>
+          <h2>Thanh Toán Đã Bị Hủy</h2>
+          <p>Đặt bàn của bạn đã được hủy. Bạn có thể quay lại danh sách nhà hàng để đặt lại.</p>
+          <button onClick={handleBackToRestaurants} className="back-button">
+            Quay Lại Danh Sách Nhà Hàng
+          </button>
+        </div>
+      );
     }
     
     if (error) {

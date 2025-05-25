@@ -19,11 +19,25 @@ async function fetchAPI(endpoint, options = {}) {
   };
   
   try {
+    console.log(`Gọi API: ${url}`);
     const response = await fetch(url, config);
     
     if (!response.ok) {
-      const error = await response.json();
-      return Promise.reject(error);
+      console.error(`Lỗi API ${endpoint}:`, response.status, response.statusText);
+      return Promise.reject({ 
+        message: `Lỗi ${response.status}: ${response.statusText}`,
+        status: response.status
+      });
+    }
+    
+    // Check if response is JSON
+    const contentType = response.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+      console.error(`Lỗi API ${endpoint}: Response không phải JSON`, contentType);
+      return Promise.reject({ 
+        message: "Response không phải định dạng JSON",
+        status: response.status
+      });
     }
     
     return await response.json();
@@ -115,20 +129,6 @@ export const authAPI = {
     method: 'POST',
     body: JSON.stringify({ tokenId })
   }),
-};
-
-// API của nhà hàng
-export const restaurantAPI = {
-  getAll: () => fetchAPI('/restaurants'),
-  
-  getById: (id) => fetchAPI(`/restaurants/${id}`),
-  
-  getReviews: (id) => fetchAPI(`/restaurants/${id}/reviews`),
-  
-  addReview: (id, reviewData) => fetchAPI(`/restaurants/${id}/reviews`, {
-    method: 'POST',
-    body: JSON.stringify(reviewData)
-  })
 };
 
 // API đặt bàn
@@ -236,6 +236,149 @@ export async function fetchWithAuth(endpoint, options = {}, retryCount = 2) {
     throw error;
   }
 }
+
+// API nhà hàng công khai
+export const restaurantsAPI = {
+  getAll: async () => {
+    try {
+      // Try different possible API endpoints
+      const endpoints = [
+        '/restaurants',           // Standard REST endpoint 
+        '/restaurant',            // Singular form
+        '/dinerchill-restaurants' // With app prefix
+      ];
+
+      // Try each endpoint until one works
+      for (const endpoint of endpoints) {
+        try {
+          console.log(`Thử kết nối API endpoint: ${endpoint}`);
+          const response = await fetchAPI(endpoint);
+          console.log(`Endpoint ${endpoint} hoạt động!`);
+          return response;
+        } catch (err) {
+          console.log(`Endpoint ${endpoint} không hoạt động:`, err.message || err);
+        }
+      }
+
+      // If reaching here, none of the endpoints worked
+      console.error('Tất cả các endpoints đều thất bại');
+      
+      // Try to get from admin API as last resort
+      try {
+        console.log('Thử lấy dữ liệu từ API admin');
+        const response = await fetchWithAuth('/admin/restaurants');
+        return response;
+      } catch (adminErr) {
+        console.error('API admin cũng thất bại:', adminErr);
+        throw new Error('Không thể kết nối với API');
+      }
+    } catch (error) {
+      console.error('Lỗi khi lấy danh sách nhà hàng:', error);
+      throw error;
+    }
+  },
+  
+  getById: async (id) => {
+    try {
+      if (!id) {
+        throw new Error("ID nhà hàng không hợp lệ");
+      }
+      
+      console.log(`Đang tìm nhà hàng với ID: ${id}`);
+      
+      // Simplify endpoint list to focus on most likely working endpoints
+      const endpoints = [
+        `/restaurants/${id}`,
+        `/admin/restaurants/${id}`
+      ];
+
+      // Try each endpoint until one works
+      for (const endpoint of endpoints) {
+        try {
+          console.log(`Thử kết nối API endpoint: ${endpoint}`);
+          const response = await fetchAPI(endpoint);
+          if (response) {
+            console.log(`Endpoint ${endpoint} hoạt động! Đã tìm thấy nhà hàng ID ${id}`);
+            
+            // If we got a response but it doesn't include images, try to fetch them separately
+            if (!response.images || response.images.length === 0) {
+              try {
+                console.log('Thử lấy thêm hình ảnh từ API');
+                const imagesResponse = await fetchAPI(`/restaurants/${id}/images`);
+                if (imagesResponse && Array.isArray(imagesResponse)) {
+                  console.log(`Đã tìm thấy ${imagesResponse.length} hình ảnh`, imagesResponse);
+                  response.images = imagesResponse;
+                }
+              } catch (imgErr) {
+                console.log('Không thể lấy thêm hình ảnh:', imgErr.message);
+              }
+            } else {
+              console.log(`Nhà hàng đã có ${response.images.length} hình ảnh`, response.images);
+            }
+            
+            // Process image paths to ensure they're properly formatted
+            if (response.images && Array.isArray(response.images)) {
+              response.images = response.images.map(img => {
+                if (typeof img === 'object' && img.image_path) {
+                  return img;
+                } else if (typeof img === 'string') {
+                  return { image_path: img };
+                }
+                return img;
+              });
+            }
+            
+            return response;
+          }
+        } catch (err) {
+          console.log(`Endpoint ${endpoint} không hoạt động:`, err.message || err);
+          // Continue to the next endpoint
+        }
+      }
+
+      // All attempts failed, throw error with detailed message
+      throw new Error(`Không thể tìm thấy nhà hàng với ID: ${id}`);
+    } catch (error) {
+      console.error(`Lỗi khi lấy thông tin nhà hàng ${id}:`, error);
+      throw error;
+    }
+  },
+  
+  getReviews: async (id) => {
+    try {
+      // Reviews functionality has been removed
+      console.log('Review functionality has been removed');
+      return [];
+    } catch (error) {
+      console.error(`Lỗi khi lấy đánh giá nhà hàng ${id}:`, error);
+      throw error;
+    }
+  },
+  
+  addReview: async (id, reviewData) => {
+    try {
+      // Reviews functionality has been removed
+      console.log('Review functionality has been removed');
+      return { success: false, message: 'Review functionality has been removed' };
+    } catch (error) {
+      console.error(`Lỗi khi thêm đánh giá cho nhà hàng ${id}:`, error);
+      throw error;
+    }
+  },
+  
+  // Use admin endpoint as fallback if needed
+  updateRestaurant: async (id, data) => {
+    try {
+      return await fetchWithAuth(`/admin/restaurants/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data)
+      });
+    } catch (error) {
+      console.error(`Lỗi khi cập nhật nhà hàng ${id}:`, error);
+      throw error;
+    }
+  }
+};
 
 // Nhóm API cho Admin
 export const adminAPI = {

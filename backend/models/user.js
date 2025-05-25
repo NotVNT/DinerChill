@@ -10,12 +10,6 @@ module.exports = (sequelize, DataTypes) => {
         as: 'reservations'
       });
       
-      // Định nghĩa quan hệ với bảng Review
-      User.hasMany(models.Review, {
-        foreignKey: 'userId',
-        as: 'reviews'
-      });
-      
       // Định nghĩa quan hệ với bảng Favorite
       User.hasMany(models.Favorite, {
         foreignKey: 'userId',

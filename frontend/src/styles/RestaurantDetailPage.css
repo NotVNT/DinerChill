@@ -346,16 +346,91 @@
   background: #d9363e;
 }
 
-/* Modal for Promotions and Images */
+/* Tab Menu Styles */
+.tabs-container {
+  width: 100%;
+  margin-bottom: 20px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.tabs-menu {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  background: #fff;
+  border-bottom: 1px solid #eaeaea;
+  padding: 0;
+  scrollbar-width: none; /* For Firefox */
+}
+
+.tabs-menu::-webkit-scrollbar {
+  display: none; /* For Chrome, Safari, and Opera */
+}
+
+.tab-button {
+  padding: 15px 25px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 500;
+  color: #666;
+  white-space: nowrap;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.tab-button:hover {
+  color: #e71a0f;
+}
+
+.tab-button.active {
+  color: #e71a0f;
+  font-weight: 600;
+}
+
+.tab-button.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background-color: #e71a0f;
+  border-radius: 3px 3px 0 0;
+}
+
+@media (max-width: 768px) {
+  .tabs-menu {
+    padding: 0 10px;
+  }
+  
+  .tab-button {
+    padding: 12px 15px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .tab-button {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+}
+
+/* Modal and overlay styles - updated for tab system */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.85);
+  background-color: rgba(0, 0, 0, 0.7);
   z-index: 1000;
-  animation: fadeIn 0.3s ease-in-out;
+  animation: fadeIn 0.3s ease;
 }
 
 @keyframes fadeIn {
@@ -368,21 +443,24 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: #fff;
-  padding: 25px;
-  border-radius: 12px;
-  max-width: 500px;
-  width: 90%;
+  background-color: white;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 5px 30px rgba(0, 0, 0, 0.3);
   z-index: 1001;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  max-width: 90%;
+  width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 .image-modal {
-  max-width: 90vw; /* Giới hạn chiều rộng tối đa */
-  max-height: 90vh; /* Giới hạn chiều cao tối đa */
-  background: none; /* Loại bỏ nền modal */
-  border: none; /* Loại bỏ viền */
-  padding: 0; /* Loại bỏ padding thừa */
+  padding: 0;
+  background-color: transparent;
+  box-shadow: none;
+  width: auto;
+  max-width: 95%;
+  height: auto;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -390,9 +468,7 @@
 
 .modal-content {
   position: relative;
-  background: none; /* Loại bỏ nền của modal-content */
-  border: none; /* Loại bỏ viền */
-  padding: 0; /* Loại bỏ padding */
+  width: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -441,10 +517,10 @@
 
 .modal-image {
   max-width: 100%;
-  max-height: 80vh; /* Giới hạn chiều cao ảnh */
-  object-fit: contain; /* Giữ tỷ lệ ảnh, không biến dạng */
-  border-radius: 8px;
-  transition: opacity 0.3s ease; /* Hiệu ứng mờ khi chuyển ảnh */
+  max-height: 80vh;
+  object-fit: contain;
+  border-radius: 5px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
 }
 
 .modal-prev,
@@ -576,11 +652,39 @@
   color: #555;
 }
 
-/* Reviews Section */
+/* Reviews Section - Updated layout */
+.reviews-container {
+  display: flex;
+  flex-direction: row;
+  gap: 25px;
+}
+
+.reviews-list-container {
+  flex: 1;
+  max-width: 60%;
+}
+
+.review-form-container {
+  flex: 1;
+  max-width: 40%;
+}
+
 .reviews-list {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  max-height: 600px;
+  overflow-y: auto;
+  padding-right: 15px;
+}
+
+.no-reviews {
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  text-align: center;
+  color: #666;
+  font-style: italic;
 }
 
 .review-card {
@@ -594,7 +698,8 @@
 .review-header {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 8px;
+  align-items: center;
+  margin-bottom: 10px;
 }
 
 .review-header span {
@@ -602,8 +707,40 @@
   color: #2d2d2d;
 }
 
-.review-rating {
-  color: #ff4d4f;
+/* Star Rating styles */
+.star-rating {
+  display: flex;
+  gap: 5px;
+  color: #000000;
+}
+
+.star-rating i.filled {
+  color: #ffba08;
+}
+
+.star-rating-select {
+  display: flex;
+  gap: 8px;
+  font-size: 24px;
+  color: #000000;
+  cursor: pointer;
+}
+
+.star-rating-select i:hover,
+.star-rating-select i.filled {
+  color: #ffa41c;
+}
+
+.form-group.rating-group {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.form-group.rating-group label {
+  margin-right: 15px;
+  margin-bottom: 0;
+  min-width: 75px;
 }
 
 .review-comment {
@@ -614,10 +751,11 @@
 .review-date {
   color: #888;
   font-size: 0.9rem;
+  text-align: right;
+  margin-top: 10px;
 }
 
 .review-form {
-  margin-top: 30px;
   background: #f8f9fa;
   padding: 20px;
   border-radius: 8px;
@@ -630,18 +768,47 @@
   margin-bottom: 20px;
 }
 
-.review-form .form-group textarea {
+.btn-submit-review {
+  background-color: #ff4e30;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 15px;
+  color: #fff;
   width: 100%;
-  padding: 10px;
-  border: 1px solid #e0e0e0;
-  border-radius: 6px;
-  font-size: 1rem;
-  resize: vertical;
+  padding: 14px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 15px;
+  text-align: center;
 }
 
-.review-form .form-group textarea:focus {
-  border-color: #ff4d4f;
-  outline: none;
+.btn-submit-review:hover:not(:disabled) {
+  background: #e64a19;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(230, 74, 25, 0.2);
+}
+
+.btn-submit-review:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+/* Responsive adjustments for the review section */
+@media (max-width: 768px) {
+  .reviews-container {
+    flex-direction: column;
+  }
+  
+  .reviews-list-container,
+  .review-form-container {
+    max-width: 100%;
+  }
+  
+  .reviews-list {
+    max-height: 400px;
+    padding-right: 0;
+  }
 }
 
 /* Buttons */
@@ -1132,28 +1299,39 @@
 
 /* Error container */
 .error-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 20px;
-  background-color: #fff0f0;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  max-width: 600px;
-  margin: 100px auto;
   text-align: center;
+  padding: 3rem 1rem;
+  max-width: 600px;
+  margin: 2rem auto;
+  background-color: #fff3f3;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-.error-container .error-message {
-  color: #e31837;
-  font-size: 18px;
+.error-message {
+  color: #e53935;
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
   font-weight: 500;
-  margin-bottom: 20px;
 }
 
-.error-container .btn {
-  margin-top: 10px;
+.error-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.error-help {
+  color: #666;
+  font-size: 0.9rem;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #eee;
+}
+
+.error-help p {
+  margin: 0.5rem 0;
 }
 
 /* Booking Section */
@@ -1178,7 +1356,7 @@
 }
 
 .form-group i {
-  color: #e71a0f;
+  color:rgb(0, 0, 0);
   font-size: 20px;
 }
 
@@ -1233,4 +1411,137 @@
   top: 50%;
   transform: translateY(-50%);
   cursor: pointer;
+}
+
+.review-form .form-group textarea {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 1rem;
+  resize: vertical;
+  min-height: 100px;
+  background-color: #f9f9f9;
+}
+
+.review-form .form-group textarea:focus {
+  border-color: #ff5722;
+  box-shadow: 0 0 0 2px rgba(255, 87, 34, 0.1);
+  outline: none;
+  background-color: #fff;
+}
+
+/* Image upload styling */
+.form-group.image-upload-group {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+}
+
+.remove-image-btn {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: white;
+  border: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+/* Image upload in review form */
+.file-input-container {
+  position: relative;
+  margin-top: 8px;
+  display: inline-block;
+}
+
+.file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.file-input-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  background-color: #f5f5f5;
+  color: #333;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 22px;
+  width: 42px;
+  height: 42px;
+  transition: all 0.2s ease;
+}
+
+.file-input-label i {
+  color: #777;
+}
+
+.file-input-label:hover {
+  background-color: #eee;
+  border-color: #ccc;
+}
+
+.image-preview-container {
+  position: relative;
+  margin-top: 15px;
+  width: 120px;
+  height: 120px;
+  border-radius: 5px;
+  overflow: hidden;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  display: inline-block;
+}
+
+.image-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.username-input {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 15px;
+  background-color: #f9f9f9;
+}
+
+/* Images in reviews */
+.review-image-container {
+  margin: 15px 0;
+  width: 180px;
+  height: 120px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.review-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.review-image:hover {
+  transform: scale(1.05);
 }

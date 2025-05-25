@@ -9,12 +9,6 @@ module.exports = (sequelize, DataTypes) => {
         as: 'reservations'
       });
       
-      // Định nghĩa quan hệ với bảng Review
-      Restaurant.hasMany(models.Review, {
-        foreignKey: 'restaurantId',
-        as: 'reviews'
-      });
-      
       // Định nghĩa quan hệ với bảng Category (nhiều-nhiều)
       Restaurant.belongsToMany(models.Category, {
         through: 'RestaurantCategories',
