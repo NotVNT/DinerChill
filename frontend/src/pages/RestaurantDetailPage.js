@@ -593,78 +593,101 @@ function RestaurantDetailPage() {
           </>
         )}
 
-        <section id="booking-section" className="content-section">
-          <h2>Đặt bàn</h2>
-          <div className="booking-card">
-            <div className="form-row">
-              <div className="form-group-half">
-                <label><i className="fas fa-user"></i> Người lớn:</label>
-                <select
-                  name="guests"
-                  value={formData.guests}
-                  onChange={handleFormChange}
-                >
-                  {[...Array(10).keys()].map(num => (
-                    <option key={num} value={num + 1}>{num + 1}</option>
-                  ))}
-                </select>
-              </div>
-              
-              <div className="form-group-half">
-                <label><i className="fas fa-child"></i> Trẻ em:</label>
-                <select
-                  name="children"
-                  value={formData.children}
-                  onChange={handleFormChange}
-                >
-                  {[...Array(11).keys()].map(num => (
-                    <option key={num} value={num}>{num}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            
-            <div className="form-row">
-              <div className="form-group-half">
-                <label><i className="fas fa-calendar"></i> Ngày:</label>
-                <input
-                  type="date"
-                  name="date"
-                  value={formData.date}
-                  onChange={handleFormChange}
-                  min={new Date().toISOString().split('T')[0]}
-                />
-              </div>
-              
-              <div className="form-group-half">
-                <label><i className="fas fa-clock"></i> Giờ:</label>
-                <select
-                  name="time"
-                  value={formData.time}
-                  onChange={handleFormChange}
-                >
-                  {availableTimes.length > 0 ? (
-                    availableTimes.map((time, index) => (
-                      <option key={index} value={time}>
-                        {time}
-                      </option>
-                    ))
-                  ) : (
-                    <option value="">Không có khung giờ khả dụng</option>
-                  )}
-                </select>
-              </div>
-            </div>
-            
-            <button 
-              className="btn-reserve-now" 
-              onClick={handleBookNow} 
-              disabled={!formData.time}
-            >
-              Đặt chỗ ngay
+        <section id="map-section" className="content-section">
+          <h2>Chỉ đường</h2>
+          <div className="map-card">
+            <p>Địa chỉ: {restaurant.address || 'Không có thông tin'}</p>
+            <button className="btn btn-book-now" onClick={handleOpenGoogleMaps}>
+              Xem trên Google Maps
             </button>
           </div>
         </section>
+
+        {showReservationForm && (
+          <section id="booking-section" className="content-section fixed-booking">
+            <div className="booking-header">
+              <h2>Đặt chỗ (Để có chỗ trước khi đến)</h2>
+              <button className="close-reservation-btn" onClick={() => setShowReservationForm(false)}>
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+            <div className="booking-card">
+              <p className="reservation-subtitle">Đặt bàn giữ chỗ</p>
+              
+              <div className="form-row">
+                <div className="form-group-half">
+                  <label><i className="fas fa-user"></i> Người lớn:</label>
+                  <select
+                    name="guests"
+                    value={formData.guests}
+                    onChange={handleFormChange}
+                  >
+                    {[...Array(10).keys()].map(num => (
+                      <option key={num} value={num + 1}>{num + 1}</option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div className="form-group-half">
+                  <label><i className="fas fa-child"></i> Trẻ em:</label>
+                  <select
+                    name="children"
+                    value={formData.children}
+                    onChange={handleFormChange}
+                  >
+                    {[...Array(11).keys()].map(num => (
+                      <option key={num} value={num}>{num}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              
+              <div className="form-group-time">
+                <div className="time-label">
+                  <i className="fas fa-clock"></i> Thời gian đến
+                </div>
+              </div>
+              
+              <div className="form-row">
+                <div className="form-group-half">
+                  <input
+                    type="date"
+                    name="date"
+                    value={formData.date}
+                    onChange={handleFormChange}
+                    min={new Date().toISOString().split('T')[0]}
+                  />
+                </div>
+                
+                <div className="form-group-half">
+                  <select
+                    name="time"
+                    value={formData.time}
+                    onChange={handleFormChange}
+                  >
+                    {availableTimes.length > 0 ? (
+                      availableTimes.map((time, index) => (
+                        <option key={index} value={time}>
+                          {time}
+                        </option>
+                      ))
+                    ) : (
+                      <option value="">Không có khung giờ khả dụng</option>
+                    )}
+                  </select>
+                </div>
+              </div>
+              
+              <button 
+                className="btn-reserve-now" 
+                onClick={handleBookNow} 
+                disabled={!formData.time}
+              >
+                Đặt chỗ ngay
+              </button>
+            </div>
+          </section>
+        )}
 
         <section id="promotions-section" className="content-section">
           <h2>Ưu đãi</h2>
@@ -715,16 +738,6 @@ function RestaurantDetailPage() {
             </div>
           </>
         )}
-
-        <section id="map-section" className="content-section">
-          <h2>Chỉ đường</h2>
-          <div className="map-card">
-            <p>Địa chỉ: {restaurant.address || 'Không có thông tin'}</p>
-            <button className="btn btn-book-now" onClick={handleOpenGoogleMaps}>
-              Xem trên Google Maps
-            </button>
-          </div>
-        </section>
 
         <section id="reviews-section" className="content-section">
           <h2>Đánh giá</h2>
