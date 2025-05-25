@@ -289,14 +289,6 @@ function ReservationPage() {
         notes: formData.specialRequests
       };
 
-      // For tracking in the UI
-      const uiReservationData = {
-        ...reservationData,
-        restaurantName: selectedRestaurant?.name,
-        restaurantAddress: selectedRestaurant?.address,
-        discountApplied: discount,
-        finalDeposit: depositAmount,
-      };
 
       // Add reservation through API
       const response = await addReservation(reservationData);

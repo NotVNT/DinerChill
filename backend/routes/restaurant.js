@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const { models } = require('../models');
-const authMiddleware = require('../middleware/auth');
+const db = require('../models');
+const { authenticate } = require('../middleware/auth');
 const fs = require('fs');
 const multer = require('multer');
 const path = require('path');
@@ -38,10 +38,10 @@ const upload = multer({
 // Get all restaurants
 router.get('/', async (req, res) => {
   try {
-    const restaurants = await models.Restaurant.findAll({
+    const restaurants = await db.Restaurant.findAll({
       include: [
         {
-          model: models.RestaurantImage, 
+          model: db.RestaurantImage, 
           as: 'images',
         }
       ]
@@ -68,10 +68,10 @@ router.get('/', async (req, res) => {
 // Get a specific restaurant
 router.get('/:id', async (req, res) => {
   try {
-    const restaurant = await models.Restaurant.findByPk(req.params.id, {
+    const restaurant = await db.Restaurant.findByPk(req.params.id, {
       include: [
         {
-          model: models.RestaurantImage, 
+          model: db.RestaurantImage, 
           as: 'images',
         }
       ]
@@ -98,7 +98,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // Create a new restaurant with image upload
-router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
+router.post('/', authenticate, upload.single('image'), async (req, res) => {
   try {
     const { name, cuisine_type, address, description } = req.body;
     
@@ -108,7 +108,7 @@ router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
     }
 
     // Create the restaurant
-    const restaurant = await models.Restaurant.create({
+    const restaurant = await db.Restaurant.create({
       name,
       cuisine_type,
       address,
@@ -121,7 +121,7 @@ router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
       try {
         const imagePath = normalizeFilePath(req.file.path);
         // Store image information in restaurant_image table
-        await models.RestaurantImage.create({
+        await db.RestaurantImage.create({
           restaurant_id: restaurant.id,
           image_path: imagePath
         });
@@ -139,10 +139,10 @@ router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
 });
 
 // Update restaurant
-router.put('/:id', authMiddleware, upload.single('image'), async (req, res) => {
+router.put('/:id', authenticate, upload.single('image'), async (req, res) => {
   try {
     const { name, cuisine_type, address, description } = req.body;
-    const restaurant = await models.Restaurant.findByPk(req.params.id);
+    const restaurant = await db.Restaurant.findByPk(req.params.id);
     
     if (!restaurant) {
       return res.status(404).json({ message: 'Restaurant not found' });
@@ -152,7 +152,7 @@ router.put('/:id', authMiddleware, upload.single('image'), async (req, res) => {
     if (req.file) {
       try {
         // Find existing restaurant image
-        const existingImage = await models.RestaurantImage.findOne({
+        const existingImage = await db.RestaurantImage.findOne({
           where: { restaurant_id: restaurant.id }
         });
 
@@ -169,7 +169,7 @@ router.put('/:id', authMiddleware, upload.single('image'), async (req, res) => {
           });
         } else {
           // Create a new image record
-          await models.RestaurantImage.create({
+          await db.RestaurantImage.create({
             restaurant_id: restaurant.id,
             image_path: normalizeFilePath(req.file.path)
           });
@@ -195,16 +195,16 @@ router.put('/:id', authMiddleware, upload.single('image'), async (req, res) => {
 });
 
 // Delete restaurant
-router.delete('/:id', authMiddleware, async (req, res) => {
+router.delete('/:id', authenticate, async (req, res) => {
   try {
-    const restaurant = await models.Restaurant.findByPk(req.params.id);
+    const restaurant = await db.Restaurant.findByPk(req.params.id);
     
     if (!restaurant) {
       return res.status(404).json({ message: 'Restaurant not found' });
     }
 
     // Find and delete associated image
-    const image = await models.RestaurantImage.findOne({
+    const image = await db.RestaurantImage.findOne({
       where: { restaurant_id: restaurant.id }
     });
 

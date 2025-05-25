@@ -292,32 +292,13 @@ function RestaurantDetailPage() {
 
   const handleSubmitReview = async (e) => {
     e.preventDefault();
-    if (userName && reviewForm.rating && reviewForm.comment) {
-      const newReview = {
-        username: userName,
-        rating: reviewForm.rating,
-        comment: reviewForm.comment,
-        date: new Date().toISOString().split('T')[0],
-      };
-      
-      try {
-        const updatedReviews = [...(restaurant.reviews || []), newReview];
-        await restaurantsAPI.updateRestaurant(id, { ...restaurant, reviews: updatedReviews });
-        setRestaurant((prev) => ({
-          ...prev,
-          reviews: updatedReviews,
-        }));
-        setReviewForm({ rating: 0, comment: '' });
-        setNotification('Đánh giá của bạn đã được gửi!');
-        setTimeout(() => setNotification(null), 2000);
-      } catch (err) {
-        setNotification('Có lỗi khi gửi đánh giá. Vui lòng thử lại.');
-        console.error('Lỗi khi gửi đánh giá:', err);
-        setTimeout(() => setNotification(null), 2000);
-      }
-    } else {
-      setNotification('Vui lòng điền đầy đủ thông tin đánh giá.');
-      setTimeout(() => setNotification(null), 2000);
+    try {
+      alert('Tính năng đánh giá đã bị vô hiệu hóa');
+      // Reset form
+      setReviewForm({ rating: 0, comment: '' });
+    } catch (error) {
+      console.error('Error submitting review:', error);
+      alert('Có lỗi xảy ra khi gửi đánh giá');
     }
   };
 
@@ -740,25 +721,13 @@ function RestaurantDetailPage() {
         )}
 
         <section id="reviews-section" className="content-section">
-          <h2>Đánh giá</h2>
+          <h2>Đánh giá từ khách hàng</h2>
           <div className="reviews-list">
-            {restaurant.reviews && restaurant.reviews.length > 0 ? (
-              restaurant.reviews.map((review, index) => (
-                <div className="review-card" key={index}>
-                  <div className="review-header">
-                    <span>{review.username}</span>
-                    <span className="review-rating">{review.rating} sao</span>
-                  </div>
-                  <p className="review-comment">{review.comment}</p>
-                  <p className="review-date">{review.date}</p>
-                </div>
-              ))
-            ) : (
-              <p>Chưa có đánh giá nào.</p>
-            )}
+            <p>Tính năng đánh giá đã bị vô hiệu hóa</p>
           </div>
+          
           <div className="review-form">
-            <h3>Để lại đánh giá</h3>
+            <h3>Gửi đánh giá của bạn</h3>
             <form onSubmit={handleSubmitReview}>
               <div className="form-group">
                 <label>Tên của bạn:</label>

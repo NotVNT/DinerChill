@@ -16,7 +16,6 @@ const passport = require('./config/passport');
 const authRoutes = require('./routes/auth');
 const promotionRoutes = require('./routes/promotion');
 const tableRoutes = require('./routes/table');
-const reviewRoutes = require('./routes/review');
 const paymentRoutes = require('./routes/payment');
 const { sequelize } = require('./models');
 
@@ -753,8 +752,20 @@ app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/promotion', promotionRoutes);
 app.use('/api/table', tableRoutes);
-app.use('/api/review', reviewRoutes);
 app.use('/api/payment', paymentRoutes);
+
+// Add restaurant routes
+const restaurantRoutes = require('./routes/restaurant');
+app.use('/api/restaurants', restaurantRoutes);
+
+// Explicitly disable review functionality
+app.post('/api/restaurants/:id/reviews', (req, res) => {
+  res.status(404).json({ message: 'Review functionality has been removed' });
+});
+
+app.get('/api/restaurants/:id/reviews', (req, res) => {
+  res.status(404).json({ message: 'Review functionality has been removed' });
+});
 
 // Add this route after the existing restaurant routes
 app.get('/api/restaurants/:id/images', async (req, res) => {

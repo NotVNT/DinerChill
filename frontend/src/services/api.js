@@ -346,27 +346,9 @@ export const restaurantsAPI = {
   
   getReviews: async (id) => {
     try {
-      // Try different possible API endpoints
-      const endpoints = [
-        `/restaurants/${id}/reviews`,
-        `/restaurant/${id}/reviews`,
-        `/dinerchill-restaurants/${id}/reviews`
-      ];
-
-      // Try each endpoint until one works
-      for (const endpoint of endpoints) {
-        try {
-          console.log(`Thử kết nối API endpoint: ${endpoint}`);
-          const response = await fetchAPI(endpoint);
-          console.log(`Endpoint ${endpoint} hoạt động!`);
-          return response;
-        } catch (err) {
-          console.log(`Endpoint ${endpoint} không hoạt động:`, err.message || err);
-        }
-      }
-
-      // If all endpoints fail
-      throw new Error(`Không thể lấy đánh giá cho nhà hàng với ID: ${id}`);
+      // Reviews functionality has been removed
+      console.log('Review functionality has been removed');
+      return [];
     } catch (error) {
       console.error(`Lỗi khi lấy đánh giá nhà hàng ${id}:`, error);
       throw error;
@@ -375,11 +357,9 @@ export const restaurantsAPI = {
   
   addReview: async (id, reviewData) => {
     try {
-      const response = await fetchWithAuth(`/restaurants/${id}/reviews`, {
-        method: 'POST',
-        body: JSON.stringify(reviewData)
-      });
-      return response;
+      // Reviews functionality has been removed
+      console.log('Review functionality has been removed');
+      return { success: false, message: 'Review functionality has been removed' };
     } catch (error) {
       console.error(`Lỗi khi thêm đánh giá cho nhà hàng ${id}:`, error);
       throw error;

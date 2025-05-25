@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Restaurant, RestaurantImage, Category, Reservation, User, Table, Promotion, Review, PaymentInformation } = require('../models');
+const { Restaurant, RestaurantImage, Category, Reservation, User, Table, Promotion, PaymentInformation } = require('../models');
 const authenticateAdmin = require('../middleware/authenticate').authenticateAdmin;
 const multer = require('multer');
 const fs = require('fs');
@@ -797,62 +797,17 @@ router.delete('/promotions/:id', authenticateAdmin, async (req, res) => {
   }
 });
 
-// Reviews routes for admin panel
-router.get('/reviews', authenticateAdmin, async (req, res) => {
-  try {
-    const reviews = await Review.findAll({
-      include: [
-        { model: User, as: 'user', attributes: ['id', 'name', 'email'] },
-        { model: Restaurant, as: 'restaurant', attributes: ['id', 'name'] }
-      ],
-      order: [['createdAt', 'DESC']]
-    });
-    res.json(reviews);
-  } catch (error) {
-    console.error('Error getting reviews:', error);
-    res.status(500).json({ message: 'Đã xảy ra lỗi khi lấy danh sách đánh giá' });
-  }
+// Reviews routes for admin panel - Removed
+router.get('/reviews', authenticateAdmin, (req, res) => {
+  res.status(404).json({ message: 'Review functionality has been removed' });
 });
 
-router.delete('/reviews/:id', authenticateAdmin, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const review = await Review.findByPk(id);
-    
-    if (!review) {
-      return res.status(404).json({ message: 'Không tìm thấy đánh giá' });
-    }
-    
-    await review.destroy();
-    res.json({ message: 'Đã xóa đánh giá thành công' });
-  } catch (error) {
-    console.error('Error deleting review:', error);
-    res.status(500).json({ message: 'Đã xảy ra lỗi khi xóa đánh giá' });
-  }
+router.delete('/reviews/:id', authenticateAdmin, (req, res) => {
+  res.status(404).json({ message: 'Review functionality has been removed' });
 });
 
-router.patch('/reviews/:id/verify', authenticateAdmin, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { isVerified } = req.body;
-    
-    const review = await Review.findByPk(id);
-    
-    if (!review) {
-      return res.status(404).json({ message: 'Không tìm thấy đánh giá' });
-    }
-    
-    review.isVerified = isVerified;
-    await review.save();
-    
-    res.json({ 
-      message: `Đánh giá đã được ${isVerified ? 'xác minh' : 'bỏ xác minh'}`,
-      review
-    });
-  } catch (error) {
-    console.error('Error updating review verification status:', error);
-    res.status(500).json({ message: 'Đã xảy ra lỗi khi cập nhật trạng thái xác minh' });
-  }
+router.patch('/reviews/:id/verify', authenticateAdmin, (req, res) => {
+  res.status(404).json({ message: 'Review functionality has been removed' });
 });
 
 // Payment Management Routes
