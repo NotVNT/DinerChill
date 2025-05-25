@@ -23,14 +23,18 @@ const { sequelize } = require('./models');
 // Đọc biến môi trường từ file .env
 dotenv.config();
 
-// Tạo thư mục uploads nếu chưa tồn tại
+// Create uploads directory if it doesn't exist
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-// Serve static files from uploads directory
-app.use('/uploads', express.static(uploadsDir));
+// Serve static files from uploads directory with proper CORS headers
+app.use('/uploads', (req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  next();
+}, express.static(uploadsDir));
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dinerchillsecretkey';
 

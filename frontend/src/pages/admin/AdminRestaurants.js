@@ -449,7 +449,10 @@ function AdminRestaurants() {
   const getImageUrl = (image) => {
     if (!image) return null;
 
-    // If it's an object with image_path
+    // Set a default API URL if not defined in environment
+    const apiBaseUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
+    // If it's an object with image_path (from RestaurantImage model)
     if (typeof image === 'object' && image.image_path) {
       const path = image.image_path;
       
@@ -460,16 +463,17 @@ function AdminRestaurants() {
       
       // Handle uploads directory paths
       if (path.includes('uploads/') || path.includes('uploads\\')) {
-        // Normalize path to use forward slashes for URLs
-        const normalizedPath = path.replace(/\\/g, '/');
-        return `${process.env.REACT_APP_API_URL}/${normalizedPath}`;
+        // Extract just the filename from the path
+        const parts = path.split(/uploads[/\\]/);
+        const fileName = parts.length > 1 ? parts[parts.length - 1] : path;
+        return `${apiBaseUrl}/uploads/${fileName}`;
       }
       
-      // If a relative path, use the API URL
-      return `${process.env.REACT_APP_API_URL}/${path}`;
+      // Default case - just append to API URL
+      return `${apiBaseUrl}/${path.replace(/^\//, '')}`;
     }
     
-    // If it's a relative path string
+    // If image is a string (direct path)
     if (typeof image === 'string') {
       // If already a full URL
       if (image.startsWith('http')) {
@@ -478,17 +482,14 @@ function AdminRestaurants() {
       
       // Handle uploads directory paths
       if (image.includes('uploads/') || image.includes('uploads\\')) {
-        // Normalize path to use forward slashes for URLs
-        const normalizedPath = image.replace(/\\/g, '/');
-        return `${process.env.REACT_APP_API_URL}/${normalizedPath}`;
+        // Extract just the filename from the path
+        const parts = image.split(/uploads[/\\]/);
+        const fileName = parts.length > 1 ? parts[parts.length - 1] : image;
+        return `${apiBaseUrl}/uploads/${fileName}`;
       }
       
-      // If a relative path, use the API URL
-      if (image.startsWith('/') || image.includes('/')) {
-        return `${process.env.REACT_APP_API_URL}/${image.replace(/^\/?/, '')}`;
-      }
-      
-      return image;
+      // Default case
+      return `${apiBaseUrl}/${image.replace(/^\//, '')}`;
     }
     
     return null;
@@ -875,7 +876,7 @@ function AdminRestaurants() {
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-pencil-square" viewBox="0 0 16 16">
                               <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
-                              <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/>
+                              <path fillRule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/>
                             </svg>
                           </button>
                           <button 

@@ -303,13 +303,29 @@ export const restaurantsAPI = {
             // If we got a response but it doesn't include images, try to fetch them separately
             if (!response.images || response.images.length === 0) {
               try {
+                console.log('Thử lấy thêm hình ảnh từ API');
                 const imagesResponse = await fetchAPI(`/restaurants/${id}/images`);
                 if (imagesResponse && Array.isArray(imagesResponse)) {
+                  console.log(`Đã tìm thấy ${imagesResponse.length} hình ảnh`, imagesResponse);
                   response.images = imagesResponse;
                 }
               } catch (imgErr) {
                 console.log('Không thể lấy thêm hình ảnh:', imgErr.message);
               }
+            } else {
+              console.log(`Nhà hàng đã có ${response.images.length} hình ảnh`, response.images);
+            }
+            
+            // Process image paths to ensure they're properly formatted
+            if (response.images && Array.isArray(response.images)) {
+              response.images = response.images.map(img => {
+                if (typeof img === 'object' && img.image_path) {
+                  return img;
+                } else if (typeof img === 'string') {
+                  return { image_path: img };
+                }
+                return img;
+              });
             }
             
             return response;

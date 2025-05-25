@@ -336,10 +336,39 @@ function RestaurantDetailPage() {
   const getImageUrl = (image) => {
     if (!image) return '';
     
+    // If it's an object with image_path property (from RestaurantImage model)
     if (typeof image === 'object' && image.image_path) {
-      return image.image_path.startsWith('http') 
-        ? image.image_path 
-        : `${process.env.REACT_APP_API_URL || ''}/${image.image_path.replace(/^\/?/, '')}`;
+      const path = image.image_path;
+      
+      // If it's a full URL already
+      if (path.startsWith('http')) {
+        return path;
+      }
+      
+      // Handle uploads directory paths
+      if (path.includes('uploads/') || path.includes('uploads\\')) {
+        // Remove any /api prefix if present
+        return `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/uploads/${path.split('uploads/').pop().split('uploads\\').pop()}`;
+      }
+      
+      // Default case - just append to API URL
+      return `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/${path.replace(/^\//, '')}`;
+    }
+    
+    // If image is a string (direct path)
+    if (typeof image === 'string') {
+      // If it's a full URL already
+      if (image.startsWith('http')) {
+        return image;
+      }
+      
+      // Handle uploads directory paths
+      if (image.includes('uploads/') || image.includes('uploads\\')) {
+        return `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/uploads/${image.split('uploads/').pop().split('uploads\\').pop()}`;
+      }
+      
+      // Default case
+      return `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/${image.replace(/^\//, '')}`;
     }
     
     return '';
