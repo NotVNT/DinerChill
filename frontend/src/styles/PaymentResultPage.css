@@ -1,27 +1,32 @@
 .payment-result-container {
   max-width: 800px;
-  margin: 0 auto;
+  margin: 40px auto;
   padding: 40px 20px;
   text-align: center;
+  background-color: #f9f9f9;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
 
 .payment-result-container h1 {
-  font-size: 2rem;
-  margin-bottom: 30px;
+  font-size: 2.2rem;
+  font-weight: 600;
+  margin-bottom: 40px;
   color: #333;
+  text-transform: uppercase;
 }
 
-.payment-result {
+.payment-result, .payment-cancelled {
   background-color: #fff;
   border-radius: 10px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  padding: 30px;
+  padding: 40px 30px;
   margin-bottom: 30px;
 }
 
-.payment-result i {
-  font-size: 4rem;
-  margin-bottom: 20px;
+.payment-result i, .payment-cancelled i {
+  font-size: 5rem;
+  margin-bottom: 25px;
   display: block;
 }
 
@@ -33,6 +38,10 @@
   color: #ffc107;
 }
 
+.payment-cancelled i {
+  color: #dc3545;
+}
+
 .payment-error i {
   color: #dc3545;
   font-size: 4rem;
@@ -40,26 +49,46 @@
   display: block;
 }
 
-.payment-result h2, .payment-error h2 {
-  font-size: 1.8rem;
-  margin-bottom: 20px;
+.payment-result h2, .payment-error h2, .payment-cancelled h2 {
+  font-size: 2rem;
+  font-weight: 600;
+  margin-bottom: 25px;
   color: #333;
+}
+
+.payment-cancelled p {
+  margin-bottom: 30px;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: #555;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .payment-details {
   text-align: left;
-  max-width: 400px;
-  margin: 0 auto;
-  margin-bottom: 30px;
-  padding: 20px;
+  max-width: 450px;
+  margin: 0 auto 30px;
+  padding: 25px;
   background-color: #f9f9f9;
   border-radius: 8px;
+  border-left: 4px solid #dc3545;
 }
 
 .payment-details p {
-  margin-bottom: 10px;
-  font-size: 1rem;
+  margin-bottom: 15px;
+  font-size: 1.1rem;
   line-height: 1.5;
+}
+
+.payment-details p:last-child {
+  margin-bottom: 0;
+}
+
+.payment-details p strong {
+  color: #333;
+  margin-right: 8px;
 }
 
 .loading-spinner {
@@ -68,17 +97,33 @@
   margin: 40px 0;
 }
 
+.payment-result, .payment-cancelled, .payment-error {
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  padding: 40px 30px;
+  margin-bottom: 30px;
+  display: flex; /* Thêm flexbox */
+  flex-direction: column; /* Sắp xếp theo cột */
+  align-items: center; /* Căn giữa theo chiều ngang */
+}
+
 .back-button {
   background-color: #dc3545;
   color: white;
   border: none;
   border-radius: 5px;
-  padding: 12px 24px;
-  font-size: 1rem;
+  padding: 14px 28px;
+  font-size: 1.1rem;
+  font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  width: fit-content; /* Đảm bảo nút chỉ rộng bằng nội dung */
 }
 
 .back-button:hover {
   background-color: #c82333;
-} 
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}

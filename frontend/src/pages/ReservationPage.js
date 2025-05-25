@@ -4,6 +4,7 @@ import { useApp } from '../context/AppContext';
 import axios from 'axios';
 import '../styles/ReservationPage.css';
 import { restaurantsAPI } from '../services/api';
+import PaymentCancelConfirmation from '../components/PaymentCancelConfirmation';
 
 function ReservationPage() {
   const { user, addReservation, addReservationHistory } = useApp();
@@ -350,6 +351,26 @@ function ReservationPage() {
       setSubmitting(false);
       setPaymentLoading(false);
     }
+  };
+
+  const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
+
+  // Handle cancel payment button click
+  const handleCancelClick = () => {
+    setShowCancelConfirmation(true);
+  };
+
+  // Handle cancel confirmation
+  const handleConfirmCancel = () => {
+    setShowCancelConfirmation(false);
+    setShowDeposit(false);
+    // Redirect to payment-result page with cancelled parameter and additional details
+    navigate('/payment-result?cancelled=true&status=CANCELLED&orderCode=00');
+  };
+
+  // Handle cancel dismissal
+  const handleDismissCancel = () => {
+    setShowCancelConfirmation(false);
   };
 
   if (loading) {
@@ -737,7 +758,7 @@ function ReservationPage() {
             <div className="deposit-actions">
               <button 
                 className="btn btn-secondary" 
-                onClick={() => setShowDeposit(false)}
+                onClick={handleCancelClick}
               >
                 Hủy
               </button>
@@ -751,6 +772,13 @@ function ReservationPage() {
             </div>
           </div>
         </>
+      )}
+
+      {showCancelConfirmation && (
+        <PaymentCancelConfirmation 
+          onConfirm={handleConfirmCancel} 
+          onCancel={handleDismissCancel}
+        />
       )}
     </div>
   );

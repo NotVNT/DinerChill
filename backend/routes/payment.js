@@ -68,8 +68,8 @@ router.post('/create', async (req, res) => {
       ],
       // Return URL after payment completion (frontend URL)
       returnUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/payment-result?orderCode=${orderCode}`,
-      // Cancel URL - use returnUrl from frontend if provided, otherwise use default
-      cancelUrl: req.body.returnUrl || `${process.env.FRONTEND_URL || 'http://localhost:3000'}/test-payment`
+      // Cancel URL - redirect to payment result page with cancelled status
+      cancelUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/payment-result?cancelled=true`
     };
 
     // Create payment link using PayOS SDK

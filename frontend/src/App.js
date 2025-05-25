@@ -33,7 +33,6 @@ import LocationPage from './components/LocationPage';
 import PromoPage from './pages/PromoPage';
 import ReservationGuidePage from './pages/ReservationGuidePage';
 import PaymentResultPage from './pages/PaymentResultPage';
-import RestaurantOwnerDashboard from './pages/RestaurantOwnerDashboard';
 import ScrollToTop from './components/ScrollToTop';
 
 // Layout cho ứng dụng (có Header và Footer)
@@ -83,12 +82,6 @@ function App() {
             <Route path="reviews" element={<AdminReviews />} />
           </Route>
 
-          {/* Restaurant Owner Dashboard Routes */}
-          <Route path="/dashboard/*" element={
-            <ProtectedRoute>
-              <RestaurantOwnerDashboard />
-            </ProtectedRoute>
-          } />
           
           {/* All other routes */}
           <Route path="/*" element={<AppLayout />}>
