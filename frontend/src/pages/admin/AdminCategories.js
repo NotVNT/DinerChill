@@ -23,7 +23,8 @@ const PageHeader = styled.div`
   }
 `;
 
-const ActionButton = styled.button`
+// Fix the marginLeft prop issue by using a CSS-in-JS approach
+const ActionButtonWrapper = styled.button`
   display: inline-flex;
   align-items: center;
   padding: 8px 16px;
@@ -40,7 +41,7 @@ const ActionButton = styled.button`
     ? '#28a745'
     : '#FF7043'};
   color: ${props => props.variant === 'warning' ? '#212529' : '#fff'};
-  margin-left: ${props => props.marginLeft ? '8px' : '0'};
+  margin-left: ${props => props.$marginLeft ? '8px' : '0'};
 
   &:hover {
     opacity: 0.9;
@@ -66,6 +67,11 @@ const ActionButton = styled.button`
   }
 `;
 
+// Create a proper React component to handle the props correctly
+function ActionButton({ children, marginLeft, ...props }) {
+  return <ActionButtonWrapper $marginLeft={marginLeft} {...props}>{children}</ActionButtonWrapper>;
+}
+
 const FormContainer = styled.div`
   background: white;
   border-radius: 8px;
@@ -83,12 +89,8 @@ const FormTitle = styled.h3`
 
 const FormGrid = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 20px;
-
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-  }
 `;
 
 const FormGroup = styled.div`
@@ -123,72 +125,6 @@ const FormGroup = styled.div`
   }
 `;
 
-const ImageUploadContainer = styled.div`
-  border: 2px dashed #ddd;
-  border-radius: 4px;
-  padding: 20px;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.2s;
-  position: relative;
-  min-height: 200px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-
-  &:hover {
-    border-color: #FF7043;
-  }
-
-  input[type="file"] {
-    display: none;
-  }
-
-  .upload-icon {
-    font-size: 40px;
-    color: #999;
-    margin-bottom: 10px;
-  }
-
-  .upload-text {
-    color: #666;
-  }
-`;
-
-const ImagePreview = styled.div`
-  position: relative;
-  width: 100%;
-  height: 200px;
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-  }
-
-  button {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: rgba(0, 0, 0, 0.5);
-    border: none;
-    border-radius: 50%;
-    width: 30px;
-    height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    cursor: pointer;
-    transition: background 0.2s;
-
-    &:hover {
-      background: rgba(0, 0, 0, 0.7);
-    }
-  }
-`;
-
 const TableContainer = styled.div`
   background: white;
   border-radius: 8px;
@@ -219,16 +155,6 @@ const Table = styled.table`
 
   tbody tr:hover {
     background-color: #f5f5f5;
-  }
-
-  .image-cell {
-    width: 100px;
-    img {
-      width: 60px;
-      height: 60px;
-      object-fit: cover;
-      border-radius: 4px;
-    }
   }
 
   .actions-cell {
@@ -278,10 +204,7 @@ function AdminCategories() {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    imageUrl: ''
   });
-  const [imageFile, setImageFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
   const [editingId, setEditingId] = useState(null);
 
   useEffect(() => {
@@ -310,32 +233,11 @@ function AdminCategories() {
     });
   };
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setImageFile(file);
-      const previewUrl = URL.createObjectURL(file);
-      setImagePreview(previewUrl);
-    }
-  };
-
-  const removeImage = () => {
-    setImageFile(null);
-    setImagePreview(null);
-    setFormData({
-      ...formData,
-      imageUrl: ''
-    });
-  };
-
   const resetForm = () => {
     setFormData({
       name: '',
       description: '',
-      imageUrl: ''
     });
-    setImageFile(null);
-    setImagePreview(null);
     setEditingId(null);
     setShowForm(false);
   };
@@ -348,12 +250,6 @@ function AdminCategories() {
       formDataToSend.append('name', formData.name);
       formDataToSend.append('description', formData.description || '');
       
-      if (imageFile) {
-        formDataToSend.append('image', imageFile);
-      } else if (formData.imageUrl) {
-        formDataToSend.append('imageUrl', formData.imageUrl);
-      }
-
       if (editingId) {
         await adminAPI.updateCategory(editingId, formDataToSend);
       } else {
@@ -374,10 +270,8 @@ function AdminCategories() {
     setFormData({
       name: category.name,
       description: category.description || '',
-      imageUrl: category.imageUrl || ''
     });
     setEditingId(category.id);
-    setImagePreview(category.imageUrl);
     setShowForm(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -457,30 +351,6 @@ function AdminCategories() {
                   />
                 </FormGroup>
               </div>
-              <div>
-                <FormGroup>
-                  <label>Hình ảnh:</label>
-                  {imagePreview ? (
-                    <ImagePreview>
-                      <img src={imagePreview} alt="Preview" />
-                      <button type="button" onClick={removeImage}>
-                        <i className="bi bi-x"></i>
-                      </button>
-                    </ImagePreview>
-                  ) : (
-                    <ImageUploadContainer onClick={() => document.getElementById('image').click()}>
-                      <i className="bi bi-image upload-icon"></i>
-                      <span className="upload-text">Click để tải lên hình ảnh</span>
-                      <input
-                        type="file"
-                        id="image"
-                        onChange={handleImageChange}
-                        accept="image/*"
-                      />
-                    </ImageUploadContainer>
-                  )}
-                </FormGroup>
-              </div>
             </FormGrid>
             <div style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
               <ActionButton 
@@ -520,9 +390,8 @@ function AdminCategories() {
           <Table>
             <thead>
               <tr>
-                <th style={{ width: '10%' }}>Tên danh mục</th>
-                <th style={{ width: '70%' }}>Mô tả</th>
-                <th style={{ width: '10%' }}>Hình ảnh</th>
+                <th style={{ width: '30%' }}>Tên danh mục</th>
+                <th style={{ width: '50%' }}>Mô tả</th>
                 <th className="actions-cell" style={{ width: '20%' }}>Thao tác</th>
               </tr>
             </thead>
@@ -531,13 +400,6 @@ function AdminCategories() {
                 <tr key={category.id}>
                   <td>{category.name}</td>
                   <td>{category.description || 'Không có mô tả'}</td>
-                  <td className="image-cell">
-                    {category.imageUrl ? (
-                      <img src={category.imageUrl} alt={category.name} />
-                    ) : (
-                      'Không có hình ảnh'
-                    )}
-                  </td>
                   <td className="actions-cell">
                     <ActionButton
                       variant="warning"

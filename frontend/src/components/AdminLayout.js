@@ -1,9 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { Outlet, NavLink, useNavigate, Link, useLocation } from 'react-router-dom';
-import { useApp } from '../context/AppContext';
-import '../styles/admin_layout/admin.css';
-import '../styles/layout/logout-confirmation.css';
-import LogoutConfirmation from '../pages/identity/LogoutConfirmation';
+import React, { useState, useEffect } from "react";
+import {
+  Outlet,
+  NavLink,
+  useNavigate,
+  Link,
+  useLocation,
+} from "react-router-dom";
+import { useApp } from "../context/AppContext";
+import "../styles/admin_layout/admin.css";
+import "../styles/layout/logout-confirmation.css";
+import LogoutConfirmation from "../pages/identity/LogoutConfirmation";
 
 function AdminLayout() {
   const { user, logout } = useApp();
@@ -18,13 +24,15 @@ function AdminLayout() {
   // For handling notifications
   useEffect(() => {
     // Load existing notifications from local storage
-    const savedNotifications = localStorage.getItem('adminNotifications');
+    const savedNotifications = localStorage.getItem("adminNotifications");
     if (savedNotifications) {
       const parsedNotifications = JSON.parse(savedNotifications);
       setNotifications(parsedNotifications);
-      
+
       // Count unread notifications
-      const unread = parsedNotifications.filter(notification => !notification.read).length;
+      const unread = parsedNotifications.filter(
+        (notification) => !notification.read
+      ).length;
       setUnreadCount(unread);
     }
   }, []);
@@ -33,97 +41,108 @@ function AdminLayout() {
   useEffect(() => {
     const handleNewNotification = (event) => {
       const newNotification = event.detail;
-      
-      setNotifications(prevNotifications => {
+
+      setNotifications((prevNotifications) => {
         const updatedNotifications = [
-          { 
-            id: Date.now(), 
-            ...newNotification, 
+          {
+            id: Date.now(),
+            ...newNotification,
             timestamp: new Date().toISOString(),
-            read: false
+            read: false,
           },
-          ...prevNotifications
+          ...prevNotifications,
         ].slice(0, 20); // Keep only last 20 notifications
-        
+
         // Save to localStorage
-        localStorage.setItem('adminNotifications', JSON.stringify(updatedNotifications));
-        
+        localStorage.setItem(
+          "adminNotifications",
+          JSON.stringify(updatedNotifications)
+        );
+
         return updatedNotifications;
       });
-      
-      setUnreadCount(prevCount => prevCount + 1);
+
+      setUnreadCount((prevCount) => prevCount + 1);
     };
-    
-    window.addEventListener('newAdminNotification', handleNewNotification);
-    
+
+    window.addEventListener("newAdminNotification", handleNewNotification);
+
     return () => {
-      window.removeEventListener('newAdminNotification', handleNewNotification);
+      window.removeEventListener("newAdminNotification", handleNewNotification);
     };
   }, []);
 
   const markAllAsRead = () => {
-    const updatedNotifications = notifications.map(notification => ({
+    const updatedNotifications = notifications.map((notification) => ({
       ...notification,
-      read: true
+      read: true,
     }));
-    
+
     setNotifications(updatedNotifications);
     setUnreadCount(0);
-    localStorage.setItem('adminNotifications', JSON.stringify(updatedNotifications));
+    localStorage.setItem(
+      "adminNotifications",
+      JSON.stringify(updatedNotifications)
+    );
   };
 
   const handleLogout = () => {
     setShowLogoutConfirm(true);
   };
-  
+
   const confirmLogout = () => {
     logout();
-    navigate('/login');
+    navigate("/login");
     setShowLogoutConfirm(false);
   };
 
   const cancelLogout = () => {
     setShowLogoutConfirm(false);
   };
-  
+
   // Lấy tiêu đề trang dựa trên đường dẫn hiện tại
   const getPageTitle = () => {
     const path = location.pathname;
-    if (path === '/admin') return 'Tổng quan';
-    if (path.includes('/admin/restaurants')) return 'Quản lý nhà hàng';
-    if (path.includes('/admin/reservations')) return 'Quản lý đặt bàn';
-    if (path.includes('/admin/reviews')) return 'Quản lý đánh giá';
-    if (path.includes('/admin/categories')) return 'Quản lý danh mục';
-    if (path.includes('/admin/promotions')) return 'Quản lý khuyến mãi';
-    if (path.includes('/admin/payments')) return 'Quản lý thanh toán';
-    if (path.includes('/admin/tables')) return 'Quản lý bàn';
-    return 'Quản trị viên';
+    if (path === "/admin") return "Tổng quan";
+    if (path.includes("/admin/restaurants")) return "Quản lý nhà hàng";
+    if (path.includes("/admin/reservations")) return "Quản lý đặt bàn";
+    if (path.includes("/admin/reviews")) return "Quản lý đánh giá";
+    if (path.includes("/admin/categories")) return "Quản lý danh mục";
+    if (path.includes("/admin/promotions")) return "Quản lý khuyến mãi";
+    if (path.includes("/admin/payments")) return "Quản lý thanh toán";
+    if (path.includes("/admin/tables")) return "Quản lý bàn";
+    return "Quản trị viên";
   };
 
   // Format time for notifications
   const formatTime = (timestamp) => {
     const date = new Date(timestamp);
-    return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + 
-           ' ' + date.toLocaleDateString('vi-VN');
+    return (
+      date.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }) +
+      " " +
+      date.toLocaleDateString("vi-VN")
+    );
   };
 
   return (
-    <div className={`admin-layout ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+    <div
+      className={`admin-layout ${sidebarCollapsed ? "sidebar-collapsed" : ""}`}
+    >
       <div className="admin-sidebar">
         <div className="admin-logo">
           <h2>DinerChill</h2>
-          <button 
-            className="sidebar-toggle" 
+          <button
+            className="sidebar-toggle"
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
           >
-            {sidebarCollapsed ? '→' : '←'}
+            {sidebarCollapsed ? "→" : "←"}
           </button>
         </div>
-        
+
         <div className="admin-user">
           <p className="admin-role">Admin</p>
         </div>
-        
+
         <nav className="admin-nav">
           <ul>
             <li>
@@ -169,12 +188,6 @@ function AdminLayout() {
               </NavLink>
             </li>
             <li>
-              <NavLink to="/admin/reviews">
-                <i>⭐</i>
-                <span>Quản lý đánh giá</span>
-              </NavLink>
-            </li>
-            <li>
               <Link to="/" className="home-btn">
                 <i>🏠</i>
                 <span>Trở về trang chủ</span>
@@ -183,17 +196,19 @@ function AdminLayout() {
           </ul>
         </nav>
       </div>
-      
+
       <div className="admin-content-wrapper">
         <div className="admin-header">
           <h1>{getPageTitle()}</h1>
           <div className="admin-header-actions">
-            <span className="current-date">{new Date().toLocaleDateString('vi-VN')}</span>
-            
+            <span className="current-date">
+              {new Date().toLocaleDateString("vi-VN")}
+            </span>
+
             {/* Notification Icon */}
             <div className="notification-dropdown">
-              <button 
-                className="notification-icon" 
+              <button
+                className="notification-icon"
                 onClick={() => {
                   setShowNotifications(!showNotifications);
                   if (!showNotifications && unreadCount > 0) {
@@ -207,45 +222,61 @@ function AdminLayout() {
                   <span className="notification-badge">{unreadCount}</span>
                 )}
               </button>
-              
+
               {showNotifications && (
                 <div className="notification-menu">
                   <div className="notification-header">
                     <h3>Thông báo</h3>
                     {notifications.length > 0 && (
-                      <button className="clear-all" onClick={() => {
-                        setNotifications([]);
-                        setUnreadCount(0);
-                        localStorage.setItem('adminNotifications', JSON.stringify([]));
-                      }}>
+                      <button
+                        className="clear-all"
+                        onClick={() => {
+                          setNotifications([]);
+                          setUnreadCount(0);
+                          localStorage.setItem(
+                            "adminNotifications",
+                            JSON.stringify([])
+                          );
+                        }}
+                      >
                         Xóa tất cả
                       </button>
                     )}
                   </div>
                   <div className="notification-list">
                     {notifications.length > 0 ? (
-                      notifications.map(notification => (
-                        <div 
-                          key={notification.id} 
-                          className={`notification-item ${!notification.read ? 'unread' : ''}`}
+                      notifications.map((notification) => (
+                        <div
+                          key={notification.id}
+                          className={`notification-item ${
+                            !notification.read ? "unread" : ""
+                          }`}
                         >
                           <div className="notification-content">
-                            <div className="notification-message">{notification.message}</div>
-                            <div className="notification-time">{formatTime(notification.timestamp)}</div>
+                            <div className="notification-message">
+                              {notification.message}
+                            </div>
+                            <div className="notification-time">
+                              {formatTime(notification.timestamp)}
+                            </div>
                           </div>
                         </div>
                       ))
                     ) : (
-                      <div className="empty-notifications">Không có thông báo mới</div>
+                      <div className="empty-notifications">
+                        Không có thông báo mới
+                      </div>
                     )}
                   </div>
                 </div>
               )}
             </div>
-            
+
             <div className="admin-profile">
               <span>{user?.name}</span>
-              <button onClick={handleLogout} className="logout-btn">Đăng xuất</button>
+              <button onClick={handleLogout} className="logout-btn">
+                Đăng xuất
+              </button>
             </div>
           </div>
         </div>
@@ -256,13 +287,10 @@ function AdminLayout() {
 
       {/* Logout Confirmation Dialog */}
       {showLogoutConfirm && (
-        <LogoutConfirmation
-          onCancel={cancelLogout}
-          onConfirm={confirmLogout}
-        />
+        <LogoutConfirmation onCancel={cancelLogout} onConfirm={confirmLogout} />
       )}
     </div>
   );
 }
 
-export default AdminLayout; 
+export default AdminLayout;

@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { adminAPI } from '../../services/api';
+import '../../styles/AdminRestaurants.css';
 import '../../styles/admin_layout/admin_restaurant.css';
 
 function AdminRestaurants() {
@@ -22,16 +23,16 @@ function AdminRestaurants() {
   });
   const [formData, setFormData] = useState({
     name: '',
-    cuisine: '',
+    selectedCategories: [],
     address: '',
     images: [],
     description: '',
-    openingTime: '',
-    closingTime: '',
+    openingTime: '10:00',
+    closingTime: '22:00',
     phone: '',
     email: '',
     capacity: '',
-    priceRange: '',
+    priceRange: '200.000đ - 500.000đ',
     status: 'active'
   });
 
@@ -67,15 +68,11 @@ function AdminRestaurants() {
   const handleEditClick = (restaurant) => {
     setEditingRestaurant(restaurant);
     
-    // Chuẩn bị mảng hình ảnh từ images
+    // Initialize images array from existing images
     let initialImages = [];
-    
-    if (restaurant.images && Array.isArray(restaurant.images) && restaurant.images.length > 0) {
-      // Sử dụng trường images từ quan hệ với bảng restaurant_images
-      initialImages = restaurant.images.map((image) => {
-        // Get correct URL for the image
+    if (restaurant.images && restaurant.images.length > 0) {
+      initialImages = restaurant.images.map(image => {
         const imageUrl = getImageUrl(image);
-        
         return {
           id: `db-${image.id}`,
           url: imageUrl,
@@ -91,9 +88,13 @@ function AdminRestaurants() {
       }];
     }
     
+    // Get restaurant categories if available
+    const restaurantCategories = restaurant.categories ? 
+      restaurant.categories.map(category => category.id) : [];
+    
     setFormData({
       name: restaurant.name,
-      cuisine: restaurant.cuisine || restaurant.cuisineType || '',
+      selectedCategories: restaurantCategories,
       address: restaurant.address || '',
       images: initialImages,
       description: restaurant.description || '',
@@ -112,6 +113,14 @@ function AdminRestaurants() {
     setFormData(prev => ({
       ...prev,
       [name]: value
+    }));
+  };
+
+  const handleCategoryChange = (e) => {
+    const selectedOptions = Array.from(e.target.selectedOptions, option => parseInt(option.value));
+    setFormData(prev => ({
+      ...prev,
+      selectedCategories: selectedOptions
     }));
   };
 
@@ -167,7 +176,10 @@ function AdminRestaurants() {
       
       // Thêm thông tin cơ bản
       formDataToSend.append('name', formData.name);
-      formDataToSend.append('cuisineType', formData.cuisine || 'Chưa phân loại');
+      
+      // Add selected categories as JSON string
+      formDataToSend.append('categoryIds', JSON.stringify(formData.selectedCategories));
+      
       formDataToSend.append('address', formData.address);
       formDataToSend.append('description', formData.description || '');
       formDataToSend.append('openingTime', formData.openingTime || '');
@@ -217,7 +229,7 @@ function AdminRestaurants() {
       
       console.log('Dữ liệu gửi đi:', {
         name: formData.name,
-        cuisineType: formData.cuisine,
+        categoryIds: formData.selectedCategories,
         address: formData.address,
         imageCount: formData.images.length,
         hasFiles,
@@ -274,16 +286,16 @@ function AdminRestaurants() {
     setEditingRestaurant(null);
     setFormData({
       name: '',
-      cuisine: '',
+      selectedCategories: [],
       address: '',
       images: [],
       description: '',
-      openingTime: '',
-      closingTime: '',
+      openingTime: '10:00',
+      closingTime: '22:00',
       phone: '',
       email: '',
       capacity: '',
-      priceRange: '',
+      priceRange: '200.000đ - 500.000đ',
       status: 'active'
     });
   };
@@ -496,7 +508,162 @@ function AdminRestaurants() {
   };
 
   return (
-    <div className="admin-restaurants">
+    <div className="admin-restaurants-page">
+      <style jsx="true">{`
+        .restaurant-form-container {
+          background-color: #fff;
+          border-radius: 8px;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+          margin-bottom: 24px;
+          max-width: 900px;
+          margin-left: auto;
+          margin-right: auto;
+        }
+
+        .form-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 16px 20px;
+          border-bottom: 1px solid #e9ecef;
+        }
+
+        .form-sections {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+          padding: 16px;
+        }
+
+        .form-section {
+          padding: 12px;
+          background-color: #f8f9fa;
+          border-radius: 6px;
+          border: 1px solid #e9ecef;
+        }
+
+        .section-title {
+          margin-bottom: 12px;
+          padding-bottom: 6px;
+          border-bottom: 1px solid #dee2e6;
+          font-size: 15px;
+          font-weight: 600;
+          color: #495057;
+        }
+
+        .form-buttons {
+          display: flex;
+          justify-content: flex-end;
+          gap: 10px;
+          padding: 12px 16px;
+          border-top: 1px solid #e9ecef;
+        }
+
+        .image-upload-container {
+          border: 2px dashed #dee2e6;
+          border-radius: 6px;
+          padding: 12px;
+          text-align: center;
+          background-color: #fff;
+        }
+
+        .image-upload-area {
+          position: relative;
+          cursor: pointer;
+          min-height: 80px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .image-upload-input {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          opacity: 0;
+          cursor: pointer;
+        }
+
+        .image-upload-placeholder {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          color: #6c757d;
+        }
+
+        .image-upload-placeholder i {
+          font-size: 20px;
+          margin-bottom: 6px;
+        }
+
+        .image-preview-container {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          margin-top: 12px;
+        }
+
+        .image-preview-item {
+          position: relative;
+          width: 80px;
+          height: 80px;
+          border-radius: 4px;
+          overflow: hidden;
+        }
+
+        .preview-thumbnail {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .remove-image-btn {
+          position: absolute;
+          top: 4px;
+          right: 4px;
+          background-color: rgba(0,0,0,0.5);
+          color: white;
+          border: none;
+          border-radius: 50%;
+          width: 20px;
+          height: 20px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+        }
+
+        .form-row {
+          margin-bottom: 8px;
+        }
+
+        /* Make form inputs and controls more compact */
+        .form-control {
+          padding: 6px 12px;
+          font-size: 14px;
+        }
+
+        textarea.form-control {
+          min-height: 60px;
+        }
+
+        .form-group {
+          margin-bottom: 8px;
+        }
+
+        @media (max-width: 768px) {
+          .form-row {
+            flex-direction: column;
+          }
+          
+          .form-group.col-md-6 {
+            width: 100%;
+          }
+        }
+      `}</style>
       <div className="page-header">
         <h1>Quản lý Nhà hàng</h1>
         <button className="btn-action btn-add" onClick={() => setEditingRestaurant({})}>
@@ -573,61 +740,121 @@ function AdminRestaurants() {
 
       
       {editingRestaurant !== null ? (
-        <div className="card edit-form-card">
-          <div className="card-header">
-            <h2>{editingRestaurant.id ? "Chỉnh sửa nhà hàng" : "Thêm nhà hàng mới"}</h2>
+        <div className="restaurant-form-container">
+          <div className="form-header">
+            <h3>{editingRestaurant?.id ? 'Chỉnh sửa nhà hàng' : 'Thêm nhà hàng mới'}</h3>
+            <button className="close-form-btn" onClick={resetForm}>
+              <i className="fas fa-times"></i>
+            </button>
           </div>
-          <div className="card-body">
-            <form onSubmit={handleSubmit} className="restaurant-form">
-              <div className="form-group">
-                <label htmlFor="name">Tên nhà hàng</label>
-                <input
-                  id="name"
-                  type="text"
-                  name="name"
-                  className="form-control"
-                  value={formData.name}
-                  onChange={handleChange}
-                  placeholder="Nhập tên nhà hàng"
-                  required
-                />
+          
+          <form onSubmit={handleSubmit} className="restaurant-form">
+            <div className="form-sections">
+              {/* Thông tin cơ bản */}
+              <div className="form-section">
+                <h4 className="section-title">Thông tin cơ bản</h4>
+                <div className="form-row">
+                  <div className="form-group col-md-6">
+                    <label htmlFor="name">Tên nhà hàng <span className="text-danger">*</span></label>
+                    <input
+                      id="name"
+                      type="text"
+                      name="name"
+                      className="form-control"
+                      value={formData.name}
+                      onChange={handleChange}
+                      placeholder="Nhập tên nhà hàng"
+                      required
+                    />
+                  </div>
+                  
+                  <div className="form-group col-md-6">
+                    <label htmlFor="address">Địa chỉ <span className="text-danger">*</span></label>
+                    <input
+                      id="address"
+                      type="text"
+                      name="address"
+                      className="form-control"
+                      value={formData.address}
+                      onChange={handleChange}
+                      placeholder="Nhập địa chỉ đầy đủ"
+                      required
+                    />
+                  </div>
+                </div>
+                
+                <div className="form-row">
+                  <div className="form-group col-md-12">
+                    <label htmlFor="selectedCategories">Danh mục nhà hàng <span className="text-danger">*</span></label>
+                    <div className="category-select-container">
+                      <select
+                        id="selectedCategories"
+                        name="selectedCategories"
+                        className="form-control category-select"
+                        value={formData.selectedCategories}
+                        onChange={handleCategoryChange}
+                        multiple
+                        size={Math.min(5, categories.length)}
+                      >
+                        {categories.map(category => (
+                          <option key={category.id} value={category.id}>
+                            {category.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="category-help-text">
+                      <small className="form-text text-muted">
+                        <i className="fas fa-info-circle mr-1"></i>
+                        Giữ phím Ctrl (hoặc Command trên Mac) để chọn nhiều danh mục
+                      </small>
+                      {formData.selectedCategories.length > 0 && (
+                        <div className="selected-categories mt-1">
+                          <span className="selected-categories-label">Đã chọn: </span>
+                          {formData.selectedCategories.map(catId => {
+                            const category = categories.find(c => c.id === catId);
+                            return category ? (
+                              <span key={catId} className="badge badge-primary mr-1">
+                                {category.name}
+                              </span>
+                            ) : null;
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="form-row">
+                  <div className="form-group col-md-6">
+                    <label htmlFor="openingTime">Giờ mở cửa</label>
+                    <input
+                      id="openingTime"
+                      type="time"
+                      name="openingTime"
+                      className="form-control"
+                      value={formData.openingTime}
+                      onChange={handleChange}
+                    />
+                  </div>
+                  
+                  <div className="form-group col-md-6">
+                    <label htmlFor="closingTime">Giờ đóng cửa</label>
+                    <input
+                      id="closingTime"
+                      type="time"
+                      name="closingTime"
+                      className="form-control"
+                      value={formData.closingTime}
+                      onChange={handleChange}
+                    />
+                  </div>
+                </div>
               </div>
               
-              <div className="form-group">
-                <label htmlFor="cuisine">Loại ẩm thực</label>
-                <select
-                  id="cuisine"
-                  name="cuisine"
-                  className="form-control"
-                  value={formData.cuisine}
-                  onChange={handleChange}
-                  required
-                >
-                  <option value="">Chọn loại ẩm thực</option>
-                  {categories.map(category => (
-                    <option key={category.id} value={category.name}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="address">Địa chỉ</label>
-                <input
-                  id="address"
-                  type="text"
-                  name="address"
-                  className="form-control"
-                  value={formData.address}
-                  onChange={handleChange}
-                  placeholder="Nhập địa chỉ đầy đủ"
-                  required
-                />
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="images">Hình ảnh nhà hàng</label>
+              {/* Hình ảnh */}
+              <div className="form-section">
+                <h4 className="section-title">Hình ảnh nhà hàng</h4>
                 <div className="image-upload-container">
                   <div className="image-upload-area">
                     <input
@@ -642,7 +869,6 @@ function AdminRestaurants() {
                     <div className="image-upload-placeholder">
                       <i className="fa fa-cloud-upload"></i>
                       <p>Kéo thả hình ảnh hoặc click để chọn</p>
-                      <small>Hình ảnh chỉ được lưu tạm trong phiên làm việc, không lưu vào database</small>
                     </div>
                   </div>
                   
@@ -674,126 +900,107 @@ function AdminRestaurants() {
                 )}
               </div>
               
-              <div className="form-row">
-                <div className="form-group col-md-6">
-                  <label htmlFor="openingTime">Giờ mở cửa</label>
-                  <input
-                    id="openingTime"
-                    type="time"
-                    name="openingTime"
-                    className="form-control"
-                    value={formData.openingTime}
-                    onChange={handleChange}
-                    placeholder="Ví dụ: 08:00"
-                  />
+              {/* Thông tin liên hệ */}
+              <div className="form-section">
+                <h4 className="section-title">Thông tin liên hệ</h4>
+                <div className="form-row">
+                  <div className="form-group col-md-6">
+                    <label htmlFor="phone">Số điện thoại</label>
+                    <input
+                      id="phone"
+                      type="tel"
+                      name="phone"
+                      className="form-control"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      placeholder="Nhập số điện thoại"
+                    />
+                  </div>
+                  
+                  <div className="form-group col-md-6">
+                    <label htmlFor="email">Email</label>
+                    <input
+                      id="email"
+                      type="email"
+                      name="email"
+                      className="form-control"
+                      value={formData.email}
+                      onChange={handleChange}
+                      placeholder="Nhập email liên hệ"
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              {/* Thông tin khác */}
+              <div className="form-section">
+                <h4 className="section-title">Thông tin khác</h4>
+                <div className="form-row">
+                  <div className="form-group col-md-6">
+                    <label htmlFor="capacity">Sức chứa (người)</label>
+                    <input
+                      id="capacity"
+                      type="number"
+                      name="capacity"
+                      className="form-control"
+                      value={formData.capacity}
+                      onChange={handleChange}
+                      min="1"
+                      placeholder="Nhập sức chứa nhà hàng"
+                    />
+                  </div>
+                  
+                  <div className="form-group col-md-6">
+                    <label htmlFor="priceRange">Mức giá</label>
+                    <input
+                      type="text"
+                      id="priceRange"
+                      name="priceRange"
+                      className="form-control"
+                      value={formData.priceRange}
+                      onChange={handleChange}
+                      placeholder="Ví dụ: 200.000đ - 500.000đ"
+                    />
+                  </div>
                 </div>
                 
-                <div className="form-group col-md-6">
-                  <label htmlFor="closingTime">Giờ đóng cửa</label>
-                  <input
-                    id="closingTime"
-                    type="time"
-                    name="closingTime"
+                <div className="form-group">
+                  <label htmlFor="description">Mô tả</label>
+                  <textarea
+                    id="description"
+                    name="description"
                     className="form-control"
-                    value={formData.closingTime}
+                    value={formData.description}
                     onChange={handleChange}
-                    placeholder="Ví dụ: 22:00"
-                  />
+                    rows="3"
+                    placeholder="Mô tả chi tiết về nhà hàng"
+                  ></textarea>
                 </div>
               </div>
-              
-              <div className="form-row">
-                <div className="form-group col-md-6">
-                  <label htmlFor="phone">Số điện thoại</label>
-                  <input
-                    id="phone"
-                    type="tel"
-                    name="phone"
-                    className="form-control"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    placeholder="Nhập số điện thoại"
-                  />
-                </div>
-                
-                <div className="form-group col-md-6">
-                  <label htmlFor="email">Email</label>
-                  <input
-                    id="email"
-                    type="email"
-                    name="email"
-                    className="form-control"
-                    value={formData.email}
-                    onChange={handleChange}
-                    placeholder="Nhập email liên hệ"
-                  />
-                </div>
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="capacity">Sức chứa (người)</label>
-                <input
-                  id="capacity"
-                  type="number"
-                  name="capacity"
-                  className="form-control"
-                  value={formData.capacity}
-                  onChange={handleChange}
-                  min="1"
-                  placeholder="Nhập sức chứa nhà hàng"
-                />
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="priceRange">Mức giá:</label>
-                <input
-                  type="text"
-                  id="priceRange"
-                  name="priceRange"
-                  className="form-control"
-                  value={formData.priceRange}
-                  onChange={handleChange}
-                  placeholder="Ví dụ: 200.000đ - 500.000đ"
-                />
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="description">Mô tả</label>
-                <textarea
-                  id="description"
-                  name="description"
-                  className="form-control"
-                  value={formData.description}
-                  onChange={handleChange}
-                  rows="4"
-                  placeholder="Mô tả chi tiết về nhà hàng"
-                ></textarea>
-              </div>
-              
-              <div className="form-buttons">
-                <button type="submit" className="btn btn-success" disabled={isSubmitting}>
-                  {isSubmitting ? (
-                    <>
-                      <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                      <span className="ms-2">Đang xử lý...</span>
-                    </>
-                  ) : (
-                    <>
-                      <i className="fa fa-save"></i> {editingRestaurant.id ? 'Cập nhật' : 'Thêm mới'}
-                    </>
-                  )}
-                </button>
-                <button 
-                  type="button" 
-                  className="btn btn-secondary"
-                  onClick={resetForm}
-                  disabled={isSubmitting}
-                >
-                  <i className="fa fa-times"></i> Hủy
-                </button>
-              </div>
-            </form>
-          </div>
+            </div>
+            
+            <div className="form-buttons">
+              <button type="submit" className="btn btn-success" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    <span className="ms-2">Đang xử lý...</span>
+                  </>
+                ) : (
+                  <>
+                    <i className="fa fa-save"></i> {editingRestaurant.id ? 'Cập nhật' : 'Thêm mới'}
+                  </>
+                )}
+              </button>
+              <button 
+                type="button" 
+                className="btn btn-secondary"
+                onClick={resetForm}
+              >
+                <i className="fa fa-times"></i> Hủy
+              </button>
+            </div>
+          </form>
         </div>
       ) : loading ? (
         <div className="loading-container">
@@ -825,7 +1032,7 @@ function AdminRestaurants() {
                   <tr>
 
                     <th style={{ width: '15%' }}>Tên nhà hàng</th>
-                    <th style={{ width: '4%' }}>Loại ẩm thực</th>
+                    <th style={{ width: '4%' }}>Danh mục</th>
                     <th style={{ width: '10%' }}>Sức chứa</th>
                     <th style={{ width: '8%' }}>Trạng thái</th>
                     <th style={{ width: '20%' }}>Địa chỉ</th>
@@ -839,7 +1046,9 @@ function AdminRestaurants() {
                       <tr key={restaurant.id}>
 
                         <td>{restaurant.name}</td>
-                        <td>{restaurant.cuisine || restaurant.cuisineType}</td>
+                        <td>{restaurant.categories && restaurant.categories.length > 0 
+                            ? restaurant.categories.map(cat => cat.name).join(', ') 
+                            : (restaurant.cuisine || restaurant.cuisineType || 'Chưa phân loại')}</td>
                         <td>{restaurant.capacity ? `${restaurant.capacity} người` : 'Chưa cập nhật'}</td>
 
                         <td>
@@ -941,7 +1150,11 @@ function AdminRestaurants() {
               <div className="restaurant-detail-content">
                 <div className="detail-header">
                   <div className="restaurant-name">{viewingRestaurant.name}</div>
-                  <div className="restaurant-cuisine">{viewingRestaurant.cuisine || viewingRestaurant.cuisineType}</div>
+                  <div className="restaurant-categories">
+                    {viewingRestaurant.categories && viewingRestaurant.categories.length > 0 
+                      ? viewingRestaurant.categories.map(cat => cat.name).join(', ') 
+                      : (viewingRestaurant.cuisine || viewingRestaurant.cuisineType || 'Chưa phân loại')}
+                  </div>
                 </div>
                 
                 {/* Restaurant Images Gallery */}

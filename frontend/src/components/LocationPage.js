@@ -609,23 +609,6 @@ function LocationPage() {
             .addTo(map)
             .bindPopup("Vị trí của bạn")
             .openPopup();
-            
-            // Thêm nút "Quay về vị trí của bạn"
-            const locationButton = L.control({ position: 'bottomright' });
-            
-            locationButton.onAdd = function() {
-              const div = L.DomUtil.create('div', 'leaflet-bar leaflet-control current-location-button');
-              div.innerHTML = '<a href="#" title="Quay về vị trí của bạn"><span>📍</span></a>';
-              
-              L.DomEvent.on(div, 'click', function(e) {
-                L.DomEvent.preventDefault(e);
-                map.setView([currentLocation.lat, currentLocation.lng], 15);
-              });
-              
-              return div;
-            };
-            
-            locationButton.addTo(map);
 
           const restaurantsData = [
             {
@@ -691,6 +674,27 @@ function LocationPage() {
           ];
 
           setNearbyRestaurants(restaurantsData);
+
+          // Thêm nút "Quay về vị trí của bạn"
+          const locationButton = L.control({ position: "bottomright" });
+
+          locationButton.onAdd = function () {
+            const div = L.DomUtil.create(
+              "div",
+              "leaflet-bar leaflet-control current-location-button"
+            );
+            div.innerHTML =
+              '<a href="#" title="Quay về vị trí của bạn"><span>📍</span></a>';
+
+            L.DomEvent.on(div, "click", function (e) {
+              L.DomEvent.preventDefault(e);
+              map.setView([currentLocation.lat, currentLocation.lng], 15);
+            });
+
+            return div;
+          };
+
+          locationButton.addTo(map);
 
           const restaurantIcon = L.icon({
             iconUrl:

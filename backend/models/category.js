@@ -5,7 +5,7 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       // Định nghĩa quan hệ với bảng Restaurant (nhiều-nhiều)
       Category.belongsToMany(models.Restaurant, {
-        through: 'RestaurantCategories',
+        through: 'restaurant_categories',
         foreignKey: 'categoryId',
         otherKey: 'restaurantId',
         as: 'restaurants'
@@ -26,14 +26,6 @@ module.exports = (sequelize, DataTypes) => {
     },
     description: {
       type: DataTypes.TEXT,
-      allowNull: true
-    },
-    imagePath: {
-      type: DataTypes.STRING,
-      allowNull: true
-    },
-    fileName: {
-      type: DataTypes.STRING,
       allowNull: true
     }
   }, {
