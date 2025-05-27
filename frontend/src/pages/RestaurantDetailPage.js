@@ -267,13 +267,12 @@ function RestaurantDetailPage() {
   const handleBookNow = () => {
     try {
       const query = new URLSearchParams({
-        restaurant: id,
         date: formData.date,
         time: formData.time,
         guests: formData.guests.toString(),
         children: formData.children.toString(),
       }).toString();
-      navigate(`/reservation?${query}`);
+      navigate(`/restaurant/${id}/tables?${query}`);
     } catch (err) {
       console.error("Lỗi khi chuyển hướng:", err);
       setNotification(
@@ -337,7 +336,6 @@ function RestaurantDetailPage() {
     }
     try {
       const query = new URLSearchParams({
-        restaurant: id,
         date: formData.date,
         time: formData.time,
         guests: formData.guests.toString(),
@@ -346,7 +344,7 @@ function RestaurantDetailPage() {
         promotionId: promo.id || "",
       }).toString();
       console.log("Navigating with query:", query);
-      navigate(`/reservation?${query}`);
+      navigate(`/restaurant/${id}/tables?${query}`);
     } catch (err) {
       console.error("Lỗi khi chuyển hướng:", err);
       setNotification("Có lỗi khi chuyển hướng. Vui lòng thử lại.");

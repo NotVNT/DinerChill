@@ -19,6 +19,9 @@ function ReservationPage() {
   const initialGuests = parseInt(queryParams.get('guests')) || 2;
   const initialChildren = parseInt(queryParams.get('children')) || 0;
   const initialPromotion = queryParams.get('promotion') || '';
+  const initialTableId = queryParams.get('tableId') || '';
+  const initialTableCode = queryParams.get('tableCode') || '';
+  const initialTableCapacity = queryParams.get('tableCapacity') || '';
 
   const [formData, setFormData] = useState({
     name: user?.name || '',
@@ -31,6 +34,9 @@ function ReservationPage() {
     restaurant: restaurantId || '',
     specialRequests: '',
     voucher: initialPromotion,
+    tableId: initialTableId,
+    tableCode: initialTableCode,
+    tableCapacity: initialTableCapacity,
   });
 
   const [selectedRestaurant, setSelectedRestaurant] = useState(null);
@@ -512,6 +518,15 @@ function ReservationPage() {
                         new Date(formData.date).toLocaleDateString('vi-VN', { weekday: 'long' }).slice(1)}, 
                         ngày {formData.date.split('-').reverse().join('/')} {formData.time}
                       </p>
+                      {formData.tableId && (
+                        <p className="booking-info-item">
+                          <span className="table-info-label">Mã bàn: </span> 
+                          <span className="table-info-value">{formData.tableCode || formData.tableCode}</span>
+                          {formData.tableCapacity && (
+                            <span className="table-capacity-info"> - Sức chứa: {formData.tableCapacity} người</span>
+                          )}
+                        </p>
+                      )}
                     </>
                   ) : (
                     // Edit form for booking information

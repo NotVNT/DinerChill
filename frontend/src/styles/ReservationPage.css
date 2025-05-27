@@ -802,3 +802,24 @@
   background-color: #e71a0f;
   transform: none;
 }
+
+.table-info-label {
+  font-weight: 600;
+  margin-right: 5px;
+  color: #444;
+}
+
+.table-info-value {
+  font-weight: 500;
+  color: #e61e25;
+}
+
+.table-capacity-info {
+  margin-left: 8px;
+  color: #555;
+}
+
+.booking-info-item {
+  margin-bottom: 10px;
+  line-height: 1.5;
+}

@@ -34,6 +34,7 @@ import PromoPage from './pages/PromoPage';
 import ReservationGuidePage from './pages/ReservationGuidePage';
 import PaymentResultPage from './pages/PaymentResultPage';
 import ScrollToTop from './components/ScrollToTop';
+import TableSelectionPage from './pages/TableSelectionPage';
 
 // Layout cho ứng dụng (có Header và Footer)
 function AppLayout() {
@@ -88,6 +89,7 @@ function App() {
             <Route path="restaurants" element={<RestaurantPage />} />
             <Route path="restaurant/:id" element={<RestaurantDetailPage />} />
             <Route path="restaurants/:id" element={<RestaurantDetailPage />} />
+            <Route path="restaurant/:id/tables" element={<TableSelectionPage />} />
             <Route path="nha-hang" element={<RestaurantPage />} />
             <Route path="lau" element={<RestaurantPage />} />
             <Route path="buffet" element={<RestaurantPage />} />
