@@ -7,7 +7,8 @@ import HomePage from './pages/HomePage';
 import RestaurantPage from './pages/RestaurantPage';
 import RestaurantDetailPage from './pages/RestaurantDetailPage';
 import { AppProvider } from './context/AppContext';
-import ReservationPage from './pages/ReservationPage';
+import ReservationPage from './pages/application/ReservationPage';
+import ReservationSuccessPage from './pages/application/ReservationSuccessPage';
 import LoginPage from './pages/identity/LoginPage';
 import RegisterPage from './pages/identity/RegisterPage';
 import ProfilePage from './pages/profile_imformation/ProfilePage';
@@ -26,15 +27,16 @@ import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
 import FavoritesPage from './pages/profile_imformation/FavoritesPage';
 import ChangePasswordPage from './pages/profile_imformation/ChangePasswordPage';
-import WalletPaymentPage from './pages/profile_imformation/WalletPaymentPage';
+import PaymentHistory from './pages/profile_imformation/PaymentHistory';
 import AdminTables from './pages/admin/AdminTables';
 import TokenHandler from './components/TokenHandler';
 import LocationPage from './components/LocationPage';
-import PromoPage from './pages/PromoPage';
+import PromoPage from './pages/application/PromoPage';
 import ReservationGuidePage from './pages/ReservationGuidePage';
-import PaymentResultPage from './pages/PaymentResultPage';
+import PaymentResultPage from './pages/application/PaymentResultPage';
 import ScrollToTop from './components/ScrollToTop';
-import TableSelectionPage from './pages/TableSelectionPage';
+import TableSelectionPage from './pages/application/TableSelectionPage';
+
 
 // Layout cho ứng dụng (có Header và Footer)
 function AppLayout() {
@@ -113,14 +115,17 @@ function App() {
             <Route path="khuyen-mai" element={<PromoPage />} />
             <Route path="huong-dan-dat-ban" element={<ReservationGuidePage />} />
             <Route path="payment-result" element={<PaymentResultPage />} />
+            <Route path="payment" element={<ProtectedRoute><PaymentResultPage /></ProtectedRoute>} />
+
             
             {/* Protected Routes */}
             <Route path="reservation" element={<ProtectedRoute><ReservationPage /></ProtectedRoute>} />
+            <Route path="reservation-success" element={<ProtectedRoute><ReservationSuccessPage /></ProtectedRoute>} />
             <Route path="profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
             <Route path="my-reservations" element={<ProtectedRoute><MyReservationsPage /></ProtectedRoute>} />
             <Route path="favorites" element={<ProtectedRoute><FavoritesPage /></ProtectedRoute>} />
             <Route path="change-password" element={<ProtectedRoute><ChangePasswordPage /></ProtectedRoute>} />
-            <Route path="linked-accounts" element={<ProtectedRoute><WalletPaymentPage /></ProtectedRoute>} />
+            <Route path="payment-history" element={<ProtectedRoute><PaymentHistory /></ProtectedRoute>} />
             
             {/* Route 404 */}
             <Route path="*" element={<div className="not-found">404 - Trang không tìm thấy</div>} />

@@ -158,11 +158,6 @@ function Header() {
           
           <nav className={`main-nav ${mobileMenuOpen ? 'mobile-active' : ''}`}>
             <ul>
-              <li className="nav-item">
-                <Link to="/nha-hang">
-                  <i className="nav-icon">🏠</i> Nhà hàng
-                </Link>
-              </li>
               <li 
                 className="food-menu-container" 
                 ref={foodMenuRef}
@@ -182,7 +177,6 @@ function Header() {
                     onMouseLeave={() => setIsHoveringDropdown(false)}
                   >
                     <div className="food-grid">
-                      <Link to="/nha-hang">Nhà hàng</Link>
                       <Link to="/lau">Lẩu</Link>
                       <Link to="/buffet">Buffet</Link>
                       <Link to="/hai-san">Hải sản</Link>

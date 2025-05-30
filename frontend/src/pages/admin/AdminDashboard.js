@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
-import { fetchWithAuth } from '../../services/api';
+import { fetchWithAuth } from '../../api';
 
 function AdminDashboard() {
   const { user } = useApp();

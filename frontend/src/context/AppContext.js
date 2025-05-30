@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { authAPI } from '../services/api';
+import { authAPI, reservationAPI } from '../api';
 
 const AppContext = createContext();
 
@@ -383,8 +383,29 @@ export function AppProvider({ children }) {
 
   const addReservation = async (reservationData) => {
     console.log('Đặt bàn:', reservationData);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    return { success: true, message: 'Đặt bàn thành công' };
+    try {
+      // Sử dụng reservationAPI.create từ services/api.js
+      const response = await reservationAPI.create(reservationData);
+      
+      return { 
+        success: true, 
+        message: 'Đặt bàn thành công', 
+        id: response.id || `RES-${Date.now()}`,
+        tableCode: response.table?.tableCode
+      };
+    } catch (error) {
+      console.error('Error saving reservation:', error);
+      
+      // Kiểm tra nếu có response.data để lấy thông tin lỗi chi tiết
+      const errorMessage = error.response?.data?.message || error.message || 'Đặt bàn thất bại, vui lòng thử lại';
+      const showAsToast = error.response?.data?.showAsToast || false;
+      
+      return { 
+        success: false, 
+        message: errorMessage,
+        showAsToast: showAsToast
+      };
+    }
   };
 
   // Lấy userName từ user (nếu có)

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
-import { reservationAPI, favoriteAPI, authAPI } from '../../services/api';
+import { reservationAPI, favoriteAPI, authAPI } from '../../api';
 import '../../styles/profile_imformation/ProfilePage.css';
 import LogoutHandler from '../identity/LogoutHandler';
 
@@ -58,7 +58,7 @@ function ProfilePage() {
         // Lấy dữ liệu danh sách yêu thích
         let favorites = [];
         try {
-          const response = await favoriteAPI.getByUser();
+          const response = await favoriteAPI.getUserFavorites();
           if (Array.isArray(response)) {
             favorites = response;
           } else {
@@ -337,14 +337,14 @@ function ProfilePage() {
                 </Link>
               </li>
               <li>
-                <Link to="/linked-accounts">
+                <Link to="/payment-history">
                   <span className="nav-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
                       <line x1="1" y1="10" x2="23" y2="10"></line>
                     </svg>
                   </span>
-                  Ví tiền/Thanh toán
+                  Lịch sử đặt cọc
                 </Link>
               </li>
               <li>

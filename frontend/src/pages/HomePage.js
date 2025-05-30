@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import FilterBox from '../components/FilterBox';
 import RestaurantCard from '../components/RestaurantCard';
 import { useApp } from '../context/AppContext';
-import { restaurantsAPI } from '../services/api';
+import { restaurantsAPI } from '../api';
 import '../styles/HomePage.css';
 
 function HomePage() {

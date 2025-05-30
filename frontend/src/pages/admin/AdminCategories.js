@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { adminAPI } from '../../services/api';
+import { adminAPI } from '../../api';
 import styled from 'styled-components';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 

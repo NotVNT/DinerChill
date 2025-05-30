@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { adminAPI } from "../../services/api";
+import { adminAPI } from "../../api";
 import "../../styles/admin_layout/admin_promotion.css";
 
 // Định nghĩa API_BASE_URL cho thông báo lỗi

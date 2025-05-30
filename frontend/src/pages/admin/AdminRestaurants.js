@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { adminAPI } from '../../services/api';
+import React, { useState, useEffect } from 'react';
+import { adminAPI } from '../../api';
 import '../../styles/AdminRestaurants.css';
 import '../../styles/admin_layout/admin_restaurant.css';
 

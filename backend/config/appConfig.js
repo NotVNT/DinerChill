@@ -9,9 +9,9 @@ const config = {
   
   // PayOS configuration
   payos: {
-    clientId: process.env.PAYOS_CLIENT_ID || 'your-payos-client-id',
-    apiKey: process.env.PAYOS_API_KEY || 'your-payos-api-key',
-    checksumKey: process.env.PAYOS_CHECKSUM_KEY || 'your-payos-checksum-key',
+    clientId: process.env.PAYOS_CLIENT_ID,
+    apiKey: process.env.PAYOS_API_KEY,
+    checksumKey: process.env.PAYOS_CHECKSUM_KEY,
     baseUrl: process.env.PAYOS_BASE_URL || 'https://api-sandbox.payos.vn'
   },
   

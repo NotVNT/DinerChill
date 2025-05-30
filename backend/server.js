@@ -17,6 +17,7 @@ const authRoutes = require('./routes/auth');
 const promotionRoutes = require('./routes/promotion');
 const tableRoutes = require('./routes/table');
 const paymentRoutes = require('./routes/payment');
+const reservationRoutes = require('./routes/reservation');
 const { sequelize } = require('./models');
 
 // Đọc biến môi trường từ file .env
@@ -753,6 +754,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/promotion', promotionRoutes);
 app.use('/api/table', tableRoutes);
 app.use('/api/payment', paymentRoutes);
+app.use('/api/reservation', reservationRoutes);
 
 // Add restaurant routes
 const restaurantRoutes = require('./routes/restaurant');

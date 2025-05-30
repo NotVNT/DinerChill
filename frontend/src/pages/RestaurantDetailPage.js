@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useApp } from "../context/AppContext";
-import { restaurantsAPI } from "../services/api";
+import { restaurantsAPI } from "../api";
 import "../styles/RestaurantDetailPage.css";
 
 function RestaurantDetailPage() {
@@ -13,10 +13,22 @@ function RestaurantDetailPage() {
   const [isFavorite, setIsFavorite] = useState(false);
   const [notification, setNotification] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
+  
+  // Get initial date, checking if current time is after 22:00 to select next day
+  const getCurrentOrNextDay = () => {
+    const now = new Date();
+    if (now.getHours() >= 22) {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      return tomorrow.toISOString().split('T')[0];
+    }
+    return now.toISOString().split('T')[0];
+  };
+  
   const [formData, setFormData] = useState({
     guests: 2,
     children: 0,
-    date: new Date().toISOString().split("T")[0],
+    date: getCurrentOrNextDay(),
     time: "",
   });
   const [selectedImage, setSelectedImage] = useState(null);
@@ -64,6 +76,52 @@ function RestaurantDetailPage() {
     }
   }, [location]);
 
+  const generateTimeSlots = useCallback((openTime, closeTime) => {
+    const times = [];
+    const [openHour, openMinute] = openTime.split(":").map(Number);
+    const [closeHour, closeMinute] = closeTime.split(":").map(Number);
+
+    let currentHour = openHour;
+    let currentMinute = openMinute;
+
+    while (
+      currentHour < closeHour ||
+      (currentHour === closeHour && currentMinute <= closeMinute)
+    ) {
+      const timeString = `${currentHour
+        .toString()
+        .padStart(2, "0")}:${currentMinute.toString().padStart(2, "0")}`;
+      times.push(timeString);
+
+      currentMinute += 30;
+      if (currentMinute >= 60) {
+        currentMinute = 0;
+        currentHour += 1;
+      }
+    }
+
+    // Check if current date is today and if current time is after 22:00
+    const today = new Date().toISOString().split("T")[0];
+    const currentTime = new Date();
+    const currentHourOfDay = currentTime.getHours();
+    
+    // If it's after 22:00, don't filter - we're already using tomorrow's date
+    if (formData.date === today && currentHourOfDay < 22) {
+      const filteredTimes = times.filter(time => {
+        const [hour, minute] = time.split(':').map(Number);
+        const timeDate = new Date(currentTime);
+        timeDate.setHours(hour, minute, 0, 0);
+        const diffHours = (timeDate - currentTime) / (1000 * 60 * 60);
+        return diffHours >= 2;
+      });
+      
+      // Return filtered times if there are any, otherwise return all times
+      return filteredTimes.length > 0 ? filteredTimes : times;
+    }
+
+    return times;
+  }, [formData.date]);
+
   useEffect(() => {
     const fetchRestaurant = async () => {
       try {
@@ -95,7 +153,7 @@ function RestaurantDetailPage() {
     };
 
     fetchRestaurant();
-  }, [id, addToRecentlyViewed]);
+  }, [id, addToRecentlyViewed, generateTimeSlots]);
 
   useEffect(() => {
     const favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
@@ -151,33 +209,6 @@ function RestaurantDetailPage() {
 
     loadSavedReviews();
   }, [id]);
-
-  const generateTimeSlots = (openTime, closeTime) => {
-    const times = [];
-    const [openHour, openMinute] = openTime.split(":").map(Number);
-    const [closeHour, closeMinute] = closeTime.split(":").map(Number);
-
-    let currentHour = openHour;
-    let currentMinute = openMinute;
-
-    while (
-      currentHour < closeHour ||
-      (currentHour === closeHour && currentMinute <= closeMinute)
-    ) {
-      const timeString = `${currentHour
-        .toString()
-        .padStart(2, "0")}:${currentMinute.toString().padStart(2, "0")}`;
-      times.push(timeString);
-
-      currentMinute += 30;
-      if (currentMinute >= 60) {
-        currentMinute = 0;
-        currentHour += 1;
-      }
-    }
-
-    return times;
-  };
 
   const handleFavorite = () => {
     const favorites = [...favoriteList];
@@ -261,11 +292,32 @@ function RestaurantDetailPage() {
   const handleFormChange = (e) => {
     e.stopPropagation();
     const { name, value } = e.target;
+    
+    // Special handling for date to prevent selecting a date earlier than the current selected date
+    if (name === 'date') {
+      // Don't allow selecting dates earlier than the current value
+      if (value < formData.date) {
+        return; // Don't update if trying to select an earlier date
+      }
+    }
+    
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleBookNow = () => {
     try {
+      // Check if reservation time is at least 2 hours in the future
+      const currentTime = new Date();
+      const reservationTime = new Date(`${formData.date}T${formData.time}:00`);
+      const timeDifferenceInHours = (reservationTime - currentTime) / (1000 * 60 * 60);
+      
+      if (timeDifferenceInHours < 2) {
+        setNotification("Thời gian đặt bàn phải ít nhất 2 giờ sau thời gian hiện tại");
+        setTimeout(() => setNotification(null), 3000);
+        return;
+      }
+      
+      // Pass both guests and children params - partySize will be calculated as guests + children in ReservationPage
       const query = new URLSearchParams({
         date: formData.date,
         time: formData.time,
@@ -334,22 +386,37 @@ function RestaurantDetailPage() {
       setNotification("Không có ưu đãi nào được chọn.");
       return;
     }
+    
     try {
+      // Check if reservation time is at least 2 hours in the future
+      const currentTime = new Date();
+      const reservationTime = new Date(`${formData.date}T${formData.time}:00`);
+      const timeDifferenceInHours = (reservationTime - currentTime) / (1000 * 60 * 60);
+      
+      if (timeDifferenceInHours < 2) {
+        setNotification("Thời gian đặt bàn phải ít nhất 2 giờ sau thời gian hiện tại");
+        setTimeout(() => setNotification(null), 3000);
+        closePromotionModal();
+        return;
+      }
+      
+      // Pass both guests and children params - partySize will be calculated as guests + children in ReservationPage
       const query = new URLSearchParams({
         date: formData.date,
         time: formData.time,
         guests: formData.guests.toString(),
         children: formData.children.toString(),
-        promotion: promo.code || promo.name || "",
-        promotionId: promo.id || "",
+        promotion: promo.code,
       }).toString();
-      console.log("Navigating with query:", query);
+
+      // Close the promotion modal before navigating
+      closePromotionModal();
       navigate(`/restaurant/${id}/tables?${query}`);
-    } catch (err) {
-      console.error("Lỗi khi chuyển hướng:", err);
-      setNotification("Có lỗi khi chuyển hướng. Vui lòng thử lại.");
+    } catch (error) {
+      console.error("Error applying promotion:", error);
+      setNotification("Có lỗi xảy ra khi áp dụng ưu đãi");
+      setTimeout(() => setNotification(null), 2000);
     }
-    closePromotionModal();
   };
 
   const handleReviewChange = (e) => {
@@ -1031,7 +1098,7 @@ function RestaurantDetailPage() {
                     name="date"
                     value={formData.date}
                     onChange={handleFormChange}
-                    min={new Date().toISOString().split("T")[0]}
+                    min={formData.date}
                   />
                 </div>
 
@@ -1095,45 +1162,64 @@ function RestaurantDetailPage() {
         {selectedPromotion && (
           <>
             <div className="modal-overlay" onClick={closePromotionModal}></div>
-            <div className="modal">
+            <div className="modal promotion-modal">
               <div className="modal-content">
-                <h2>{selectedPromotion.name}</h2>
+                <button className="close-modal" onClick={closePromotionModal}>×</button>
+                
+                <div className="promotion-modal-header">
+                  <h3>Chi tiết ưu đãi</h3>
+                  <div className="promotion-title">{selectedPromotion.name}</div>
+                </div>
+                
                 {selectedPromotion.code && (
-                  <div className="voucher-code-modal">
-                    <strong>Mã khuyến mãi: {selectedPromotion.code}</strong>
+                  <div className="promotion-modal-code">
+                    <div className="code-label">Mã khuyến mãi:</div>
+                    <div className="code-value-container">
+                      <span className="code-value">{selectedPromotion.code}</span>
+                    </div>
                   </div>
                 )}
-                <p>{selectedPromotion.description || "Không có mô tả"}</p>
-                <div className="promotion-modal-details">
-                  {selectedPromotion.discountType === "percent" && (
-                    <p>
-                      Giảm giá: {selectedPromotion.discountValue}%
-                      {selectedPromotion.maxDiscountValue &&
-                        ` (tối đa ${selectedPromotion.maxDiscountValue.toLocaleString(
-                          "vi-VN"
-                        )}đ)`}
-                    </p>
-                  )}
-                  {selectedPromotion.discountType === "fixed" && (
-                    <p>
-                      Giảm giá:{" "}
-                      {selectedPromotion.discountValue.toLocaleString("vi-VN")}đ
-                    </p>
-                  )}
-                  {selectedPromotion.minOrderValue && (
-                    <p>
-                      Đơn hàng tối thiểu:{" "}
-                      {selectedPromotion.minOrderValue.toLocaleString("vi-VN")}đ
-                    </p>
-                  )}
-                  <p>
-                    Hiệu lực đến:{" "}
-                    {new Date(selectedPromotion.endDate).toLocaleDateString(
-                      "vi-VN"
+                
+                <div className="promotion-modal-content">
+                  <div className="promotion-description">
+                    <p>{selectedPromotion.description || "Không có mô tả"}</p>
+                  </div>
+                  
+                  <div className="promotion-details">
+                    {selectedPromotion.discountType === "percent" && (
+                      <div className="promotion-detail-item highlight">
+                        <i className="fas fa-percentage"></i>
+                        <span>Giảm giá: <strong>{selectedPromotion.discountValue}%</strong>
+                        {selectedPromotion.maxDiscountValue &&
+                          ` (tối đa ${selectedPromotion.maxDiscountValue.toLocaleString(
+                            "vi-VN"
+                          )}đ)`}
+                        </span>
+                      </div>
                     )}
-                  </p>
+                    
+                    {selectedPromotion.discountType === "fixed" && (
+                      <div className="promotion-detail-item highlight">
+                        <i className="fas fa-money-bill-wave"></i>
+                        <span>Giảm giá: <strong>{selectedPromotion.discountValue.toLocaleString("vi-VN")}đ</strong></span>
+                      </div>
+                    )}
+                    
+                    {selectedPromotion.minOrderValue && (
+                      <div className="promotion-detail-item">
+                        <i className="fas fa-shopping-cart"></i>
+                        <span>Đơn hàng tối thiểu: {selectedPromotion.minOrderValue.toLocaleString("vi-VN")}đ</span>
+                      </div>
+                    )}
+                    
+                    <div className="promotion-detail-item">
+                      <i className="fas fa-calendar-alt"></i>
+                      <span>Hiệu lực đến: {new Date(selectedPromotion.endDate).toLocaleDateString("vi-VN")}</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="modal-actions">
+                
+                <div className="promotion-modal-footer">
                   <button
                     className="btn btn-secondary"
                     onClick={closePromotionModal}
@@ -1141,10 +1227,10 @@ function RestaurantDetailPage() {
                     Đóng
                   </button>
                   <button
-                    className="btn btn-book-now"
+                    className="btn btn-primary"
                     onClick={() => applyPromotionAndBook(selectedPromotion)}
                   >
-                    Đặt ngay
+                    Áp dụng ngay
                   </button>
                 </div>
               </div>

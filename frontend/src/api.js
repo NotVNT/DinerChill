@@ -22,32 +22,47 @@ async function fetchAPI(endpoint, options = {}) {
     console.log(`Gọi API: ${url}`);
     const response = await fetch(url, config);
 
-    if (!response.ok) {
-      console.error(
-        `Lỗi API ${endpoint}:`,
-        response.status,
-        response.statusText
-      );
-      return Promise.reject({
-        message: `Lỗi ${response.status}: ${response.statusText}`,
-        status: response.status,
-      });
-    }
-
-    // Check if response is JSON
+    // Always attempt to parse the JSON even if the status is not OK
+    // This helps us get more detailed error messages from the backend
+    let data;
     const contentType = response.headers.get("content-type");
-    if (!contentType || !contentType.includes("application/json")) {
-      console.error(
-        `Lỗi API ${endpoint}: Response không phải JSON`,
-        contentType
-      );
+    if (contentType && contentType.includes("application/json")) {
+      try {
+        data = await response.json();
+      } catch (jsonError) {
+        console.error("Error parsing JSON response:", jsonError);
+        // If JSON parsing fails, throw a generic error with the status
+        if (!response.ok) {
+          throw new Error(`Lỗi ${response.status}: ${response.statusText}`);
+        }
+      }
+    }
+
+    if (!response.ok) {
+      console.error(`Lỗi API ${endpoint}:`, response.status, response.statusText);
+      // Use error message from the response data if available
+      const errorMessage = data && data.message 
+        ? data.message 
+        : `Lỗi ${response.status}: ${response.statusText}`;
+      
       return Promise.reject({
-        message: "Response không phải định dạng JSON",
+        message: errorMessage,
         status: response.status,
+        data: data,
       });
     }
 
-    return await response.json();
+    // If we parsed the data successfully, return it
+    if (data) {
+      return data;
+    }
+
+    // If we couldn't parse the data but the response is OK, return an error
+    console.error(`Lỗi API ${endpoint}: Response không phải JSON`, contentType);
+    return Promise.reject({
+      message: "Response không phải định dạng JSON",
+      status: response.status,
+    });
   } catch (error) {
     console.error("API Error:", error);
     return Promise.reject(error);
@@ -152,25 +167,49 @@ export const authAPI = {
 
 // API đặt bàn
 export const reservationAPI = {
-  getAll: () => fetchAPI("/reservations"),
+  getAll: () => fetchAPI("/reservation"),
 
-  getByUser: () => fetchAPI("/reservations/user"),
+  getByUser: () => fetchAPI("/reservation/my?include=restaurant,table,payment"),
 
   create: (reservationData) =>
-    fetchAPI("/reservations", {
+    fetchAPI("/reservation", {
       method: "POST",
       body: JSON.stringify(reservationData),
     }),
 
   update: (id, reservationData) =>
-    fetchAPI(`/reservations/${id}`, {
+    fetchAPI(`/reservation/${id}`, {
       method: "PUT",
       body: JSON.stringify(reservationData),
     }),
 
   delete: (id) =>
-    fetchAPI(`/reservations/${id}`, {
+    fetchAPI(`/reservation/${id}`, {
       method: "DELETE",
+    }),
+
+  refund: (id, refundData) =>
+    fetchAPI(`/reservation/${id}/refund`, {
+      method: "POST",
+      body: JSON.stringify(refundData),
+    }),
+};
+
+// API thanh toán
+export const paymentAPI = {
+  createPayment: (paymentData) =>
+    fetchAPI("/payment/create", {
+      method: "POST",
+      body: JSON.stringify(paymentData),
+    }),
+    
+  getPaymentInfo: (orderCode) =>
+    fetchAPI(`/payment/info/${orderCode}?include=reservation`),
+    
+  confirmPayment: (paymentData) =>
+    fetchAPI("/reservation/confirm", {
+      method: "POST",
+      body: JSON.stringify(paymentData),
     }),
 };
 

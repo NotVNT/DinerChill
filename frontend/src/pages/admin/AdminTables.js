@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { adminAPI } from '../../services/api';
+import { adminAPI } from '../../api';
 import '../../styles/admin_layout/admin_tables.css';
 
 // Di chuyển hàm generateTableCode lên trước component
