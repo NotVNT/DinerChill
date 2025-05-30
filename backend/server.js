@@ -760,6 +760,10 @@ app.use('/api/reservation', reservationRoutes);
 const restaurantRoutes = require('./routes/restaurant');
 app.use('/api/restaurants', restaurantRoutes);
 
+// Add categories routes
+const categoryRoutes = require('./routes/categories');
+app.use('/api/categories', categoryRoutes);
+
 // Explicitly disable review functionality
 app.post('/api/restaurants/:id/reviews', (req, res) => {
   res.status(404).json({ message: 'Review functionality has been removed' });

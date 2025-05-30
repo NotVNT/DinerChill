@@ -1,10 +1,9 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Outlet } from 'react-router-dom';
 import './App.css';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import HomePage from './pages/HomePage';
-import RestaurantPage from './pages/RestaurantPage';
 import RestaurantDetailPage from './pages/RestaurantDetailPage';
 import { AppProvider } from './context/AppContext';
 import ReservationPage from './pages/application/ReservationPage';
@@ -37,6 +36,29 @@ import PaymentResultPage from './pages/application/PaymentResultPage';
 import ScrollToTop from './components/ScrollToTop';
 import TableSelectionPage from './pages/application/TableSelectionPage';
 
+// Lazy load category components
+const Lau = React.lazy(() => import('./categories/Lau'));
+const Buffet = React.lazy(() => import('./categories/Buffet'));
+const HaiSan = React.lazy(() => import('./categories/Hai_San'));
+const LauNuong = React.lazy(() => import('./categories/Lau_Nuong'));
+const QuanNhau = React.lazy(() => import('./categories/Quan_Nhau'));
+const MonChay = React.lazy(() => import('./categories/Mon_Chay'));
+const DoTiec = React.lazy(() => import('./categories/Do_tiec'));
+const HanQuoc = React.lazy(() => import('./categories/Han_Quoc'));
+const NhatBan = React.lazy(() => import('./categories/Nhat_Ban'));
+const MonViet = React.lazy(() => import('./categories/Mon_Viet'));
+const MonThai = React.lazy(() => import('./categories/Mon_Thai'));
+const MonTrungHoa = React.lazy(() => import('./categories/Mon_TrungHoa'));
+const TiecCuoi = React.lazy(() => import('./categories/Tiec_Cuoi'));
+const DoUong = React.lazy(() => import('./categories/Do_Uong'));
+
+// Loading component for suspense
+const Loading = () => (
+  <div className="loading-container">
+    <div className="loading-spinner"></div>
+    <p>Đang tải...</p>
+  </div>
+);
 
 // Layout cho ứng dụng (có Header và Footer)
 function AppLayout() {
@@ -88,25 +110,9 @@ function App() {
           
           {/* All other routes */}
           <Route path="/*" element={<AppLayout />}>
-            <Route path="restaurants" element={<RestaurantPage />} />
             <Route path="restaurant/:id" element={<RestaurantDetailPage />} />
             <Route path="restaurants/:id" element={<RestaurantDetailPage />} />
             <Route path="restaurant/:id/tables" element={<TableSelectionPage />} />
-            <Route path="nha-hang" element={<RestaurantPage />} />
-            <Route path="lau" element={<RestaurantPage />} />
-            <Route path="buffet" element={<RestaurantPage />} />
-            <Route path="hai-san" element={<RestaurantPage />} />
-            <Route path="lau-nuong" element={<RestaurantPage />} />
-            <Route path="quan-nhau" element={<RestaurantPage />} />
-            <Route path="mon-chay" element={<RestaurantPage />} />
-            <Route path="do-tiec" element={<RestaurantPage />} />
-            <Route path="han-quoc" element={<RestaurantPage />} />
-            <Route path="nhat-ban" element={<RestaurantPage />} />
-            <Route path="mon-viet" element={<RestaurantPage />} />
-            <Route path="mon-thai" element={<RestaurantPage />} />
-            <Route path="mon-trung-hoa" element={<RestaurantPage />} />
-            <Route path="tiec-cuoi" element={<RestaurantPage />} />
-            <Route path="do-uong" element={<RestaurantPage />} />
             <Route path="login" element={<LoginPage />} />
             <Route path="register" element={<RegisterPage />} />
             <Route path="forgot-password" element={<ForgotPasswordPage />} />
@@ -117,6 +123,21 @@ function App() {
             <Route path="payment-result" element={<PaymentResultPage />} />
             <Route path="payment" element={<ProtectedRoute><PaymentResultPage /></ProtectedRoute>} />
 
+            {/* Category Routes */}
+            <Route path="lau" element={<Suspense fallback={<Loading />}><Lau /></Suspense>} />
+            <Route path="buffet" element={<Suspense fallback={<Loading />}><Buffet /></Suspense>} />
+            <Route path="hai-san" element={<Suspense fallback={<Loading />}><HaiSan /></Suspense>} />
+            <Route path="lau-nuong" element={<Suspense fallback={<Loading />}><LauNuong /></Suspense>} />
+            <Route path="quan-nhau" element={<Suspense fallback={<Loading />}><QuanNhau /></Suspense>} />
+            <Route path="mon-chay" element={<Suspense fallback={<Loading />}><MonChay /></Suspense>} />
+            <Route path="do-tiec" element={<Suspense fallback={<Loading />}><DoTiec /></Suspense>} />
+            <Route path="han-quoc" element={<Suspense fallback={<Loading />}><HanQuoc /></Suspense>} />
+            <Route path="nhat-ban" element={<Suspense fallback={<Loading />}><NhatBan /></Suspense>} />
+            <Route path="mon-viet" element={<Suspense fallback={<Loading />}><MonViet /></Suspense>} />
+            <Route path="mon-thai" element={<Suspense fallback={<Loading />}><MonThai /></Suspense>} />
+            <Route path="mon-trung-hoa" element={<Suspense fallback={<Loading />}><MonTrungHoa /></Suspense>} />
+            <Route path="tiec-cuoi" element={<Suspense fallback={<Loading />}><TiecCuoi /></Suspense>} />
+            <Route path="do-uong" element={<Suspense fallback={<Loading />}><DoUong /></Suspense>} />
             
             {/* Protected Routes */}
             <Route path="reservation" element={<ProtectedRoute><ReservationPage /></ProtectedRoute>} />

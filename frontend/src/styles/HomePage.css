@@ -431,3 +431,120 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* SearchBar styles for HomePage */
+.home-page .search-section {
+  max-width: 1200px;
+  margin: 20px auto;
+  padding: 0 16px;
+}
+
+.home-page .search-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #fff;
+  padding: 12px 0;
+  gap: 10px;
+  flex-wrap: nowrap;
+}
+
+.home-page .location-select {
+  padding: 8px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  font-size: 14px;
+  background-color: #fff;
+  appearance: none;
+  cursor: pointer;
+  height: 40px;
+  min-width: 120px;
+  max-width: 140px;
+}
+
+.home-page .search-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  font-size: 14px;
+  height: 40px;
+  min-width: 200px;
+}
+
+.home-page .search-button {
+  padding: 8px 16px;
+  background-color: #dc2626;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 14px;
+  height: 40px;
+  white-space: nowrap;
+}
+
+.home-page .search-button:hover {
+  background-color: #b91c1c;
+}
+
+.home-page .hotline {
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  color: #dc2626;
+  font-size: 16px;
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .home-page .search-container {
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+  
+  .home-page .location-select {
+    order: 1;
+    flex-basis: 48%;
+    max-width: none;
+  }
+  
+  .home-page .search-input {
+    order: 2;
+    flex-basis: 48%;
+    min-width: 0;
+  }
+  
+  .home-page .search-button {
+    order: 3;
+    flex-basis: 48%;
+    margin-top: 10px;
+  }
+  
+  .home-page .hotline {
+    order: 4;
+    flex-basis: 48%;
+    margin-top: 10px;
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 480px) {
+  .home-page .search-container {
+    gap: 8px;
+  }
+  
+  .home-page .location-select,
+  .home-page .search-input,
+  .home-page .search-button,
+  .home-page .hotline {
+    flex-basis: 100%;
+    max-width: none;
+    margin-top: 8px;
+  }
+  
+  .home-page .hotline {
+    justify-content: center;
+  }
+}

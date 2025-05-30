@@ -25,19 +25,20 @@ function FilterBox() {
 
   // Danh sách các loại món ăn (booth categories) - đại diện cho bộ lọc "Loại hình nhà hàng"
   const cuisineTypes = [
-    { id: 'buffet', name: 'Buffet', icon: '🍱' },
-    { id: 'hotpot', name: 'Lẩu', icon: '🍲' },
-    { id: 'grilled', name: 'Nướng', icon: '🔥' },
-    { id: 'seafood', name: 'Hải sản', icon: '🦐' },
-    { id: 'beer', name: 'Quán nhậu', icon: '🍻' },
-    { id: 'japanese', name: 'Món Nhật', icon: '🍣' },
-    { id: 'vietnamese', name: 'Món Việt', icon: '🍜' },
-    { id: 'korean', name: 'Món Hàn', icon: '🍲' },
-    { id: 'vegetarian', name: 'Món chay', icon: '🥗' },
-    { id: 'asian', name: 'Món Châu Á', icon: '🥢' },
-    { id: 'european', name: 'Món Châu Âu', icon: '🍕' },
-    { id: 'thai', name: 'Món Thái', icon: '🍸' },
-    { id: 'chinese', name: 'Món Trung Hoa', icon: '🥟' },
+    { id: 'buffet', name: 'Buffet', icon: '🍱', route: '/buffet' },
+    { id: 'lau', name: 'Lẩu', icon: '🍲', route: '/lau' },
+    { id: 'nuong', name: 'Nướng', icon: '🔥', route: '/lau-nuong' },
+    { id: 'hai-san', name: 'Hải sản', icon: '🦐', route: '/hai-san' },
+    { id: 'quan-nhau', name: 'Quán nhậu', icon: '🍻', route: '/quan-nhau' },
+    { id: 'nhat-ban', name: 'Món Nhật', icon: '🍣', route: '/nhat-ban' },
+    { id: 'mon-viet', name: 'Món Việt', icon: '🍜', route: '/mon-viet' },
+    { id: 'han-quoc', name: 'Món Hàn', icon: '🍲', route: '/han-quoc' },
+    { id: 'mon-chay', name: 'Món chay', icon: '🥗', route: '/mon-chay' },
+    { id: 'mon-thai', name: 'Món Thái', icon: '🍸', route: '/mon-thai' },
+    { id: 'mon-trung-hoa', name: 'Món Trung Hoa', icon: '🥟', route: '/mon-trung-hoa' },
+    { id: 'do-tiec', name: 'Đồ tiệc', icon: '🍽️', route: '/do-tiec' },
+    { id: 'tiec-cuoi', name: 'Tiệc cưới', icon: '💍', route: '/tiec-cuoi' },
+    { id: 'do-uong', name: 'Đồ uống', icon: '🥤', route: '/do-uong' },
   ];
 
   // Số lượng filter hiển thị cùng lúc
@@ -110,10 +111,11 @@ function FilterBox() {
       ...filters,
       cuisine: cuisineId,
     });
-    navigate({
-      pathname: '/restaurants',
-      search: `?cuisine=${cuisineId}`,
-    });
+    
+    const selectedCuisine = cuisineTypes.find(c => c.id === cuisineId);
+    if (selectedCuisine && selectedCuisine.route) {
+      navigate(selectedCuisine.route);
+    }
   };
 
   const scrollCategories = (direction) => {
@@ -252,6 +254,7 @@ function FilterBox() {
         <button
           className={`category-nav prev ${!isScrolled ? 'hidden' : ''}`}
           onClick={() => scrollCategories('left')}
+          aria-label="Previous categories"
         >
           <span>←</span>
         </button>
@@ -274,6 +277,7 @@ function FilterBox() {
         <button
           className={`category-nav next ${isAtEnd ? 'hidden' : ''}`}
           onClick={() => scrollCategories('right')}
+          aria-label="Next categories"
         >
           <span>→</span>
         </button>

@@ -680,3 +680,14 @@ export const favoriteAPI = {
       method: "DELETE",
     }),
 };
+
+// API for categories
+export const categoriesAPI = {
+  getAll: () => fetchAPI("/categories"),
+  
+  getById: (id) => fetchAPI(`/categories/${id}`),
+  
+  getRestaurantsByCategory: (categoryId) => fetchAPI(`/categories/${categoryId}/restaurants`),
+  
+  getRestaurantsByCategoryName: (categoryName) => fetchAPI(`/categories/name/${categoryName}/restaurants`),
+};
