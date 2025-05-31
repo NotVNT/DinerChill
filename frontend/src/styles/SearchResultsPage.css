@@ -1,74 +1,59 @@
-.category-page {
+.search-results-page {
   width: 100%;
   padding-bottom: 50px;
 }
 
-.category-content {
+.search-results-container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 15px;
 }
 
-.category-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+.search-results-header {
   margin-bottom: 30px;
   padding: 20px 0;
   border-bottom: 1px solid #e8e8e8;
 }
 
-.category-info h1 {
+.search-results-header h1 {
   font-size: 1.8rem;
   margin-bottom: 10px;
   color: #333;
 }
 
-.category-info p {
+.search-info {
   font-size: 1rem;
   color: #555;
+  margin-bottom: 8px;
 }
 
-.sort-options {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.sort-options label {
+.results-count {
   font-size: 0.9rem;
-  color: #555;
-  white-space: nowrap;
+  color: #777;
 }
 
-.sort-select {
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background-color: white;
-  font-size: 0.9rem;
-  color: #333;
-  min-width: 180px;
-  cursor: pointer;
-}
-
-.sort-select:focus {
-  outline: none;
-  border-color: #e71a0f;
-}
-
-.restaurant-grid {
+.search-results-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 25px;
 }
 
-.no-restaurants {
+.no-results {
   text-align: center;
   padding: 50px 0;
-  font-size: 1.1rem;
-  color: #666;
-  grid-column: 1 / -1;
+}
+
+.no-results h2 {
+  font-size: 1.4rem;
+  margin-bottom: 15px;
+  color: #e71a0f;
+}
+
+.no-results p {
+  font-size: 1rem;
+  color: #555;
+  max-width: 500px;
+  margin: 0 auto;
 }
 
 .loading-container {
@@ -105,7 +90,7 @@
   margin-bottom: 20px;
 }
 
-.error-container button {
+.retry-button {
   background-color: #e71a0f;
   color: white;
   border: none;
@@ -116,42 +101,29 @@
   transition: background-color 0.2s;
 }
 
-.error-container button:hover {
+.retry-button:hover {
   background-color: #d10a00;
 }
 
 /* Responsive Design */
 @media (max-width: 992px) {
-  .category-header {
-    flex-direction: column;
-  }
-  
-  .sort-options {
-    margin-top: 15px;
-    align-self: flex-start;
-  }
-  
-  .restaurant-grid {
+  .search-results-grid {
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
     gap: 20px;
   }
 }
 
 @media (max-width: 576px) {
-  .restaurant-grid {
+  .search-results-grid {
     grid-template-columns: 1fr;
     gap: 15px;
   }
   
-  .category-header h1 {
+  .search-results-header h1 {
     font-size: 1.5rem;
   }
   
-  .sort-options {
-    width: 100%;
-  }
-  
-  .sort-select {
-    flex: 1;
+  .search-info {
+    font-size: 0.9rem;
   }
 } 

@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import FilterBox from '../components/FilterBox';
-import SearchBar from '../components/SearchBar';
 import RestaurantCard from '../components/RestaurantCard';
+import SearchBar from '../components/SearchBar';
 import { useApp } from '../context/AppContext';
 import { restaurantsAPI } from '../api';
 import '../styles/HomePage.css';
@@ -190,6 +190,7 @@ function HomePage() {
 
   return (
     <div className="home-page">
+      <SearchBar />
       {showPasswordBanner && (
         <div className="password-notification-banner">
           <div className="password-notification-content">
@@ -206,8 +207,6 @@ function HomePage() {
           </div>
         </div>
       )}
-      
-      <SearchBar />
       
       <div className="container">
         <FilterBox />

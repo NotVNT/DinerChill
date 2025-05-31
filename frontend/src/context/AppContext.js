@@ -51,6 +51,8 @@ export function AppProvider({ children }) {
     distance: 'all',
     cuisine: 'all',
     rating: 'all',
+    price: 'all',
+    operatingHours: 'all',
     keyword: '',
   });
 
@@ -154,6 +156,27 @@ export function AppProvider({ children }) {
         const rating = item.rating || 0;
         return filters.rating === 'above4' ? rating >= 4 :
                filters.rating === 'above3' ? rating >= 3 : true;
+      });
+    }
+    if (filters.price !== 'all') {
+      filteredData = filteredData.filter(item => {
+        const averagePrice = item.averagePrice || 0;
+        return filters.price === 'low' ? averagePrice < 100000 :
+               filters.price === 'medium' ? (averagePrice >= 100000 && averagePrice < 300000) :
+               filters.price === 'high' ? (averagePrice >= 300000 && averagePrice < 500000) :
+               filters.price === 'luxury' ? averagePrice >= 500000 : true;
+      });
+    }
+    if (filters.operatingHours !== 'all') {
+      filteredData = filteredData.filter(item => {
+        const openHour = item.openHour || 0;
+        const closeHour = item.closeHour || 24;
+        
+        return filters.operatingHours === 'morning' ? (openHour <= 6 && closeHour >= 11) :
+               filters.operatingHours === 'lunch' ? (openHour <= 11 && closeHour >= 14) :
+               filters.operatingHours === 'evening' ? (openHour <= 17 && closeHour >= 22) :
+               filters.operatingHours === 'latenight' ? (openHour <= 22 && closeHour >= 2) :
+               filters.operatingHours === '24h' ? (openHour === 0 && closeHour === 24) : true;
       });
     }
     if (filters.keyword) {

@@ -5,6 +5,8 @@ import Header from './components/Header';
 import Footer from './components/Footer';
 import HomePage from './pages/HomePage';
 import RestaurantDetailPage from './pages/RestaurantDetailPage';
+import SearchResultsPage from './pages/SearchResultsPage';
+import FilterResultsPage from './pages/FilterResultsPage';
 import { AppProvider } from './context/AppContext';
 import ReservationPage from './pages/application/ReservationPage';
 import ReservationSuccessPage from './pages/application/ReservationSuccessPage';
@@ -113,6 +115,8 @@ function App() {
             <Route path="restaurant/:id" element={<RestaurantDetailPage />} />
             <Route path="restaurants/:id" element={<RestaurantDetailPage />} />
             <Route path="restaurant/:id/tables" element={<TableSelectionPage />} />
+            <Route path="search" element={<SearchResultsPage />} />
+            <Route path="filter-results" element={<FilterResultsPage />} />
             <Route path="login" element={<LoginPage />} />
             <Route path="register" element={<RegisterPage />} />
             <Route path="forgot-password" element={<ForgotPasswordPage />} />
