@@ -18,6 +18,8 @@ const promotionRoutes = require('./routes/promotion');
 const tableRoutes = require('./routes/table');
 const paymentRoutes = require('./routes/payment');
 const reservationRoutes = require('./routes/reservation');
+const restaurantRoutes = require('./routes/restaurant');
+const categoryRoutes = require('./routes/categories');
 const { sequelize } = require('./models');
 
 // Đọc biến môi trường từ file .env
@@ -749,19 +751,13 @@ app.post('/api/auth/change-password', authenticate, async (req, res) => {
 // Use auth routes
 app.use('/api/auth', authRoutes);
 
-// Thêm vào cuối file server.js trước app.listen
+// Use other routes
 app.use('/api/admin', adminRoutes);
 app.use('/api/promotion', promotionRoutes);
 app.use('/api/table', tableRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/reservation', reservationRoutes);
-
-// Add restaurant routes
-const restaurantRoutes = require('./routes/restaurant');
 app.use('/api/restaurants', restaurantRoutes);
-
-// Add categories routes
-const categoryRoutes = require('./routes/categories');
 app.use('/api/categories', categoryRoutes);
 
 // Explicitly disable review functionality

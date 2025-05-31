@@ -81,7 +81,19 @@ function App() {
       <AppProvider>
         <TokenHandler />
         <ScrollToTop />
+        <ScrollToTop />
         <Routes>
+          {/* Root path with HomePage - highest priority */}
+          <Route exact path="/" element={
+            <div className="App">
+              <Header />
+              <main className="main-content">
+                <HomePage />
+              </main>
+              <Footer />
+            </div>
+          } />
+
           {/* Root path with HomePage - highest priority */}
           <Route exact path="/" element={
             <div className="App">
@@ -108,6 +120,9 @@ function App() {
             <Route path="tables" element={<AdminTables />} />
             <Route path="reviews" element={<AdminReviews />} />
           </Route>
+
+          
+          {/* All other routes */}
 
           
           {/* All other routes */}

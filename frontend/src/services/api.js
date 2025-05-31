@@ -20,6 +20,7 @@ async function fetchAPI(endpoint, options = {}) {
 
   try {
     console.log(`Gọi API: ${url}`);
+    console.log(`Gọi API: ${url}`);
     const response = await fetch(url, config);
 
     // Always attempt to parse the JSON even if the status is not OK
