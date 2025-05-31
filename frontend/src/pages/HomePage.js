@@ -1,35 +1,35 @@
-import { Link, useNavigate } from 'react-router-dom';
-import { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import FilterBox from '../components/FilterBox';
 import RestaurantCard from '../components/RestaurantCard';
+import SearchBar from '../components/SearchBar';
 import { useApp } from '../context/AppContext';
 import { restaurantsAPI } from '../services/api';
 import '../styles/HomePage.css';
 
 function HomePage() {
-  const navigate = useNavigate(); // Giữ lại navigate
   const [showPasswordBanner, setShowPasswordBanner] = useState(true);
-  const [filters, setFilters] = useState({
-    area: '',
-    priceRange: '',
-    mainDish: '',
-    occasion: '',
-    promotion: '',
-    privateRoom: '',
-    dailyMeal: '',
-    companyEvent: '',
-    privateArea: '',
-    familyEvent: '',
-    serviceStyle: '',
-    cuisineStyle: '',
-  });
+  // Filters state - may be used in future implementation
+  // const [filters, setFilters] = useState({
+  //   area: '',
+  //   priceRange: '',
+  //   mainDish: '',
+  //   occasion: '',
+  //   promotion: '',
+  //   privateRoom: '',
+  //   dailyMeal: '',
+  //   companyEvent: '',
+  //   privateArea: '',
+  //   familyEvent: '',
+  //   serviceStyle: '',
+  //   cuisineStyle: '',
+  // });
 
   const {
     recentlyViewed,
     clearRecentlyViewed,
   } = useApp();
 
-  const filterRef = useRef(null);
   const [allRestaurants, setAllRestaurants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -102,61 +102,6 @@ function HomePage() {
   const handleDismissBanner = () => {
     setShowPasswordBanner(false);
     localStorage.setItem('passwordBannerDismissed', 'true');
-  };
-
-  const areas = ['Quận 1', 'Quận 3', 'Quận 7', 'Bình Thạnh', 'Phú Nhuận'];
-  const priceRanges = ['Dưới 100k', '100k-200k', '200k-300k', '300k-500k', 'Trên 500k'];
-  const mainDishes = ['Lẩu', 'Nướng', 'Món Á', 'Món Âu', 'Món Nhật', 'Món Hàn'];
-  const occasions = ['Hội nghị', 'Truyền thống', 'Hiện đại', 'Tiệc sinh nhật'];
-  const promotions = ['Ưu đãi', 'Độc quyền'];
-  const privateRooms = ['10-20 người', '20-50 người', '50-100 người'];
-  const dailyMeals = ['Sáng', 'Trưa', 'Chiều', 'Tối', 'Đêm', 'Khuya'];
-  const companyEvents = ['Tiệc nhỏ', 'Tiệc lớn', 'Tiệc buffet', 'Tiệc công ty ngoài trời'];
-  const privateAreas = ['Nhóm nhỏ (dưới 20)', 'Nhóm vừa (20-50)', 'Nhóm lớn (50-100)'];
-  const familyEvents = ['Tiệc nhỏ', 'Tiệc ấm cúng', 'Tiệc ngoài trời', 'Tiệc đông người'];
-  const serviceStyles = ['Tại bàn', 'Buffet', 'Gọi món', 'Tự phục vụ'];
-  const cuisineStyles = ['Việt Nam', 'Trung Quốc', 'Nhật Bản', 'Hàn Quốc', 'Thái Lan', 'Âu'];
-
-  const cuisines = [
-    { name: 'Buffet', path: '/cuisines?cuisineStyle=Buffet', icon: 'fa-utensils' },
-    { name: 'Lẩu', path: '/cuisines?cuisineStyle=Lẩu', icon: 'fa-hot-tub' },
-    { name: 'Nướng', path: '/cuisines?cuisineStyle=Nướng', icon: 'fa-fire' },
-    { name: 'Hải sản', path: '/cuisines?cuisineStyle=Hải sản', icon: 'fa-fish' },
-    { name: 'Quán nhậu', path: '/cuisines?cuisineStyle=Quán nhậu', icon: 'fa-beer-mug-empty' },
-    { name: 'Món Nhẹ', path: '/cuisines?cuisineStyle=Món Nhẹ', icon: 'fa-leaf' },
-    { name: 'Món Việt', path: '/cuisines?cuisineStyle=Việt Nam', icon: 'fa-bowl-rice' },
-    { name: 'Món Hàn', path: '/cuisines?cuisineStyle=Hàn Quốc', icon: 'fa-pepper-hot' },
-    { name: 'Món chay', path: '/cuisines?cuisineStyle=Món chay', icon: 'fa-carrot' },
-    { name: 'Món khác', path: '/cuisines?cuisineStyle=Món khác', icon: 'fa-utensil-spoon' },
-  ];
-
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-    setFilters({ ...filters, [name]: value });
-  };
-
-  const applyFilters = () => {
-    // Tạo query string từ filters
-    const queryParams = new URLSearchParams();
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value) {
-        queryParams.append(key, value);
-      }
-    });
-    // Điều hướng đến trang /restaurants với bộ lọc
-    navigate(`/restaurants?${queryParams.toString()}`);
-  };
-
-  const scrollFiltersLeft = () => {
-    if (filterRef.current) {
-      filterRef.current.scrollBy({ left: -200, behavior: 'smooth' });
-    }
-  };
-
-  const scrollFiltersRight = () => {
-    if (filterRef.current) {
-      filterRef.current.scrollBy({ left: 200, behavior: 'smooth' });
-    }
   };
 
   const handleLoadMore = (category, dataList) => {
@@ -245,6 +190,7 @@ function HomePage() {
 
   return (
     <div className="home-page">
+      <SearchBar />
       {showPasswordBanner && (
         <div className="password-notification-banner">
           <div className="password-notification-content">
@@ -261,105 +207,7 @@ function HomePage() {
           </div>
         </div>
       )}
-      <div className="filter-container">
-        <div className="top-filters-wrapper">
-          <button className="scroll-arrow scroll-left" onClick={scrollFiltersLeft}>
-            ←
-          </button>
-          <div className="top-filters" ref={filterRef}>
-            <select name="area" value={filters.area} onChange={handleFilterChange}>
-              <option value="">Khu vực</option>
-              {areas.map((area) => (
-                <option key={area} value={area}>{area}</option>
-              ))}
-            </select>
-            <select name="mainDish" value={filters.mainDish} onChange={handleFilterChange}>
-              <option value="">Nhà hàng</option>
-              {mainDishes.map((dish) => (
-                <option key={dish} value={dish}>{dish}</option>
-              ))}
-            </select>
-            <select name="priceRange" value={filters.priceRange} onChange={handleFilterChange}>
-              <option value="">Giá trung bình</option>
-              {priceRanges.map((range) => (
-                <option key={range} value={range}>{range}</option>
-              ))}
-            </select>
-            <select name="occasion" value={filters.occasion} onChange={handleFilterChange}>
-              <option value="">Đồ ăn chính</option>
-              {occasions.map((occasion) => (
-                <option key={occasion} value={occasion}>{occasion}</option>
-              ))}
-            </select>
-            <select name="promotion" value={filters.promotion} onChange={handleFilterChange}>
-              <option value="">Phù hợp</option>
-              {promotions.map((promo) => (
-                <option key={promo} value={promo}>{promo}</option>
-              ))}
-            </select>
-            <select name="privateRoom" value={filters.privateRoom} onChange={handleFilterChange}>
-              <option value="">Phòng riêng</option>
-              {privateRooms.map((room) => (
-                <option key={room} value={room}>{room}</option>
-              ))}
-            </select>
-            <select name="dailyMeal" value={filters.dailyMeal} onChange={handleFilterChange}>
-              <option value="">Bữa ăn hàng ngày</option>
-              {dailyMeals.map((meal) => (
-                <option key={meal} value={meal}>{meal}</option>
-              ))}
-            </select>
-            <select name="companyEvent" value={filters.companyEvent} onChange={handleFilterChange}>
-              <option value="">Đặt tiệc công ty</option>
-              {companyEvents.map((event) => (
-                <option key={event} value={event}>{event}</option>
-              ))}
-            </select>
-            <select name="privateArea" value={filters.privateArea} onChange={handleFilterChange}>
-              <option value="">Khu riêng</option>
-              {privateAreas.map((area) => (
-                <option key={area} value={area}>{area}</option>
-              ))}
-            </select>
-            <select name="familyEvent" value={filters.familyEvent} onChange={handleFilterChange}>
-              <option value="">Đặt tiệc gia đình</option>
-              {familyEvents.map((event) => (
-                <option key={event} value={event}>{event}</option>
-              ))}
-            </select>
-            <select name="serviceStyle" value={filters.serviceStyle} onChange={handleFilterChange}>
-              <option value="">Kiểu phục vụ</option>
-              {serviceStyles.map((style) => (
-                <option key={style} value={style}>{style}</option>
-              ))}
-            </select>
-            <select name="cuisineStyle" value={filters.cuisineStyle} onChange={handleFilterChange}>
-              <option value="">Phong cách ẩm thực</option>
-              {cuisineStyles.map((style) => (
-                <option key={style} value={style}>{style}</option>
-              ))}
-            </select>
-          </div>
-          <button className="scroll-arrow scroll-right" onClick={scrollFiltersRight}>
-            →
-          </button>
-          <button className="apply-filter-button" onClick={applyFilters}>
-            Tìm kiếm
-          </button>
-        </div>
-        <div className="cuisine-filter">
-          {cuisines.map((cuisine) => (
-            <Link key={cuisine.name} to={cuisine.path} className="cuisine-button">
-              <div className="cuisine-top">
-                <i className={`fas ${cuisine.icon} cuisine-icon`}></i>
-              </div>
-              <div className="cuisine-content">
-                <h3 className="cuisine-headline">{cuisine.name}</h3>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </div>
+      
       <div className="container">
         <FilterBox />
       </div>

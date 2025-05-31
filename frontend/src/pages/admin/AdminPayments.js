@@ -36,7 +36,11 @@ function AdminPayments() {
         queryParams.append('search', searchQuery.trim());
       }
       
+      // Add include parameter to fetch reservation details with user data
+      queryParams.append('include', 'reservation.user');
+      
       const data = await fetchWithAuth(`/admin/payments?${queryParams.toString()}`);
+      console.log('Payments data with reservations and users:', data);
       setPayments(data);
       setError(null);
     } catch (error) {
@@ -107,6 +111,31 @@ function AdminPayments() {
   const handleViewDetails = (payment) => {
     console.log('Payment details clicked:', payment);
     if (payment) {
+      // Log reservation and user details for debugging
+      if (payment.reservation) {
+        console.log('Reservation details:', {
+          date: payment.reservation.date,
+          time: payment.reservation.time,
+          partySize: payment.reservation.partySize
+        });
+        
+        if (payment.reservation.user) {
+          console.log('User details from reservation:', {
+            userId: payment.reservation.user.id,
+            userName: payment.reservation.user.name,
+            userPhone: payment.reservation.user.phone,
+            userEmail: payment.reservation.user.email
+          });
+        }
+      }
+      
+      // Log possible phone number fields
+      console.log('Phone number fields:', {
+        'payment.userPhone': payment.userPhone,
+        'payment.user?.phone': payment.user?.phone,
+        'payment.reservation?.user?.phone': payment.reservation?.user?.phone
+      });
+      
       setSelectedPayment(payment);
       setShowDetailModal(true);
     }
@@ -374,7 +403,13 @@ function AdminPayments() {
                       </div>
                       <div className="detail-row">
                         <span className="label">Số điện thoại:</span>
-                        <span className="value">{selectedPayment.userPhone || 'Không có'}</span>
+                        <span className="value">
+                          {selectedPayment.reservation && selectedPayment.reservation.user && selectedPayment.reservation.user.phone
+                            ? selectedPayment.reservation.user.phone
+                            : selectedPayment.user && selectedPayment.user.phone
+                              ? selectedPayment.user.phone
+                              : selectedPayment.userPhone || 'Không có'}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -394,11 +429,23 @@ function AdminPayments() {
                       </div>
                       <div className="detail-row">
                         <span className="label">Ngày đặt bàn:</span>
-                        <span className="value">{selectedPayment.reservationDate ? formatDate(selectedPayment.reservationDate) : 'N/A'}</span>
+                        <span className="value">
+                          {selectedPayment.reservation && selectedPayment.reservation.date
+                            ? `${selectedPayment.reservation.date} ${selectedPayment.reservation.time || ''}`
+                            : selectedPayment.reservationDate 
+                              ? formatDate(selectedPayment.reservationDate) 
+                              : 'N/A'}
+                        </span>
                       </div>
                       <div className="detail-row">
                         <span className="label">Số lượng người:</span>
-                        <span className="value">{selectedPayment.guestCount ? `${selectedPayment.guestCount} người` : 'N/A'}</span>
+                        <span className="value">
+                          {selectedPayment.reservation && selectedPayment.reservation.partySize
+                            ? `${selectedPayment.reservation.partySize} người`
+                            : selectedPayment.guestCount 
+                              ? `${selectedPayment.guestCount} người` 
+                              : 'N/A'}
+                        </span>
                       </div>
                     </div>
                   </div>

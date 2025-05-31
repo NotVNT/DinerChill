@@ -2,7 +2,13 @@
 .admin-tables-container {
   padding: 24px;
   background-color: #f8f9fa;
-  min-height: calc(100vh - 64px);
+  min-height: 100vh;
+  width: 100%;
+  box-sizing: border-box; /* Ensure padding doesn't add to width */
+  overflow-x: hidden; /* Prevent horizontal scrolling */
+  overflow-y: visible; /* Allow content to expand naturally */
+  margin: 0;
+  position: relative;
 }
 
 .table-controls {
@@ -36,7 +42,7 @@
 .search-input:focus {
   outline: none;
   border-color: #80bdff;
-  box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }
 
 .search-input::placeholder {
@@ -60,7 +66,7 @@
 .time-filter:focus {
   outline: none;
   border-color: #80bdff;
-  box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }
 
 .status-filter:hover,
@@ -158,7 +164,8 @@
   gap: 8px;
 }
 
-.edit-btn, .delete-btn {
+.edit-btn,
+.delete-btn {
   padding: 6px 12px;
   border-radius: 6px;
   border: none;
@@ -242,7 +249,7 @@
 .form-group textarea:focus {
   outline: none;
   border-color: #80bdff;
-  box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }
 
 .capacity-input-group {
@@ -272,7 +279,8 @@
   margin-top: 24px;
 }
 
-.save-btn, .cancel-btn {
+.save-btn,
+.cancel-btn {
   padding: 10px 20px;
   border-radius: 8px;
   border: none;
@@ -352,7 +360,7 @@
 /* Focus effect cho cả group */
 .capacity-input-group:focus-within {
   border-color: #80bdff;
-  box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }
 
 /* Đảm bảo input type number không có mũi tên */
@@ -362,7 +370,7 @@
   margin: 0;
 }
 
-.capacity-input[type=number] {
+.capacity-input[type="number"] {
   -moz-appearance: textfield;
 }
 
@@ -379,11 +387,15 @@
 
 /* Add these new styles */
 .restaurant-list {
-
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(450px, 1fr)
+  ); /* Dynamic column sizing */
   gap: 16px;
+  width: 100%;
+  margin-bottom: 20px;
+  overflow: visible; /* Ensure content isn't cut off */
 }
 
 .restaurant-item {
@@ -392,7 +404,6 @@
   padding: 20px;
   display: flex;
   justify-content: space-between;
-
   align-items: flex-start;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
@@ -400,7 +411,6 @@
   height: 160px;
   position: relative;
   overflow: hidden;
-
 }
 
 .restaurant-item:hover {
@@ -412,7 +422,6 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-
   width: calc(100% - 50px);
   overflow: hidden;
   text-align: left;
@@ -427,20 +436,20 @@
   overflow: hidden;
   text-overflow: ellipsis;
   width: 100%;
-
 }
 
 .restaurant-name {
   font-size: 18px;
   font-weight: 600;
   color: #2c3e50;
-
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.restaurant-hours, .table-count, .last-updated {
+.restaurant-hours,
+.table-count,
+.last-updated {
   margin-left: 15px;
   display: flex;
   align-items: center;
@@ -450,17 +459,15 @@
 .restaurant-hours {
   color: #6c757d;
   font-size: 14px;
-
 }
 
 .table-count {
   color: #6c757d;
   font-size: 14px;
-
 }
 
 .table-count::before {
-  content: "\f236";  /* Font Awesome chair icon */
+  content: "\f236"; /* Font Awesome chair icon */
   font-family: "Font Awesome 5 Free";
   font-weight: 900;
 }
@@ -468,11 +475,10 @@
 .last-updated {
   color: #adb5bd;
   font-size: 12px;
-
 }
 
 .last-updated::before {
-  content: "\f017";  /* Font Awesome clock icon */
+  content: "\f017"; /* Font Awesome clock icon */
   font-family: "Font Awesome 5 Free";
   font-weight: 900;
 }
@@ -491,12 +497,10 @@
   justify-content: center;
   min-width: 40px;
   height: 40px;
-
   position: absolute;
   top: 50%;
   right: 20px;
   transform: translateY(-50%);
-
 }
 
 .view-tables-btn:hover {
@@ -519,7 +523,6 @@
   transform: scale(0.95);
 }
 
-
 /* Restaurant header section with enhanced styling */
 .restaurant-header {
   display: flex;
@@ -537,13 +540,13 @@
 }
 
 .restaurant-header::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
   width: 6px;
   height: 100%;
-  background: linear-gradient(to bottom, #4CAF50, #45a049);
+  background: linear-gradient(to bottom, #4caf50, #45a049);
   border-top-left-radius: 16px;
   border-bottom-left-radius: 16px;
 }
@@ -583,7 +586,9 @@
   flex-wrap: wrap;
 }
 
-.table-count-display, .table-count-reserved, .table-count-occupied {
+.table-count-display,
+.table-count-reserved,
+.table-count-occupied {
   font-size: 14px;
   padding: 6px 16px;
   border-radius: 30px;
@@ -591,7 +596,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   transition: all 0.2s;
 }
 
@@ -602,7 +607,7 @@
 }
 
 .table-count-display:before {
-  content: "\f236";  /* Font Awesome chair icon */
+  content: "\f236"; /* Font Awesome chair icon */
   font-family: "Font Awesome 5 Free";
   font-weight: 900;
   margin-right: 8px;
@@ -616,7 +621,7 @@
 }
 
 .table-count-reserved:before {
-  content: "\f02a";  /* Font Awesome tag icon */
+  content: "\f02a"; /* Font Awesome tag icon */
   font-family: "Font Awesome 5 Free";
   font-weight: 900;
   margin-right: 8px;
@@ -630,7 +635,7 @@
 }
 
 .table-count-occupied:before {
-  content: "\f4fc";  /* Font Awesome user-check icon */
+  content: "\f4fc"; /* Font Awesome user-check icon */
   font-family: "Font Awesome 5 Free";
   font-weight: 900;
   margin-right: 8px;
@@ -657,7 +662,7 @@
   border-radius: 50px !important;
   background-color: #f8f9fa !important;
   border: 1px solid #dee2e6 !important;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.05) !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05) !important;
   transition: all 0.3s ease !important;
   font-size: 14px !important;
 }
@@ -665,7 +670,7 @@
 .table-search-input:focus {
   background-color: #fff !important;
   border-color: #80bdff !important;
-  box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25) !important;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
 }
 
 .search-icon {
@@ -691,18 +696,18 @@
   align-items: center !important;
   justify-content: center !important;
   transition: all 0.3s ease !important;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1) !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1) !important;
 }
 
 .add-table-btn:hover {
   background-color: #218838 !important;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
   transform: translateY(-1px);
 }
 
 .add-table-btn:active {
   transform: translateY(1px);
-  box-shadow: 0 2px 3px rgba(0,0,0,0.1) !important;
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1) !important;
 }
 
 /* Improved back button */
@@ -721,14 +726,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
 
 .back-btn:hover {
   background: #e8eaed;
   color: #202124;
   transform: scale(1.05);
-
 }
 
 /* Tables Grid */
@@ -737,6 +741,8 @@
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 20px;
   padding: 20px 0;
+  width: 100%;
+  flex-grow: 1; /* Allow grid to grow and fill available space */
 }
 
 .table-card {
@@ -851,14 +857,14 @@
 }
 
 /* Add styles for restaurant status indicators */
-.restaurant-name-wrapper, .restaurant-title {
+.restaurant-name-wrapper,
+.restaurant-title {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
 .status-indicator {
-
   width: 12px;
   height: 12px;
   border-radius: 50%;
@@ -866,19 +872,18 @@
   margin-right: 8px;
   position: relative;
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8);
-
 }
 
 .status-indicator.open {
-  background-color: #4CAF50;
+  background-color: #4caf50;
 }
 
 .status-indicator.closed {
-  background-color: #9E9E9E;
+  background-color: #9e9e9e;
 }
 
 .status-indicator.maintenance {
-  background-color: #F44336;
+  background-color: #f44336;
 }
 
 .restaurant-hours {
@@ -922,11 +927,15 @@
   margin-top: 8px;
 }
 
-
-/* Add responsive behavior for smaller screens */
+/* Responsive adjustments to ensure fullscreen usage */
 @media (max-width: 992px) {
   .restaurant-list {
     grid-template-columns: 1fr;
+  }
+
+  .restaurant-header {
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .action-container {
@@ -940,7 +949,27 @@
   }
 }
 
+@media (max-width: 768px) {
+  .admin-tables-container {
+    padding: 16px;
+  }
+
+  .restaurant-item {
+    height: auto;
+    min-height: 160px;
+    padding: 15px;
+  }
+
+  .tables-grid {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  }
+}
+
 @media (max-width: 576px) {
+  .admin-tables-container {
+    padding: 12px;
+  }
+
   .action-container {
     flex-direction: column;
     align-items: stretch;
@@ -960,7 +989,8 @@
 .admin-tables-container {
   padding: 24px;
   background-color: #f8f9fa;
-  min-height: calc(100vh - 64px);
+  /* Remove this line as it conflicts with the earlier declaration */
+  /* min-height: calc(100vh - 64px); */
 }
 
 /* Enhanced top restaurant title and stats area */
@@ -980,14 +1010,13 @@
 }
 
 .status-indicator.open {
-  background-color: #4CAF50;
+  background-color: #4caf50;
 }
 
 .status-indicator.closed {
-  background-color: #9E9E9E;
+  background-color: #9e9e9e;
 }
 
 .status-indicator.maintenance {
-  background-color: #F44336;
+  background-color: #f44336;
 }
-

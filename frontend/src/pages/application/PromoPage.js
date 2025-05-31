@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import '../styles/pages/PromoPage.css';
+import '../../styles/pages/PromoPage.css';
 
 function PromoPage() {
   const [promotions, setPromotions] = useState([]);

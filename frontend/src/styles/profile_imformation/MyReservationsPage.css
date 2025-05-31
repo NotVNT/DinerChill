@@ -146,6 +146,57 @@
   padding: 15px 20px;
   border-top: 1px solid #f0f0f0;
   background-color: #fafafa;
+  flex-wrap: wrap;
+}
+
+.cancel-time-limit-info,
+.pending-info {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 15px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  background-color: #f0f0f0;
+  color: #666;
+  border: 1px solid #e0e0e0;
+  margin-right: auto;
+}
+
+.cancel-time-limit-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-right: auto;
+}
+
+.cancel-time-limit-container .btn-delete {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 15px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  background-color: #ffebee;
+  color: #c62828;
+  border: 1px solid #ffcdd2;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cancel-time-limit-container .btn-delete:hover {
+  background-color: #ffcdd2;
+}
+
+.cancel-time-limit-info svg,
+.pending-info svg {
+  color: #f44336;
+}
+
+.pending-info svg {
+  color: #ff9800;
 }
 
 .btn-cancel, .btn-review, .btn-view-restaurant {
@@ -342,5 +393,269 @@
   .btn-cancel, .btn-review, .btn-view-restaurant {
     width: 100%;
     justify-content: center;
+  }
+  
+  .cancel-time-limit-container {
+    flex-direction: column;
+    width: 100%;
+    gap: 10px;
+  }
+  
+  .cancel-time-limit-container .cancel-time-limit-info,
+  .cancel-time-limit-container .btn-delete {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Thêm CSS cho modal hủy đặt bàn */
+.cancel-reservation-modal {
+  max-width: 500px;
+  width: 90%;
+  border-radius: 12px;
+  overflow: hidden;
+  padding: 0;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+  border: none;
+}
+
+.cancel-reservation-modal .modal-header {
+  background-color: #f8f9fa;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e9ecef;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cancel-reservation-modal .modal-header h2 {
+  margin: 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.cancel-reservation-modal .close-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s;
+}
+
+.cancel-reservation-modal .close-button:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.cancel-reservation-modal .modal-body {
+  padding: 20px;
+}
+
+.cancel-reservation-modal .warning-message {
+  background-color: #fff3cd;
+  border-left: 4px solid #ffc107;
+  padding: 15px;
+  margin-bottom: 20px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+}
+
+.cancel-reservation-modal .warning-message svg {
+  color: #ffc107;
+  margin-right: 15px;
+  flex-shrink: 0;
+}
+
+.cancel-reservation-modal .warning-message p {
+  margin: 0;
+  color: #664d03;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.cancel-reservation-modal .reason-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.cancel-reservation-modal .reason-option {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancel-reservation-modal .reason-option:hover {
+  border-color: #dc3545;
+  background-color: #fff1f2;
+}
+
+.cancel-reservation-modal .reason-option.selected {
+  border-color: #dc3545;
+  background-color: #fff1f2;
+}
+
+.cancel-reservation-modal .reason-option svg {
+  margin-right: 15px;
+  color: #6c757d;
+}
+
+.cancel-reservation-modal .reason-option.selected svg {
+  color: #dc3545;
+}
+
+.cancel-reservation-modal .reason-option span {
+  font-weight: 500;
+}
+
+.cancel-reservation-modal .modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 15px 20px;
+  background-color: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+  gap: 10px;
+}
+
+.cancel-reservation-modal .btn-danger {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.2s;
+}
+
+.cancel-reservation-modal .btn-danger:hover:not(:disabled) {
+  background-color: #bb2d3b;
+}
+
+.cancel-reservation-modal .btn-danger:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.cancel-reservation-modal .btn-secondary {
+  background-color: #f8f9fa;
+  color: #212529;
+  border: 1px solid #dee2e6;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cancel-reservation-modal .btn-secondary:hover {
+  background-color: #e9ecef;
+}
+
+.cancel-reservation-modal .spinner-icon {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Styling for pending info section */
+.pending-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: #856404;
+  background-color: #fff8e1;
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin-bottom: 10px;
+  flex-wrap: wrap; /* Allow items to wrap on smaller screens */
+}
+
+/* Add styling for the deposit payment button */
+.btn-pay-deposit {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  margin-left: auto; /* Push the button to the right */
+  transition: background-color 0.2s;
+}
+
+.btn-pay-deposit:hover {
+  background-color: #3a7bc8;
+}
+
+.btn-pay-deposit:active {
+  background-color: #2a6cb8;
+}
+
+.btn-pay-deposit.loading {
+  background-color: #78a9e6;
+  cursor: not-allowed;
+}
+
+.btn-pay-deposit:disabled {
+  opacity: 0.7;
+}
+
+.deposit-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.btn-pay-deposit svg {
+  color: white;
+}
+
+/* Make sure the button is properly positioned on mobile */
+@media (max-width: 768px) {
+  .pending-info {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .btn-pay-deposit {
+    margin-left: 0;
+    margin-top: 8px;
+    align-self: flex-start;
   }
 } 

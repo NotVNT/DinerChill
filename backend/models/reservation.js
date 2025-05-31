@@ -37,7 +37,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     userId: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true, // Made optional to allow guest bookings
       references: {
         model: 'users',
         key: 'id'
@@ -61,7 +61,8 @@ module.exports = (sequelize, DataTypes) => {
     },
     partySize: {
       type: DataTypes.INTEGER,
-      allowNull: false
+      allowNull: false,
+      comment: 'Total number of guests'
     },
     status: {
       type: DataTypes.ENUM('pending', 'confirmed', 'cancelled', 'completed'),
@@ -78,11 +79,12 @@ module.exports = (sequelize, DataTypes) => {
         model: 'tables',
         key: 'id'
       }
-    }
+    },
   }, {
     sequelize,
     modelName: 'Reservation',
-    tableName: 'reservations'
+    tableName: 'reservations',
+    timestamps: true // Ensure createdAt and updatedAt fields are included
   });
   
   return Reservation;

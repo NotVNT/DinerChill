@@ -15,15 +15,23 @@
 .filter-section {
   display: flex;
   align-items: center;
-  gap: 15px; /* Tăng khoảng cách giữa các dropdown để trông thoáng hơn */
+  gap: 10px; /* Giảm khoảng cách giữa các dropdown để có thể hiển thị 5 lựa chọn */
   padding: 5px 0;
   width: 100%;
   justify-content: center; /* Căn giữa các dropdown */
+  overflow-x: auto; /* Cho phép cuộn ngang nếu không đủ không gian */
+  scrollbar-width: none; /* Ẩn thanh cuộn trên Firefox */
+  -ms-overflow-style: none; /* Ẩn thanh cuộn trên IE và Edge */
+}
+
+.filter-section::-webkit-scrollbar {
+  display: none; /* Ẩn thanh cuộn trên Chrome, Safari và Opera */
 }
 
 .filter-dropdown {
   position: relative;
-  min-width: 200px; /* Tăng min-width để dropdown trông cân đối hơn */
+  min-width: 180px; /* Giảm min-width để có thể chứa 5 filter */
+  flex: 1;
 }
 
 .filter-select {
@@ -56,7 +64,12 @@
   box-shadow: 0 0 0 2px rgba(216, 31, 38, 0.1);
 }
 
-/* Style cho nút điều hướng (giờ không cần nữa nhưng giữ lại để tương lai mở rộng) */
+/* Thêm hiệu ứng hover cho các dropdown */
+.filter-select:hover {
+  border-color: #e71a0f;
+}
+
+/* Style cho nút điều hướng */
 .filter-nav {
   position: absolute;
   top: 50%;
@@ -71,6 +84,7 @@
   justify-content: center;
   cursor: pointer;
   z-index: 5;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
 .filter-nav.prev {
@@ -97,20 +111,95 @@
 }
 
 /* Responsive styles */
-@media (max-width: 768px) {
+@media (max-width: 1200px) {
+  .filter-dropdown {
+    min-width: 150px;
+  }
+}
+
+@media (max-width: 992px) {
   .filter-section {
-    flex-wrap: wrap; /* Cho phép wrap nếu màn hình nhỏ */
+    flex-wrap: wrap;
     justify-content: flex-start;
   }
 
   .filter-dropdown {
-    min-width: 150px; /* Giảm min-width trên màn hình nhỏ */
+    min-width: 150px;
     flex: 1 1 calc(33.33% - 10px); /* Chia đều 3 dropdown trên 1 hàng */
+  }
+}
+
+@media (max-width: 768px) {
+  .filter-dropdown {
+    min-width: 150px;
+    flex: 1 1 calc(50% - 10px); /* Chia đều 2 dropdown trên 1 hàng */
   }
 }
 
 @media (max-width: 480px) {
   .filter-dropdown {
     min-width: 100%; /* Dropdown chiếm toàn bộ chiều rộng trên màn hình rất nhỏ */
+  }
+}
+
+.filter-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 15px;
+}
+
+.filter-action-btn {
+  padding: 8px 15px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  white-space: nowrap;
+}
+
+.apply-btn {
+  background-color: #e71a0f;
+  color: white;
+}
+
+.apply-btn:hover {
+  background-color: #d10a00;
+  transform: translateY(-2px);
+}
+
+.reset-btn {
+  background-color: #f2f2f2;
+  color: #333;
+  border: 1px solid #ddd;
+}
+
+.reset-btn:hover {
+  background-color: #e8e8e8;
+}
+
+@media (max-width: 992px) {
+  .filter-buttons {
+    margin: 10px 0 0;
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .filter-action-btn {
+    flex: 1;
+    max-width: 120px;
+  }
+}
+
+@media (max-width: 768px) {
+  .filter-buttons {
+    flex-direction: row;
+    width: 100%;
+  }
+  
+  .filter-action-btn {
+    flex: 1;
   }
 }

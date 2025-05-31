@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { authAPI } from '../services/api';
+import { authAPI, reservationAPI } from '../services/api';
 
 const AppContext = createContext();
 
@@ -51,6 +51,8 @@ export function AppProvider({ children }) {
     distance: 'all',
     cuisine: 'all',
     rating: 'all',
+    price: 'all',
+    operatingHours: 'all',
     keyword: '',
   });
 
@@ -154,6 +156,27 @@ export function AppProvider({ children }) {
         const rating = item.rating || 0;
         return filters.rating === 'above4' ? rating >= 4 :
                filters.rating === 'above3' ? rating >= 3 : true;
+      });
+    }
+    if (filters.price !== 'all') {
+      filteredData = filteredData.filter(item => {
+        const averagePrice = item.averagePrice || 0;
+        return filters.price === 'low' ? averagePrice < 100000 :
+               filters.price === 'medium' ? (averagePrice >= 100000 && averagePrice < 300000) :
+               filters.price === 'high' ? (averagePrice >= 300000 && averagePrice < 500000) :
+               filters.price === 'luxury' ? averagePrice >= 500000 : true;
+      });
+    }
+    if (filters.operatingHours !== 'all') {
+      filteredData = filteredData.filter(item => {
+        const openHour = item.openHour || 0;
+        const closeHour = item.closeHour || 24;
+        
+        return filters.operatingHours === 'morning' ? (openHour <= 6 && closeHour >= 11) :
+               filters.operatingHours === 'lunch' ? (openHour <= 11 && closeHour >= 14) :
+               filters.operatingHours === 'evening' ? (openHour <= 17 && closeHour >= 22) :
+               filters.operatingHours === 'latenight' ? (openHour <= 22 && closeHour >= 2) :
+               filters.operatingHours === '24h' ? (openHour === 0 && closeHour === 24) : true;
       });
     }
     if (filters.keyword) {
@@ -383,8 +406,29 @@ export function AppProvider({ children }) {
 
   const addReservation = async (reservationData) => {
     console.log('Đặt bàn:', reservationData);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    return { success: true, message: 'Đặt bàn thành công' };
+    try {
+      // Sử dụng reservationAPI.create từ services/api.js
+      const response = await reservationAPI.create(reservationData);
+      
+      return { 
+        success: true, 
+        message: 'Đặt bàn thành công', 
+        id: response.id || `RES-${Date.now()}`,
+        tableCode: response.table?.tableCode
+      };
+    } catch (error) {
+      console.error('Error saving reservation:', error);
+      
+      // Kiểm tra nếu có response.data để lấy thông tin lỗi chi tiết
+      const errorMessage = error.response?.data?.message || error.message || 'Đặt bàn thất bại, vui lòng thử lại';
+      const showAsToast = error.response?.data?.showAsToast || false;
+      
+      return { 
+        success: false, 
+        message: errorMessage,
+        showAsToast: showAsToast
+      };
+    }
   };
 
   // Lấy userName từ user (nếu có)

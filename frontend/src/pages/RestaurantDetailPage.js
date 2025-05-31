@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { useApp } from '../context/AppContext';
-import { restaurantsAPI } from '../services/api';
-import '../styles/RestaurantDetailPage.css';
+import React, { useState, useEffect, useCallback } from "react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useApp } from "../context/AppContext";
+import { restaurantsAPI } from "../services/api";
+import "../styles/RestaurantDetailPage.css";
 
 function RestaurantDetailPage() {
   const { id } = useParams();
@@ -13,36 +13,52 @@ function RestaurantDetailPage() {
   const [isFavorite, setIsFavorite] = useState(false);
   const [notification, setNotification] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
+  
+  // Get initial date, checking if current time is after 22:00 to select next day
+  const getCurrentOrNextDay = () => {
+    const now = new Date();
+    if (now.getHours() >= 22) {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      return tomorrow.toISOString().split('T')[0];
+    }
+    return now.toISOString().split('T')[0];
+  };
+  
   const [formData, setFormData] = useState({
     guests: 2,
     children: 0,
-    date: new Date().toISOString().split('T')[0],
-    time: '',
+    date: getCurrentOrNextDay(),
+    time: "",
   });
   const [selectedImage, setSelectedImage] = useState(null);
   const [selectedImageSource, setSelectedImageSource] = useState(null);
   const [selectedPromotion, setSelectedPromotion] = useState(null);
   const [availableTimes, setAvailableTimes] = useState([]);
-  const [reviewForm, setReviewForm] = useState({ rating: 0, comment: '', image: null });
+  const [reviewForm, setReviewForm] = useState({
+    rating: 0,
+    comment: "",
+    image: null,
+  });
   const [showAllAmenities, setShowAllAmenities] = useState(false);
   const [favoriteList, setFavoriteList] = useState([]);
   const [currentModalImageIndex, setCurrentModalImageIndex] = useState(0);
   const [showReservationForm, setShowReservationForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState('summary');
+  const [activeTab, setActiveTab] = useState("summary");
   const [savedReviews, setSavedReviews] = useState([]);
   const [previewImage, setPreviewImage] = useState(null);
 
   const tabs = [
-    { id: 'summary', label: 'Thông tin tóm tắt' },
-    { id: 'description', label: 'Mô tả' },
-    { id: 'amenities', label: 'Tiện ích' },
-    { id: 'operating-hours', label: 'Giờ hoạt động' },
-    { id: 'promotions', label: 'Ưu đãi' },
-    { id: 'reviews', label: 'Đánh giá' },
-    { id: 'images', label: 'Hình ảnh' },
-    { id: 'map', label: 'Chỉ đường' },
+    { id: "summary", label: "Thông tin tóm tắt" },
+    { id: "description", label: "Mô tả" },
+    { id: "amenities", label: "Tiện ích" },
+    { id: "operating-hours", label: "Giờ hoạt động" },
+    { id: "promotions", label: "Ưu đãi" },
+    { id: "reviews", label: "Đánh giá" },
+    { id: "images", label: "Hình ảnh" },
+    { id: "map", label: "Chỉ đường" },
   ];
 
   const handleTabChange = (tabId) => {
@@ -51,12 +67,60 @@ function RestaurantDetailPage() {
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
-    const showReservation = searchParams.get('showReservation');
-    if (showReservation === 'true') {
+    const showReservation = searchParams.get("showReservation");
+    if (showReservation === "true") {
       setShowReservationForm(true);
-      document.getElementById('booking-section')?.scrollIntoView({ behavior: 'smooth' });
+      document
+        .getElementById("booking-section")
+        ?.scrollIntoView({ behavior: "smooth" });
     }
   }, [location]);
+
+  const generateTimeSlots = useCallback((openTime, closeTime) => {
+    const times = [];
+    const [openHour, openMinute] = openTime.split(":").map(Number);
+    const [closeHour, closeMinute] = closeTime.split(":").map(Number);
+
+    let currentHour = openHour;
+    let currentMinute = openMinute;
+
+    while (
+      currentHour < closeHour ||
+      (currentHour === closeHour && currentMinute <= closeMinute)
+    ) {
+      const timeString = `${currentHour
+        .toString()
+        .padStart(2, "0")}:${currentMinute.toString().padStart(2, "0")}`;
+      times.push(timeString);
+
+      currentMinute += 30;
+      if (currentMinute >= 60) {
+        currentMinute = 0;
+        currentHour += 1;
+      }
+    }
+
+    // Check if current date is today and if current time is after 22:00
+    const today = new Date().toISOString().split("T")[0];
+    const currentTime = new Date();
+    const currentHourOfDay = currentTime.getHours();
+    
+    // If it's after 22:00, don't filter - we're already using tomorrow's date
+    if (formData.date === today && currentHourOfDay < 22) {
+      const filteredTimes = times.filter(time => {
+        const [hour, minute] = time.split(':').map(Number);
+        const timeDate = new Date(currentTime);
+        timeDate.setHours(hour, minute, 0, 0);
+        const diffHours = (timeDate - currentTime) / (1000 * 60 * 60);
+        return diffHours >= 2;
+      });
+      
+      // Return filtered times if there are any, otherwise return all times
+      return filteredTimes.length > 0 ? filteredTimes : times;
+    }
+
+    return times;
+  }, [formData.date]);
 
   useEffect(() => {
     const fetchRestaurant = async () => {
@@ -64,9 +128,9 @@ function RestaurantDetailPage() {
         setLoading(true);
         const data = await restaurantsAPI.getById(id);
         if (!data) throw new Error(`Không thể tìm thấy nhà hàng với ID: ${id}`);
-        
+
         setRestaurant(data);
-        
+
         if (data && data.id) {
           addToRecentlyViewed(data);
         }
@@ -74,13 +138,13 @@ function RestaurantDetailPage() {
         if (data.openingTime && data.closingTime) {
           const times = generateTimeSlots(data.openingTime, data.closingTime);
           setAvailableTimes(times);
-          setFormData((prev) => ({ ...prev, time: times[0] || '' }));
+          setFormData((prev) => ({ ...prev, time: times[0] || "" }));
         } else {
           setAvailableTimes([]);
-          setFormData((prev) => ({ ...prev, time: '' }));
+          setFormData((prev) => ({ ...prev, time: "" }));
         }
       } catch (err) {
-        console.error('Lỗi tìm nhà hàng:', err);
+        console.error("Lỗi tìm nhà hàng:", err);
         setError(err.message);
         setRestaurant(null);
       } finally {
@@ -89,17 +153,18 @@ function RestaurantDetailPage() {
     };
 
     fetchRestaurant();
-  }, [id, addToRecentlyViewed]);
+  }, [id, addToRecentlyViewed, generateTimeSlots]);
 
   useEffect(() => {
-    const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+    const favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
     setIsFavorite(favorites.includes(parseInt(id)));
     setFavoriteList(favorites);
   }, [id]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     let isMounted = true;
-    
+
     const getUserLocation = () => {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
@@ -110,62 +175,40 @@ function RestaurantDetailPage() {
             }
           },
           (err) => {
-            console.log('Không thể lấy vị trí người dùng:', err.message);
-            if (isMounted) setUserLocation('');
+            console.log("Không thể lấy vị trí người dùng:", err.message);
+            if (isMounted) setUserLocation("");
           }
         );
       } else {
-        console.log('Trình duyệt không hỗ trợ định vị.');
-        if (isMounted) setUserLocation('');
+        console.log("Trình duyệt không hỗ trợ định vị.");
+        if (isMounted) setUserLocation("");
       }
     };
-    
+
     if (userLocation === null) {
       getUserLocation();
     }
-    
-    return () => { isMounted = false; };
-  }, []);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [userLocation]);
 
   useEffect(() => {
     // Load saved reviews from session storage
     const loadSavedReviews = () => {
       try {
-        const restaurantReviews = JSON.parse(sessionStorage.getItem(`reviews_${id}`)) || [];
+        const restaurantReviews =
+          JSON.parse(sessionStorage.getItem(`reviews_${id}`)) || [];
         setSavedReviews(restaurantReviews);
       } catch (err) {
-        console.error('Error loading saved reviews:', err);
+        console.error("Error loading saved reviews:", err);
         setSavedReviews([]);
       }
     };
-    
+
     loadSavedReviews();
   }, [id]);
-
-  const generateTimeSlots = (openTime, closeTime) => {
-    const times = [];
-    const [openHour, openMinute] = openTime.split(':').map(Number);
-    const [closeHour, closeMinute] = closeTime.split(':').map(Number);
-
-    let currentHour = openHour;
-    let currentMinute = openMinute;
-
-    while (
-      (currentHour < closeHour) ||
-      (currentHour === closeHour && currentMinute <= closeMinute)
-    ) {
-      const timeString = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`;
-      times.push(timeString);
-
-      currentMinute += 30;
-      if (currentMinute >= 60) {
-        currentMinute = 0;
-        currentHour += 1;
-      }
-    }
-
-    return times;
-  };
 
   const handleFavorite = () => {
     const favorites = [...favoriteList];
@@ -177,43 +220,64 @@ function RestaurantDetailPage() {
     };
 
     if (isFavorite) {
-      const updatedFavorites = favorites.filter(favId => favId !== parseInt(id));
-      localStorage.setItem('favorites', JSON.stringify(updatedFavorites));
-      const existingFavoriteDetails = JSON.parse(localStorage.getItem('favoriteDetails') || '[]');
-      const updatedFavoriteDetails = existingFavoriteDetails.filter(fav => fav.id !== parseInt(id));
-      localStorage.setItem('favoriteDetails', JSON.stringify(updatedFavoriteDetails));
+      const updatedFavorites = favorites.filter(
+        (favId) => favId !== parseInt(id)
+      );
+      localStorage.setItem("favorites", JSON.stringify(updatedFavorites));
+      const existingFavoriteDetails = JSON.parse(
+        localStorage.getItem("favoriteDetails") || "[]"
+      );
+      const updatedFavoriteDetails = existingFavoriteDetails.filter(
+        (fav) => fav.id !== parseInt(id)
+      );
+      localStorage.setItem(
+        "favoriteDetails",
+        JSON.stringify(updatedFavoriteDetails)
+      );
       setFavoriteList(updatedFavorites);
-      setNotification('Đã bỏ yêu thích nhà hàng.');
-      console.log(`Đã xóa ${restaurant.name} khỏi danh sách yêu thích của tài khoản.`);
+      setNotification("Đã bỏ yêu thích nhà hàng.");
+      console.log(
+        `Đã xóa ${restaurant.name} khỏi danh sách yêu thích của tài khoản.`
+      );
     } else {
       favorites.push(parseInt(id));
-      localStorage.setItem('favorites', JSON.stringify(favorites));
-      const existingFavoriteDetails = JSON.parse(localStorage.getItem('favoriteDetails') || '[]');
-      if (!existingFavoriteDetails.some(fav => fav.id === parseInt(id))) {
-        localStorage.setItem('favoriteDetails', JSON.stringify([...existingFavoriteDetails, favoriteData]));
+      localStorage.setItem("favorites", JSON.stringify(favorites));
+      const existingFavoriteDetails = JSON.parse(
+        localStorage.getItem("favoriteDetails") || "[]"
+      );
+      if (!existingFavoriteDetails.some((fav) => fav.id === parseInt(id))) {
+        localStorage.setItem(
+          "favoriteDetails",
+          JSON.stringify([...existingFavoriteDetails, favoriteData])
+        );
       }
       setFavoriteList(favorites);
-      setNotification('Đã thêm vào danh sách yêu thích.');
-      console.log(`Đã thêm ${restaurant.name} vào danh sách yêu thích của tài khoản.`);
+      setNotification("Đã thêm vào danh sách yêu thích.");
+      console.log(
+        `Đã thêm ${restaurant.name} vào danh sách yêu thích của tài khoản.`
+      );
     }
     setIsFavorite(!isFavorite);
     setTimeout(() => setNotification(null), 2000);
   };
 
   const handleShare = () => {
-    navigator.clipboard.writeText(window.location.href).then(() => {
-      setNotification('Đã sao chép liên kết chia sẻ!');
-      setTimeout(() => setNotification(null), 2000);
-    }).catch(err => {
-      console.error('Lỗi khi sao chép liên kết:', err);
-      setNotification('Không thể sao chép liên kết. Vui lòng thử lại.');
-      setTimeout(() => setNotification(null), 2000);
-    });
+    navigator.clipboard
+      .writeText(window.location.href)
+      .then(() => {
+        setNotification("Đã sao chép liên kết chia sẻ!");
+        setTimeout(() => setNotification(null), 2000);
+      })
+      .catch((err) => {
+        console.error("Lỗi khi sao chép liên kết:", err);
+        setNotification("Không thể sao chép liên kết. Vui lòng thử lại.");
+        setTimeout(() => setNotification(null), 2000);
+      });
   };
 
   const handleOpenGoogleMaps = () => {
     if (!restaurant?.address) {
-      setNotification('Địa chỉ nhà hàng không có sẵn.');
+      setNotification("Địa chỉ nhà hàng không có sẵn.");
       return;
     }
     const encodedDestination = encodeURIComponent(restaurant.address);
@@ -222,28 +286,50 @@ function RestaurantDetailPage() {
       const encodedOrigin = encodeURIComponent(userLocation);
       googleMapsUrl += `&origin=${encodedOrigin}`;
     }
-    window.open(googleMapsUrl, '_blank');
+    window.open(googleMapsUrl, "_blank");
   };
 
   const handleFormChange = (e) => {
     e.stopPropagation();
     const { name, value } = e.target;
+    
+    // Special handling for date to prevent selecting a date earlier than the current selected date
+    if (name === 'date') {
+      // Don't allow selecting dates earlier than the current value
+      if (value < formData.date) {
+        return; // Don't update if trying to select an earlier date
+      }
+    }
+    
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleBookNow = () => {
     try {
+      // Check if reservation time is at least 2 hours in the future
+      const currentTime = new Date();
+      const reservationTime = new Date(`${formData.date}T${formData.time}:00`);
+      const timeDifferenceInHours = (reservationTime - currentTime) / (1000 * 60 * 60);
+      
+      if (timeDifferenceInHours < 2) {
+        setNotification("Thời gian đặt bàn phải ít nhất 2 giờ sau thời gian hiện tại");
+        setTimeout(() => setNotification(null), 3000);
+        return;
+      }
+      
+      // Pass both guests and children params - partySize will be calculated as guests + children in ReservationPage
       const query = new URLSearchParams({
-        restaurant: id,
         date: formData.date,
         time: formData.time,
         guests: formData.guests.toString(),
         children: formData.children.toString(),
       }).toString();
-      navigate(`/reservation?${query}`);
+      navigate(`/restaurant/${id}/tables?${query}`);
     } catch (err) {
-      console.error('Lỗi khi chuyển hướng:', err);
-      setNotification('Có lỗi khi chuyển hướng đến trang đặt bàn. Vui lòng thử lại.');
+      console.error("Lỗi khi chuyển hướng:", err);
+      setNotification(
+        "Có lỗi khi chuyển hướng đến trang đặt bàn. Vui lòng thử lại."
+      );
       setTimeout(() => setNotification(null), 2000);
     }
   };
@@ -262,9 +348,9 @@ function RestaurantDetailPage() {
 
   const nextImage = () => {
     let images;
-    if (selectedImageSource === 'menu') {
-      images = (restaurant.menu || []).map(item => item.image);
-    } else if (selectedImageSource === 'details') {
+    if (selectedImageSource === "menu") {
+      images = (restaurant.menu || []).map((item) => item.image);
+    } else if (selectedImageSource === "details") {
       images = restaurant.detailImages || [];
     } else {
       images = restaurant.images || [];
@@ -274,14 +360,16 @@ function RestaurantDetailPage() {
 
   const prevImage = () => {
     let images;
-    if (selectedImageSource === 'menu') {
-      images = (restaurant.menu || []).map(item => item.image);
-    } else if (selectedImageSource === 'details') {
+    if (selectedImageSource === "menu") {
+      images = (restaurant.menu || []).map((item) => item.image);
+    } else if (selectedImageSource === "details") {
       images = restaurant.detailImages || [];
     } else {
       images = restaurant.images || [];
     }
-    setCurrentModalImageIndex((prev) => (prev - 1 + images.length) % images.length);
+    setCurrentModalImageIndex(
+      (prev) => (prev - 1 + images.length) % images.length
+    );
   };
 
   const handlePromotionClick = (e, promo) => {
@@ -295,30 +383,48 @@ function RestaurantDetailPage() {
 
   const applyPromotionAndBook = (promo) => {
     if (!promo) {
-      setNotification('Không có ưu đãi nào được chọn.');
+      setNotification("Không có ưu đãi nào được chọn.");
       return;
     }
+    
     try {
+      // Check if reservation time is at least 2 hours in the future
+      const currentTime = new Date();
+      const reservationTime = new Date(`${formData.date}T${formData.time}:00`);
+      const timeDifferenceInHours = (reservationTime - currentTime) / (1000 * 60 * 60);
+      
+      if (timeDifferenceInHours < 2) {
+        setNotification("Thời gian đặt bàn phải ít nhất 2 giờ sau thời gian hiện tại");
+        setTimeout(() => setNotification(null), 3000);
+        closePromotionModal();
+        return;
+      }
+      
+      // Pass both guests and children params - partySize will be calculated as guests + children in ReservationPage
       const query = new URLSearchParams({
-        restaurant: id,
         date: formData.date,
         time: formData.time,
         guests: formData.guests.toString(),
         children: formData.children.toString(),
-        promotion: promo.title || '',
+        promotion: promo.code,
       }).toString();
-      console.log('Navigating with query:', query);
-      navigate(`/reservation?${query}`);
-    } catch (err) {
-      console.error('Lỗi khi chuyển hướng:', err);
-      setNotification('Có lỗi khi chuyển hướng. Vui lòng thử lại.');
+
+      // Close the promotion modal before navigating
+      closePromotionModal();
+      navigate(`/restaurant/${id}/tables?${query}`);
+    } catch (error) {
+      console.error("Error applying promotion:", error);
+      setNotification("Có lỗi xảy ra khi áp dụng ưu đãi");
+      setTimeout(() => setNotification(null), 2000);
     }
-    closePromotionModal();
   };
 
   const handleReviewChange = (e) => {
     const { name, value } = e.target;
-    setReviewForm((prev) => ({ ...prev, [name]: name === 'rating' ? parseInt(value) : value }));
+    setReviewForm((prev) => ({
+      ...prev,
+      [name]: name === "rating" ? parseInt(value) : value,
+    }));
   };
 
   const handleImageUpload = (e) => {
@@ -339,30 +445,31 @@ function RestaurantDetailPage() {
       // Create new review with current date
       const newReview = {
         id: Date.now(), // Use timestamp as ID
-        username: userName || 'Người dùng mặc định',
+        username: userName || "Người dùng mặc định",
         rating: reviewForm.rating,
-        comment: reviewForm.comment || '',
+        comment: reviewForm.comment || "",
         image: reviewForm.image, // Include image data
-        date: new Date().toLocaleDateString('vi-VN')
+        date: new Date().toLocaleDateString("vi-VN"),
       };
-      
+
       // Save to session storage
-      const existingReviews = JSON.parse(sessionStorage.getItem(`reviews_${id}`)) || [];
+      const existingReviews =
+        JSON.parse(sessionStorage.getItem(`reviews_${id}`)) || [];
       const updatedReviews = [newReview, ...existingReviews];
       sessionStorage.setItem(`reviews_${id}`, JSON.stringify(updatedReviews));
-      
+
       // Update UI
       setSavedReviews(updatedReviews);
-      
+
       // Reset form
-      setReviewForm({ rating: 0, comment: '', image: null });
+      setReviewForm({ rating: 0, comment: "", image: null });
       setPreviewImage(null);
-      
-      setNotification('Cảm ơn bạn đã đánh giá!');
+
+      setNotification("Cảm ơn bạn đã đánh giá!");
       setTimeout(() => setNotification(null), 2000);
     } catch (error) {
-      console.error('Error submitting review:', error);
-      setNotification('Có lỗi xảy ra khi gửi đánh giá');
+      console.error("Error submitting review:", error);
+      setNotification("Có lỗi xảy ra khi gửi đánh giá");
       setTimeout(() => setNotification(null), 2000);
     }
   };
@@ -370,7 +477,9 @@ function RestaurantDetailPage() {
   const handleToggleReservationForm = () => {
     setShowReservationForm((prev) => !prev);
     if (!showReservationForm) {
-      document.getElementById('booking-section')?.scrollIntoView({ behavior: 'smooth' });
+      document
+        .getElementById("booking-section")
+        ?.scrollIntoView({ behavior: "smooth" });
     }
   };
 
@@ -379,35 +488,43 @@ function RestaurantDetailPage() {
   };
 
   const getImageUrl = (image) => {
-    if (!image) return '';
-    
-    if (typeof image === 'object' && image.image_path) {
+    if (!image) return "";
+
+    if (typeof image === "object" && image.image_path) {
       const path = image.image_path;
-      
-      if (path.startsWith('http')) {
+
+      if (path.startsWith("http")) {
         return path;
       }
-      
-      if (path.includes('uploads/') || path.includes('uploads\\')) {
-        return `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/uploads/${path.split('uploads/').pop().split('uploads\\').pop()}`;
+
+      if (path.includes("uploads/") || path.includes("uploads\\")) {
+        return `${
+          process.env.REACT_APP_API_URL || "http://localhost:5000"
+        }/uploads/${path.split("uploads/").pop().split("uploads\\").pop()}`;
       }
-      
-      return `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/${path.replace(/^\//, '')}`;
+
+      return `${
+        process.env.REACT_APP_API_URL || "http://localhost:5000"
+      }/${path.replace(/^\//, "")}`;
     }
-    
-    if (typeof image === 'string') {
-      if (image.startsWith('http')) {
+
+    if (typeof image === "string") {
+      if (image.startsWith("http")) {
         return image;
       }
-      
-      if (image.includes('uploads/') || image.includes('uploads\\')) {
-        return `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/uploads/${image.split('uploads/').pop().split('uploads\\').pop()}`;
+
+      if (image.includes("uploads/") || image.includes("uploads\\")) {
+        return `${
+          process.env.REACT_APP_API_URL || "http://localhost:5000"
+        }/uploads/${image.split("uploads/").pop().split("uploads\\").pop()}`;
       }
-      
-      return `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/${image.replace(/^\//, '')}`;
+
+      return `${
+        process.env.REACT_APP_API_URL || "http://localhost:5000"
+      }/${image.replace(/^\//, "")}`;
     }
-    
-    return '';
+
+    return "";
   };
 
   if (loading) {
@@ -424,7 +541,7 @@ function RestaurantDetailPage() {
       <div className="error-container">
         <p className="error-message">{error}</p>
         <div className="error-actions">
-          <button className="btn" onClick={() => navigate('/restaurants')}>
+          <button className="btn" onClick={() => navigate("/restaurants")}>
             Quay lại danh sách nhà hàng
           </button>
           <button className="btn" onClick={() => window.location.reload()}>
@@ -439,37 +556,43 @@ function RestaurantDetailPage() {
     return (
       <div className="error-container">
         <p className="error-message">Không tìm thấy nhà hàng với ID: {id}</p>
-        <button className="btn" onClick={() => navigate('/restaurants')}>
+        <button className="btn" onClick={() => navigate("/restaurants")}>
           Quay lại danh sách nhà hàng
         </button>
       </div>
     );
   }
 
-  const promotions = restaurant.promotions || [];
   const currentDate = new Date();
-  const currentDay = currentDate.toLocaleDateString('vi-VN', { weekday: 'long' });
+  const currentDay = currentDate.toLocaleDateString("vi-VN", {
+    weekday: "long",
+  });
   const currentHour = currentDate.getHours();
   const currentMinute = currentDate.getMinutes();
 
-  const amenitiesEntries = restaurant.amenities ? Object.entries(restaurant.amenities) : [];
-  const displayedAmenities = showAllAmenities ? amenitiesEntries : amenitiesEntries.slice(0, 6);
+  const amenitiesEntries = restaurant.amenities
+    ? Object.entries(restaurant.amenities)
+    : [];
+  const displayedAmenities = showAllAmenities
+    ? amenitiesEntries
+    : amenitiesEntries.slice(0, 6);
   const images = restaurant.images || [];
   const visibleImages = images.slice(0, 9);
   const remainingImagesCount = images.length - 9;
 
-  const bannerImage = restaurant.images && restaurant.images.length > 0 
-    ? getImageUrl(restaurant.images[0]) 
-    : '';
+  const bannerImage =
+    restaurant.images && restaurant.images.length > 0
+      ? getImageUrl(restaurant.images[0])
+      : "";
 
   // Star Rating component
   const StarRating = ({ rating }) => {
     return (
       <div className="star-rating">
         {[1, 2, 3, 4, 5].map((star) => (
-          <i 
-            key={star} 
-            className={`fas fa-star ${star <= rating ? 'filled' : ''}`}
+          <i
+            key={star}
+            className={`fas fa-star ${star <= rating ? "filled" : ""}`}
           ></i>
         ))}
       </div>
@@ -478,11 +601,7 @@ function RestaurantDetailPage() {
 
   return (
     <div className="restaurant-detail-page">
-      {notification && (
-        <div className="notification">
-          {notification}
-        </div>
-      )}
+      {notification && <div className="notification">{notification}</div>}
 
       <div className="back-button-container">
         <button className="back-button" onClick={handleGoBack}>
@@ -495,20 +614,29 @@ function RestaurantDetailPage() {
           src={bannerImage}
           alt={restaurant.name}
           className="banner-image"
-          onError={(e) => { e.target.src = '/placeholder-restaurant.jpg'; }}
+          onError={(e) => {
+            e.target.src = "/placeholder-restaurant.jpg";
+          }}
         />
         <div className="banner-overlay">
           <h1>{restaurant.name}</h1>
-          <p>{restaurant.address || 'Địa chỉ không có'}</p>
+          <p>{restaurant.address || "Địa chỉ không có"}</p>
           <div className="banner-actions">
             <button className="btn btn-outline" onClick={handleFavorite}>
-              <i className={`fas fa-heart ${isFavorite ? 'favorite-active' : ''}`}></i>
-              {isFavorite ? 'Bỏ yêu thích' : 'Yêu thích'}
+              <i
+                className={`fas fa-heart ${
+                  isFavorite ? "favorite-active" : ""
+                }`}
+              ></i>
+              {isFavorite ? "Bỏ yêu thích" : "Yêu thích"}
             </button>
             <button className="btn btn-outline" onClick={handleShare}>
               <i className="fas fa-share"></i> Chia sẻ
             </button>
-            <button className="btn btn-outline" onClick={handleToggleReservationForm}>
+            <button
+              className="btn btn-outline"
+              onClick={handleToggleReservationForm}
+            >
               <i className="fas fa-calendar-alt"></i> Đặt bàn
             </button>
           </div>
@@ -521,7 +649,7 @@ function RestaurantDetailPage() {
             {tabs.map((tab) => (
               <button
                 key={tab.id}
-                className={`tab-button ${activeTab === tab.id ? 'active' : ''}`}
+                className={`tab-button ${activeTab === tab.id ? "active" : ""}`}
                 onClick={() => handleTabChange(tab.id)}
               >
                 {tab.label}
@@ -530,40 +658,63 @@ function RestaurantDetailPage() {
           </div>
         </div>
 
-        {activeTab === 'summary' && (
+        {activeTab === "summary" && (
           <section id="summary-section" className="content-section">
             <h2>Thông tin tóm tắt</h2>
             <div className="summary-card">
-              <p><i className="fas fa-map-marker-alt"></i> Địa chỉ: {restaurant.address || 'Chưa cập nhật'}</p>
-              <p><i className="fas fa-utensils"></i> Loại hình: {restaurant.cuisineType || 'Chưa cập nhật'}</p>
-              <p><i className="fas fa-money-bill-wave"></i> Giá: {restaurant.priceRange || 'Chưa cập nhật'}</p>
-              <p><i className="fas fa-clock"></i> Giờ mở cửa: {restaurant.openingTime || 'Chưa cập nhật'} - {restaurant.closingTime || 'Chưa cập nhật'}</p>
-              <p><i className="fas fa-phone"></i> Điện thoại: {restaurant.phone || 'Chưa cập nhật'}</p>
-              <p><i className="fas fa-envelope"></i> Email: {restaurant.email || 'Chưa cập nhật'}</p>
+              <p>
+                <i className="fas fa-map-marker-alt"></i> Địa chỉ:{" "}
+                {restaurant.address || "Chưa cập nhật"}
+              </p>
+              <p>
+                <i className="fas fa-utensils"></i> Loại hình:{" "}
+                {restaurant.cuisineType || "Chưa cập nhật"}
+              </p>
+              <p>
+                <i className="fas fa-money-bill-wave"></i> Giá:{" "}
+                {restaurant.priceRange || "Chưa cập nhật"}
+              </p>
+              <p>
+                <i className="fas fa-clock"></i> Giờ mở cửa:{" "}
+                {restaurant.openingTime || "Chưa cập nhật"} -{" "}
+                {restaurant.closingTime || "Chưa cập nhật"}
+              </p>
+              <p>
+                <i className="fas fa-phone"></i> Điện thoại:{" "}
+                {restaurant.phone || "Chưa cập nhật"}
+              </p>
+              <p>
+                <i className="fas fa-envelope"></i> Email:{" "}
+                {restaurant.email || "Chưa cập nhật"}
+              </p>
             </div>
           </section>
         )}
 
-        {activeTab === 'description' && (
+        {activeTab === "description" && (
           <section id="description-section" className="content-section">
             <h2>Mô tả</h2>
             <div className="description-card">
-              <p>{restaurant.description || 'Chưa có thông tin mô tả.'}</p>
+              <p>{restaurant.description || "Chưa có thông tin mô tả."}</p>
             </div>
           </section>
         )}
 
-        {activeTab === 'amenities' && (
+        {activeTab === "amenities" && (
           <section id="amenities-section" className="content-section">
             <h2>Tiện ích</h2>
             <div className="amenities-card">
-              {(amenitiesEntries.length > 0) ? (
+              {amenitiesEntries.length > 0 ? (
                 <>
                   <div className="amenities-list">
                     {displayedAmenities.map(([key, value]) => (
                       <div key={key} className="amenity-item">
-                        <i className={`fas ${value ? 'fa-check' : 'fa-times'}`}></i>
-                        <span>{key}: {value ? 'Có' : 'Không'}</span>
+                        <i
+                          className={`fas ${value ? "fa-check" : "fa-times"}`}
+                        ></i>
+                        <span>
+                          {key}: {value ? "Có" : "Không"}
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -572,7 +723,7 @@ function RestaurantDetailPage() {
                       className="btn btn-show-more"
                       onClick={() => setShowAllAmenities(!showAllAmenities)}
                     >
-                      {showAllAmenities ? 'Thu gọn' : 'Xem thêm'}
+                      {showAllAmenities ? "Thu gọn" : "Xem thêm"}
                     </button>
                   )}
                 </>
@@ -583,27 +734,36 @@ function RestaurantDetailPage() {
           </section>
         )}
 
-        {activeTab === 'operating-hours' && (
+        {activeTab === "operating-hours" && (
           <section id="operating-hours-section" className="content-section">
             <h2>Giờ hoạt động</h2>
             <div className="operating-hours-card">
               {(restaurant.operatingHours || []).map((day, index) => {
-                const [startTime, endTime] = (day.time || '').split(' - ');
-                const [startHour, startMin] = startTime ? startTime.split(':').map(Number) : [0, 0];
-                const [endHour, endMin] = endTime ? endTime.split(':').map(Number) : [0, 0];
-                const isCurrentDay = day.day.toLowerCase() === currentDay.toLowerCase();
-                const isWithinTime = (isCurrentDay && startTime && endTime && (
-                  (currentHour > startHour && currentHour < endHour) ||
-                  (currentHour === startHour && currentMinute >= startMin) ||
-                  (currentHour === endHour && currentMinute <= endMin)
-                ));
+                const [startTime, endTime] = (day.time || "").split(" - ");
+                const [startHour, startMin] = startTime
+                  ? startTime.split(":").map(Number)
+                  : [0, 0];
+                const [endHour, endMin] = endTime
+                  ? endTime.split(":").map(Number)
+                  : [0, 0];
+                const isCurrentDay =
+                  day.day.toLowerCase() === currentDay.toLowerCase();
+                const isWithinTime =
+                  isCurrentDay &&
+                  startTime &&
+                  endTime &&
+                  ((currentHour > startHour && currentHour < endHour) ||
+                    (currentHour === startHour && currentMinute >= startMin) ||
+                    (currentHour === endHour && currentMinute <= endMin));
 
                 return (
                   <p
                     key={index}
-                    className={`${isCurrentDay ? 'current-day' : ''} ${isWithinTime ? 'current-time' : ''}`}
+                    className={`${isCurrentDay ? "current-day" : ""} ${
+                      isWithinTime ? "current-time" : ""
+                    }`}
                   >
-                    {day.day}: {day.time || 'Chưa cập nhật'}
+                    {day.day}: {day.time || "Chưa cập nhật"}
                   </p>
                 );
               }) || <p>Chưa có thông tin giờ hoạt động.</p>}
@@ -611,36 +771,87 @@ function RestaurantDetailPage() {
           </section>
         )}
 
-        {activeTab === 'promotions' && (
+        {activeTab === "promotions" && (
           <section id="promotions-section" className="content-section">
             <h2>Ưu đãi</h2>
             <div className="promotions-grid">
-              {promotions.length > 0 ? (
-                promotions.map((promo, index) => (
-                  <div className="promotion-card" key={index}>
-                    <img src={promo.image || restaurant.image} alt={promo.title || 'Ưu đãi'} className="promotion-image" />
+              {restaurant.promotions && restaurant.promotions.length > 0 ? (
+                restaurant.promotions.map((promo, index) => (
+                  <div className="promotion-card" key={promo.id || index}>
+                    <div
+                      className="promotion-header"
+                      style={{ textAlign: "center" }}
+                    >
+                      {promo.code && (
+                        <div
+                          className="voucher-code"
+                          style={{ display: "inline-block", margin: "0 auto" }}
+                        >
+                          <span className="code-label">Mã:</span>
+                          <span className="code-value">{promo.code}</span>
+                        </div>
+                      )}
+                    </div>
                     <div className="promotion-info">
-                      <h3>{promo.title || 'Không có tiêu đề'}</h3>
-                      <p>Giá: {promo.price || 'Liên hệ'}</p>
-                      <p>Giảm: {promo.discount ? `${promo.discount}%` : 'Không có'}</p>
-                      <p>Hiệu lực đến: {promo.validUntil || 'Không xác định'}</p>
+                      <p className="promotion-description">
+                        {promo.description || "Không có mô tả"}
+                      </p>
+                      <div className="promotion-details">
+                        {promo.discountType === "percent" && (
+                          <p className="discount-info">
+                            <i className="fas fa-percentage"></i>
+                            Giảm {promo.discountValue}%
+                            {promo.maxDiscountValue &&
+                              ` (tối đa ${promo.maxDiscountValue.toLocaleString(
+                                "vi-VN"
+                              )}đ)`}
+                          </p>
+                        )}
+                        {promo.discountType === "fixed" && (
+                          <p className="discount-info">
+                            <i className="fas fa-money-bill-wave"></i>
+                            Giảm {promo.discountValue.toLocaleString("vi-VN")}đ
+                          </p>
+                        )}
+                        {promo.discountType === "freebies" && (
+                          <p className="discount-info">
+                            <i className="fas fa-gift"></i>
+                            Quà tặng miễn phí
+                          </p>
+                        )}
+                        {promo.minOrderValue && (
+                          <p className="min-order">
+                            <i className="fas fa-shopping-cart"></i>
+                            Đơn tối thiểu:{" "}
+                            {promo.minOrderValue.toLocaleString("vi-VN")}đ
+                          </p>
+                        )}
+                        <p className="validity-period">
+                          <i className="fas fa-calendar-alt"></i>
+                          Có hiệu lực đến:{" "}
+                          {new Date(promo.endDate).toLocaleDateString("vi-VN")}
+                        </p>
+                      </div>
                     </div>
                     <button
                       className="btn btn-choose"
                       onClick={(e) => handlePromotionClick(e, promo)}
                     >
-                      Chọn ngay
+                      Áp dụng ngay
                     </button>
                   </div>
                 ))
               ) : (
-                <p>Chưa có ưu đãi nào.</p>
+                <div className="no-promotions">
+                  <i className="fas fa-tag"></i>
+                  <p>Hiện tại nhà hàng chưa có chương trình khuyến mãi nào.</p>
+                </div>
               )}
             </div>
           </section>
         )}
 
-        {activeTab === 'reviews' && (
+        {activeTab === "reviews" && (
           <section id="reviews-section" className="content-section">
             <h2>Đánh giá từ khách hàng</h2>
             <div className="reviews-container">
@@ -657,9 +868,9 @@ function RestaurantDetailPage() {
                         <p className="review-comment">{review.comment}</p>
                         {review.image && (
                           <div className="review-image-container">
-                            <img 
-                              src={review.image} 
-                              alt="Hình ảnh đánh giá" 
+                            <img
+                              src={review.image}
+                              alt="Hình ảnh đánh giá"
                               className="review-image"
                             />
                           </div>
@@ -672,7 +883,7 @@ function RestaurantDetailPage() {
                   <p className="no-reviews">Chưa có đánh giá nào.</p>
                 )}
               </div>
-              
+
               <div className="review-form-container">
                 <div className="review-form">
                   <h3>Gửi đánh giá của bạn</h3>
@@ -682,7 +893,7 @@ function RestaurantDetailPage() {
                       <input
                         type="text"
                         name="username"
-                        value={userName || 'Người dùng mặc định'}
+                        value={userName || "Người dùng mặc định"}
                         disabled
                       />
                     </div>
@@ -690,10 +901,17 @@ function RestaurantDetailPage() {
                       <label>Đánh giá:</label>
                       <div className="star-rating-select">
                         {[1, 2, 3, 4, 5].map((star) => (
-                          <i 
-                            key={star} 
-                            className={`fas fa-star ${star <= reviewForm.rating ? 'filled' : ''}`}
-                            onClick={() => setReviewForm((prev) => ({ ...prev, rating: star }))}
+                          <i
+                            key={star}
+                            className={`fas fa-star ${
+                              star <= reviewForm.rating ? "filled" : ""
+                            }`}
+                            onClick={() =>
+                              setReviewForm((prev) => ({
+                                ...prev,
+                                rating: star,
+                              }))
+                            }
                           ></i>
                         ))}
                       </div>
@@ -718,23 +936,29 @@ function RestaurantDetailPage() {
                           className="file-input"
                           id="review-image-upload"
                         />
-                        <label htmlFor="review-image-upload" className="file-input-label">
+                        <label
+                          htmlFor="review-image-upload"
+                          className="file-input-label"
+                        >
                           <i className="fas fa-camera"></i>
                         </label>
                       </div>
                       {previewImage && (
                         <div className="image-preview-container">
-                          <img 
-                            src={previewImage} 
-                            alt="Xem trước" 
+                          <img
+                            src={previewImage}
+                            alt="Xem trước"
                             className="image-preview"
                           />
-                          <button 
+                          <button
                             type="button"
                             className="remove-image-btn"
                             onClick={() => {
                               setPreviewImage(null);
-                              setReviewForm((prev) => ({ ...prev, image: null }));
+                              setReviewForm((prev) => ({
+                                ...prev,
+                                image: null,
+                              }));
                             }}
                           >
                             <i className="fas fa-times"></i>
@@ -742,8 +966,8 @@ function RestaurantDetailPage() {
                         </div>
                       )}
                     </div>
-                    <button 
-                      type="submit" 
+                    <button
+                      type="submit"
                       className="btn btn-submit-review"
                       disabled={reviewForm.rating === 0}
                     >
@@ -756,7 +980,7 @@ function RestaurantDetailPage() {
           </section>
         )}
 
-        {activeTab === 'images' && (
+        {activeTab === "images" && (
           <section id="images-section" className="content-section">
             <h2>Hình ảnh</h2>
             <div className="image-grid">
@@ -764,23 +988,28 @@ function RestaurantDetailPage() {
                 <div
                   key={index}
                   className="image-item"
-                  onClick={() => handleImageClick(index, 'images')}
+                  onClick={() => handleImageClick(index, "images")}
                 >
-                  <img 
-                    src={getImageUrl(img)} 
-                    alt={`${restaurant.name} - Ảnh ${index + 1}`} 
+                  <img
+                    src={getImageUrl(img)}
+                    alt={`${restaurant.name} - Ảnh ${index + 1}`}
                     className="grid-image"
-                    onError={(e) => { e.target.src = '/placeholder-image.jpg'; }}
+                    onError={(e) => {
+                      e.target.src = "/placeholder-image.jpg";
+                    }}
                   />
                 </div>
               ))}
               {remainingImagesCount > 0 && (
-                <div className="image-item remaining" onClick={() => handleImageClick(0, 'images')}>
+                <div
+                  className="image-item remaining"
+                  onClick={() => handleImageClick(0, "images")}
+                >
                   <div className="remaining-count">+{remainingImagesCount}</div>
-                  <img 
-                    src={getImageUrl(images[8])} 
-                    alt={`${restaurant.name} - Ảnh bổ sung`} 
-                    className="grid-image" 
+                  <img
+                    src={getImageUrl(images[8])}
+                    alt={`${restaurant.name} - Ảnh bổ sung`}
+                    className="grid-image"
                   />
                 </div>
               )}
@@ -788,12 +1017,15 @@ function RestaurantDetailPage() {
           </section>
         )}
 
-        {activeTab === 'map' && (
+        {activeTab === "map" && (
           <section id="map-section" className="content-section">
             <h2>Chỉ đường</h2>
             <div className="map-card">
-              <p>Địa chỉ: {restaurant.address || 'Không có thông tin'}</p>
-              <button className="btn btn-book-now" onClick={handleOpenGoogleMaps}>
+              <p>Địa chỉ: {restaurant.address || "Không có thông tin"}</p>
+              <button
+                className="btn btn-book-now"
+                onClick={handleOpenGoogleMaps}
+              >
                 Xem trên Google Maps
               </button>
             </div>
@@ -801,50 +1033,64 @@ function RestaurantDetailPage() {
         )}
 
         {showReservationForm && (
-          <section id="booking-section" className="content-section fixed-booking">
+          <section
+            id="booking-section"
+            className="content-section fixed-booking"
+          >
             <div className="booking-header">
               <h2>Đặt chỗ (Để có chỗ trước khi đến)</h2>
-              <button className="close-reservation-btn" onClick={() => setShowReservationForm(false)}>
+              <button
+                className="close-reservation-btn"
+                onClick={() => setShowReservationForm(false)}
+              >
                 <i className="fas fa-times"></i>
               </button>
             </div>
             <div className="booking-card">
               <p className="reservation-subtitle">Đặt bàn giữ chỗ</p>
-              
+
               <div className="form-row">
                 <div className="form-group-half">
-                  <label><i className="fas fa-user"></i> Người lớn:</label>
+                  <label>
+                    <i className="fas fa-user"></i> Người lớn:
+                  </label>
                   <select
                     name="guests"
                     value={formData.guests}
                     onChange={handleFormChange}
                   >
-                    {[...Array(10).keys()].map(num => (
-                      <option key={num} value={num + 1}>{num + 1}</option>
+                    {[...Array(10).keys()].map((num) => (
+                      <option key={num} value={num + 1}>
+                        {num + 1}
+                      </option>
                     ))}
                   </select>
                 </div>
-                
+
                 <div className="form-group-half">
-                  <label><i className="fas fa-child"></i> Trẻ em:</label>
+                  <label>
+                    <i className="fas fa-child"></i> Trẻ em:
+                  </label>
                   <select
                     name="children"
                     value={formData.children}
                     onChange={handleFormChange}
                   >
-                    {[...Array(11).keys()].map(num => (
-                      <option key={num} value={num}>{num}</option>
+                    {[...Array(11).keys()].map((num) => (
+                      <option key={num} value={num}>
+                        {num}
+                      </option>
                     ))}
                   </select>
                 </div>
               </div>
-              
+
               <div className="form-group-time">
                 <div className="time-label">
                   <i className="fas fa-clock"></i> Thời gian đến
                 </div>
               </div>
-              
+
               <div className="form-row">
                 <div className="form-group-half">
                   <input
@@ -852,10 +1098,10 @@ function RestaurantDetailPage() {
                     name="date"
                     value={formData.date}
                     onChange={handleFormChange}
-                    min={new Date().toISOString().split('T')[0]}
+                    min={formData.date}
                   />
                 </div>
-                
+
                 <div className="form-group-half">
                   <select
                     name="time"
@@ -874,10 +1120,10 @@ function RestaurantDetailPage() {
                   </select>
                 </div>
               </div>
-              
-              <button 
-                className="btn-reserve-now" 
-                onClick={handleBookNow} 
+
+              <button
+                className="btn-reserve-now"
+                onClick={handleBookNow}
                 disabled={!formData.time}
               >
                 Đặt chỗ ngay
@@ -898,9 +1144,13 @@ function RestaurantDetailPage() {
                   src={getImageUrl(restaurant.images[currentModalImageIndex])}
                   alt="Hình ảnh"
                   className="modal-image"
-                  onError={(e) => { e.target.src = '/placeholder-image.jpg'; }}
+                  onError={(e) => {
+                    e.target.src = "/placeholder-image.jpg";
+                  }}
                 />
-                <button className="close-modal" onClick={closeImageModal}>×</button>
+                <button className="close-modal" onClick={closeImageModal}>
+                  ×
+                </button>
               </div>
               <button className="modal-next" onClick={nextImage}>
                 <i className="fas fa-chevron-right"></i>
@@ -912,19 +1162,75 @@ function RestaurantDetailPage() {
         {selectedPromotion && (
           <>
             <div className="modal-overlay" onClick={closePromotionModal}></div>
-            <div className="modal">
+            <div className="modal promotion-modal">
               <div className="modal-content">
-                <h2>{selectedPromotion.title || 'Không có tiêu đề'}</h2>
-                <p>{selectedPromotion.description || 'Không có mô tả'}</p>
-                <p>Giá: {selectedPromotion.price || 'Liên hệ'}</p>
-                <p>Giảm: {selectedPromotion.discount ? `${selectedPromotion.discount}%` : 'Không có'}</p>
-                <p>Hiệu lực đến: {selectedPromotion.validUntil || 'Không xác định'}</p>
-                <div className="modal-actions">
-                  <button className="btn btn-secondary" onClick={closePromotionModal}>
+                <button className="close-modal" onClick={closePromotionModal}>×</button>
+                
+                <div className="promotion-modal-header">
+                  <h3>Chi tiết ưu đãi</h3>
+                  <div className="promotion-title">{selectedPromotion.name}</div>
+                </div>
+                
+                {selectedPromotion.code && (
+                  <div className="promotion-modal-code">
+                    <div className="code-label">Mã khuyến mãi:</div>
+                    <div className="code-value-container">
+                      <span className="code-value">{selectedPromotion.code}</span>
+                    </div>
+                  </div>
+                )}
+                
+                <div className="promotion-modal-content">
+                  <div className="promotion-description">
+                    <p>{selectedPromotion.description || "Không có mô tả"}</p>
+                  </div>
+                  
+                  <div className="promotion-details">
+                    {selectedPromotion.discountType === "percent" && (
+                      <div className="promotion-detail-item highlight">
+                        <i className="fas fa-percentage"></i>
+                        <span>Giảm giá: <strong>{selectedPromotion.discountValue}%</strong>
+                        {selectedPromotion.maxDiscountValue &&
+                          ` (tối đa ${selectedPromotion.maxDiscountValue.toLocaleString(
+                            "vi-VN"
+                          )}đ)`}
+                        </span>
+                      </div>
+                    )}
+                    
+                    {selectedPromotion.discountType === "fixed" && (
+                      <div className="promotion-detail-item highlight">
+                        <i className="fas fa-money-bill-wave"></i>
+                        <span>Giảm giá: <strong>{selectedPromotion.discountValue.toLocaleString("vi-VN")}đ</strong></span>
+                      </div>
+                    )}
+                    
+                    {selectedPromotion.minOrderValue && (
+                      <div className="promotion-detail-item">
+                        <i className="fas fa-shopping-cart"></i>
+                        <span>Đơn hàng tối thiểu: {selectedPromotion.minOrderValue.toLocaleString("vi-VN")}đ</span>
+                      </div>
+                    )}
+                    
+                    <div className="promotion-detail-item">
+                      <i className="fas fa-calendar-alt"></i>
+                      <span>Hiệu lực đến: {new Date(selectedPromotion.endDate).toLocaleDateString("vi-VN")}</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="promotion-modal-footer">
+                  <button
+                    className="btn btn-secondary"
+                    onClick={closePromotionModal}
+                  >
                     Đóng
                   </button>
-                  <button className="btn btn-book-now" onClick={() => applyPromotionAndBook(selectedPromotion)}>
-                    Đặt ngay
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => applyPromotionAndBook(selectedPromotion)}
+                  >
+                    Áp dụng ngay
                   </button>
                 </div>
               </div>

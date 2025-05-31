@@ -5,7 +5,8 @@ import '../styles/modules/filterBox.css';
 import '../styles/modules/booth_categories.css';
 
 function FilterBox() {
-  const { filters = { location: '', distance: '', rating: '', cuisine: '' }, setFilters } = useApp();
+  const { filters = { location: '', distance: '', rating: '', cuisine: '', price: '', operatingHours: '' }, setFilters } = useApp();
+  const [localFilters, setLocalFilters] = useState(filters); // Local state for filter values
   const [visibleFilterStart, setVisibleFilterStart] = useState(0);
   const [visibleCategoryStart, setVisibleCategoryStart] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -16,32 +17,40 @@ function FilterBox() {
   const filtersSliderRef = useRef(null);
   const categoriesSliderRef = useRef(null);
 
-  // Danh sách các bộ lọc (chỉ giữ 3 bộ lọc chính)
+  // Update local filters when global filters change
+  useEffect(() => {
+    setLocalFilters(filters);
+  }, [filters]);
+
+  // Danh sách các bộ lọc (thêm 2 bộ lọc mới: giá và giờ hoạt động)
   const filterOptions = [
     { id: 'location', name: 'Khu vực' },
     { id: 'distance', name: 'Khoảng cách' },
+    { id: 'price', name: 'Mức giá' },
     { id: 'rating', name: 'Đánh giá' },
+    { id: 'operatingHours', name: 'Giờ hoạt động' },
   ];
 
   // Danh sách các loại món ăn (booth categories) - đại diện cho bộ lọc "Loại hình nhà hàng"
   const cuisineTypes = [
-    { id: 'buffet', name: 'Buffet', icon: '🍱' },
-    { id: 'hotpot', name: 'Lẩu', icon: '🍲' },
-    { id: 'grilled', name: 'Nướng', icon: '🔥' },
-    { id: 'seafood', name: 'Hải sản', icon: '🦐' },
-    { id: 'beer', name: 'Quán nhậu', icon: '🍻' },
-    { id: 'japanese', name: 'Món Nhật', icon: '🍣' },
-    { id: 'vietnamese', name: 'Món Việt', icon: '🍜' },
-    { id: 'korean', name: 'Món Hàn', icon: '🍲' },
-    { id: 'vegetarian', name: 'Món chay', icon: '🥗' },
-    { id: 'asian', name: 'Món Châu Á', icon: '🥢' },
-    { id: 'european', name: 'Món Châu Âu', icon: '🍕' },
-    { id: 'thai', name: 'Món Thái', icon: '🍸' },
-    { id: 'chinese', name: 'Món Trung Hoa', icon: '🥟' },
+    { id: 'buffet', name: 'Buffet', icon: '🍱', route: '/buffet' },
+    { id: 'lau', name: 'Lẩu', icon: '🍲', route: '/lau' },
+    { id: 'nuong', name: 'Nướng', icon: '🔥', route: '/lau-nuong' },
+    { id: 'hai-san', name: 'Hải sản', icon: '🦐', route: '/hai-san' },
+    { id: 'quan-nhau', name: 'Quán nhậu', icon: '🍻', route: '/quan-nhau' },
+    { id: 'nhat-ban', name: 'Món Nhật', icon: '🍣', route: '/nhat-ban' },
+    { id: 'mon-viet', name: 'Món Việt', icon: '🍜', route: '/mon-viet' },
+    { id: 'han-quoc', name: 'Món Hàn', icon: '🍲', route: '/han-quoc' },
+    { id: 'mon-chay', name: 'Món chay', icon: '🥗', route: '/mon-chay' },
+    { id: 'mon-thai', name: 'Món Thái', icon: '🍸', route: '/mon-thai' },
+    { id: 'mon-trung-hoa', name: 'Món Trung Hoa', icon: '🥟', route: '/mon-trung-hoa' },
+    { id: 'do-tiec', name: 'Đồ tiệc', icon: '🍽️', route: '/do-tiec' },
+    { id: 'tiec-cuoi', name: 'Tiệc cưới', icon: '💍', route: '/tiec-cuoi' },
+    { id: 'do-uong', name: 'Đồ uống', icon: '🥤', route: '/do-uong' },
   ];
 
   // Số lượng filter hiển thị cùng lúc
-  const visibleFiltersCount = 3; // Vì chỉ có 3 bộ lọc, không cần cuộn ngang nữa
+  const visibleFiltersCount = 5; // Tăng lên 5 vì đã thêm 2 bộ lọc mới
 
   // Số lượng categories hiển thị cùng lúc
   const visibleCategoriesCount = 8;
@@ -96,24 +105,86 @@ function FilterBox() {
   const canScrollRight =
     visibleFilterStart + visibleFiltersCount < filterOptions.length && !isTransitioning;
 
-  const handleFilterChange = (filterId, value) => {
-    if (!setFilters) return;
-    setFilters({
-      ...filters,
+  // Handle local filter changes without applying them immediately
+  const handleLocalFilterChange = (filterId, value) => {
+    setLocalFilters(prev => ({
+      ...prev,
       [filterId]: value,
-    });
+    }));
+  };
+
+  // Apply all filters at once
+  const applyFilters = () => {
+    if (!setFilters) return;
+    
+    // Apply filters to context
+    setFilters(localFilters);
+    
+    // Create query parameters for URL
+    const params = new URLSearchParams();
+    
+    // Add all non-empty and non-default filters to query params
+    if (localFilters.location && localFilters.location !== '') {
+      params.append('location', localFilters.location);
+    }
+    
+    if (localFilters.distance && localFilters.distance !== 'all') {
+      params.append('distance', localFilters.distance);
+    }
+    
+    if (localFilters.price && localFilters.price !== 'all') {
+      params.append('price', localFilters.price);
+    }
+    
+    if (localFilters.rating && localFilters.rating !== 'all') {
+      params.append('rating', localFilters.rating);
+    }
+    
+    if (localFilters.operatingHours && localFilters.operatingHours !== 'all') {
+      params.append('operatingHours', localFilters.operatingHours);
+    }
+    
+    if (localFilters.cuisine && localFilters.cuisine !== 'all') {
+      params.append('cuisine', localFilters.cuisine);
+    }
+    
+    // Navigate to filter results page with query parameters
+    navigate(`/filter-results?${params.toString()}`);
+  };
+
+  // Reset all filters to default values
+  const resetFilters = () => {
+    const defaultFilters = {
+      location: '',
+      distance: 'all',
+      cuisine: 'all',
+      rating: 'all',
+      price: 'all',
+      operatingHours: 'all',
+      keyword: '',
+    };
+    setLocalFilters(defaultFilters);
+    if (setFilters) {
+      setFilters(defaultFilters);
+    }
   };
 
   const handleCuisineSelect = (cuisineId) => {
     if (!setFilters) return;
-    setFilters({
-      ...filters,
+    
+    // Update both local and global filters
+    const updatedFilters = {
+      ...localFilters,
       cuisine: cuisineId,
-    });
-    navigate({
-      pathname: '/restaurants',
-      search: `?cuisine=${cuisineId}`,
-    });
+    };
+    
+    setLocalFilters(updatedFilters);
+    setFilters(updatedFilters);
+    
+    const selectedCuisine = cuisineTypes.find(c => c.id === cuisineId);
+    if (selectedCuisine && selectedCuisine.route) {
+      navigate(selectedCuisine.route);
+    }
   };
 
   const scrollCategories = (direction) => {
@@ -205,8 +276,8 @@ function FilterBox() {
             <div key={filter.id} className="filter-dropdown">
               <select
                 className="filter-select"
-                value={filters[filter.id] || ''}
-                onChange={(e) => handleFilterChange(filter.id, e.target.value)}
+                value={localFilters[filter.id] || ''}
+                onChange={(e) => handleLocalFilterChange(filter.id, e.target.value)}
               >
                 {filter.id === 'location' && (
                   <>
@@ -233,10 +304,40 @@ function FilterBox() {
                     <option value="above3">Trên 3 sao</option>
                   </>
                 )}
+                {filter.id === 'price' && (
+                  <>
+                    <option value="">{filter.name}</option>
+                    <option value="all">Tất cả</option>
+                    <option value="low">Dưới 100.000đ</option>
+                    <option value="medium">100.000đ - 300.000đ</option>
+                    <option value="high">300.000đ - 500.000đ</option>
+                    <option value="luxury">Trên 500.000đ</option>
+                  </>
+                )}
+                {filter.id === 'operatingHours' && (
+                  <>
+                    <option value="">{filter.name}</option>
+                    <option value="all">Tất cả</option>
+                    <option value="morning">Buổi sáng (6:00 - 11:00)</option>
+                    <option value="lunch">Buổi trưa (11:00 - 14:00)</option>
+                    <option value="evening">Buổi tối (17:00 - 22:00)</option>
+                    <option value="latenight">Khuya (22:00 - 2:00)</option>
+                    <option value="24h">Mở cửa 24h</option>
+                  </>
+                )}
               </select>
               <span className="dropdown-icon">▼</span>
             </div>
           ))}
+
+          <div className="filter-buttons">
+            <button type="button" className="filter-action-btn apply-btn" onClick={applyFilters}>
+              Lọc
+            </button>
+            <button type="button" className="filter-action-btn reset-btn" onClick={resetFilters}>
+              Đặt lại
+            </button>
+          </div>
 
           <button
             className={`filter-nav next custom-position ${canScrollRight ? '' : 'hidden'}`}
@@ -252,6 +353,7 @@ function FilterBox() {
         <button
           className={`category-nav prev ${!isScrolled ? 'hidden' : ''}`}
           onClick={() => scrollCategories('left')}
+          aria-label="Previous categories"
         >
           <span>←</span>
         </button>
@@ -274,6 +376,7 @@ function FilterBox() {
         <button
           className={`category-nav next ${isAtEnd ? 'hidden' : ''}`}
           onClick={() => scrollCategories('right')}
+          aria-label="Next categories"
         >
           <span>→</span>
         </button>

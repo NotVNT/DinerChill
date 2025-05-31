@@ -29,7 +29,7 @@
   table-layout: fixed;
 }
 
-.admin-table th, 
+.admin-table th,
 .admin-table td {
   padding: 12px 10px;
   border-bottom: 1px solid #dee2e6;
@@ -50,29 +50,44 @@
 }
 
 /* Tùy chỉnh độ rộng cụ thể cho từng cột */
-.admin-table th:nth-child(1), .admin-table td:nth-child(1) { 
-  width: 15%; 
+.admin-table th:nth-child(1),
+.admin-table td:nth-child(1) {
+  width: 15%;
   min-width: 140px;
 }
 
-.admin-table th:nth-child(2), .admin-table td:nth-child(2) { 
-  width: 15%; 
+.admin-table th:nth-child(2),
+.admin-table td:nth-child(2) {
+  width: 8%;
   padding-left: 15px;
 }
 
-.admin-table th:nth-child(3), .admin-table td:nth-child(3) { 
-  width: 8%; 
+.admin-table th:nth-child(3),
+.admin-table td:nth-child(3) {
+  width: 12%;
   text-align: center;
 }
 
-.admin-table th:nth-child(4), .admin-table td:nth-child(4) { 
-  width: 18%; 
+.admin-table th:nth-child(4),
+.admin-table td:nth-child(4) {
+  width: 18%;
 }
 
-.admin-table th:nth-child(5) { width: 14%; } /* Thời gian */
-.admin-table th:nth-child(6) { width: 10%; } /* Sử dụng */
-.admin-table th:nth-child(7) { width: 10%; } /* Trạng thái */
-.admin-table th:nth-child(8) { width: 15%; } /* Thao tác */
+.admin-table th:nth-child(5) {
+  width: 14%;
+} /* Nhà hàng áp dụng */
+.admin-table th:nth-child(6) {
+  width: 12%;
+} /* Thời gian */
+.admin-table th:nth-child(7) {
+  width: 10%;
+} /* Sử dụng */
+.admin-table th:nth-child(8) {
+  width: 10%;
+} /* Trạng thái */
+.admin-table th:nth-child(9) {
+  width: 15%;
+} /* Thao tác */
 
 .admin-table tr:hover {
   background-color: #f8f9fa;
@@ -330,7 +345,10 @@
   gap: 4px;
 }
 
-.min-order-amount, .max-discount, .no-minimum, .no-maximum {
+.min-order-amount,
+.max-discount,
+.no-minimum,
+.no-maximum {
   font-size: 0.85rem;
   white-space: nowrap;
   overflow: hidden;
@@ -347,7 +365,8 @@
   margin-top: 2px;
 }
 
-.no-minimum, .no-maximum {
+.no-minimum,
+.no-maximum {
   color: #6c757d;
   font-style: italic;
 }
@@ -395,26 +414,58 @@
   .form-row {
     flex-direction: column;
   }
-  
+
   .form-group {
     flex: 1 0 100%;
     padding: 0 5px;
   }
-  
+
   .admin-table {
     display: block;
     overflow-x: auto;
   }
-  
+
   .promotion-form {
     padding: 15px;
   }
 }
 
+/* Icon buttons for edit and delete actions */
+.btn-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 4px;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin: 0 4px;
+}
+
+.btn-edit {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.btn-edit:hover {
+  background-color: #e0a800;
+}
+
+.btn-delete {
+  background-color: #dc3545;
+  color: white;
+}
+
+.btn-delete:hover {
+  background-color: #c82333;
+}
+
 .action-buttons {
   display: flex;
   gap: 8px;
-  justify-content: flex-start;
+  justify-content: center;
 }
 
 .search-container {
@@ -463,4 +514,198 @@
   text-overflow: ellipsis;
   max-height: 2.8em;
   line-height: 1.4;
-} 
+}
+
+.applied-restaurants {
+  font-size: 0.85rem;
+}
+
+.restaurant-list {
+  max-height: 80px;
+  overflow-y: auto;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  padding: 2px 5px;
+}
+
+.restaurant-name {
+  padding: 2px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.restaurant-name:last-child {
+  border-bottom: none;
+}
+
+.more-restaurants {
+  font-style: italic;
+  color: #666;
+  font-size: 0.8rem;
+  margin-top: 4px;
+}
+
+.all-restaurants {
+  color: #28a745;
+  font-weight: 500;
+  padding: 2px 5px;
+  background-color: #e8f5e9;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.form-control[multiple] {
+  height: 120px !important;
+  padding: 8px;
+}
+
+.form-control[multiple] option {
+  padding: 4px 8px;
+  margin: 2px 0;
+}
+
+.form-control[multiple] option:checked {
+  background-color: #007bff;
+  color: white;
+}
+
+.restaurant-selection-note {
+  color: #6c757d;
+  font-size: 0.9rem;
+  margin-top: 5px;
+  font-style: italic;
+}
+
+/* Modal and restaurant list styles moved from AdminPromotions.js */
+.btn-view-restaurants {
+  background: none;
+  border: none;
+  color: #007bff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.btn-view-restaurants:hover {
+  background: rgba(0, 123, 255, 0.1);
+}
+
+.btn-view-restaurants i {
+  margin-right: 5px;
+}
+
+.restaurant-count {
+  background: #007bff;
+  color: white;
+  border-radius: 50%;
+  min-width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  margin-left: 5px;
+  padding: 0 4px;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.restaurant-modal {
+  background: white;
+  border-radius: 8px;
+  width: 500px;
+  max-width: 95%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.close-modal-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #6c757d;
+}
+
+.close-modal-btn:hover {
+  color: #343a40;
+}
+
+.modal-body {
+  padding: 20px;
+  overflow-y: auto;
+  max-height: 60vh;
+}
+
+.modal-footer {
+  padding: 15px 20px;
+  border-top: 1px solid #e9ecef;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.restaurants-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.restaurant-item {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  border-radius: 4px;
+  background-color: #f8f9fa;
+}
+
+.restaurant-icon {
+  margin-right: 10px;
+  color: #6c757d;
+}
+
+.no-restaurants {
+  text-align: center;
+  color: #6c757d;
+  font-style: italic;
+}

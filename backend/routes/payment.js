@@ -1,22 +1,19 @@
 const express = require('express');
 const router = express.Router();
 const PayOS = require('@payos/node'); // This will need to be installed via npm
-const dotenv = require('dotenv');
-const { PaymentInformation, User } = require('../models');
+const { PaymentInformation, User, Reservation } = require('../models');
 const { sendPaymentConfirmationEmail } = require('../utils/emailService');
+const config = require('../config/appConfig');
 
-dotenv.config();
-
-// Initialize PayOS SDK with credentials from environment variables
+// Initialize PayOS SDK with credentials from config
 let payos;
 try {
   // Check if all required credentials are available
-  const clientId = process.env.PAYOS_CLIENT_ID;
-  const apiKey = process.env.PAYOS_API_KEY;
-  const checksumKey = process.env.PAYOS_CHECKSUM_KEY;
+  const { clientId, apiKey, checksumKey } = config.payos;
   
   if (clientId && apiKey && checksumKey) {
     payos = new PayOS(clientId, apiKey, checksumKey);
+    console.log('PayOS initialized successfully');
   } else {
     console.warn('PayOS credentials missing. Payment functionality will be limited.');
   }
@@ -41,7 +38,7 @@ router.post('/create', async (req, res) => {
       });
     }
 
-    const { amount, orderInfo, productId } = req.body;
+    const { amount, orderInfo, reservationId } = req.body;
 
     // Validate input
     if (!amount || !orderInfo) {
@@ -53,23 +50,28 @@ router.post('/create', async (req, res) => {
 
     // Format orderCode - must be unique for each payment link
     const orderCode = Date.now();
+    
+    // Create payment description - limited to 25 characters max for PayOS
+    const description = `Đặt cọc #${orderCode.toString().slice(-6)}`;
 
     // Create payment link request data
     const paymentData = {
       orderCode: orderCode,
       amount: amount,
-      description: `Thanh toán ${orderCode}`,
+      description: description,
       items: [
         {
-          name: orderInfo,
+          name: orderInfo.length > 25 ? orderInfo.substring(0, 25) : orderInfo,
           quantity: 1,
           price: amount
         }
       ],
       // Return URL after payment completion (frontend URL)
-      returnUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/payment-result?orderCode=${orderCode}`,
+      returnUrl: `${config.appUrl}/payment-result?orderCode=${orderCode}${reservationId ? `&reservationId=${reservationId}` : ''}`,
       // Cancel URL - redirect to payment result page with cancelled status
-      cancelUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/payment-result?cancelled=true`
+      cancelUrl: `${config.appUrl}/payment-result?cancelled=true${reservationId ? `&reservationId=${reservationId}` : ''}`,
+      // Add reservationId in additionalData if provided
+      additionalData: reservationId ? JSON.stringify({ reservationId }) : undefined
     };
 
     // Create payment link using PayOS SDK
@@ -81,7 +83,8 @@ router.post('/create', async (req, res) => {
       checkoutUrl: paymentLinkResponse.checkoutUrl,
       qrCode: paymentLinkResponse.qrCode,
       paymentLinkId: paymentLinkResponse.paymentLinkId,
-      orderCode: orderCode
+      orderCode: orderCode,
+      reservationId: reservationId || null
     });
 
   } catch (error) {
@@ -98,6 +101,7 @@ router.post('/create', async (req, res) => {
 router.get('/info/:orderCode', async (req, res) => {
   try {
     const { orderCode } = req.params;
+    const { reservationId } = req.query; // Get reservation ID from query params if provided
     
     // First, check if payment already exists in database to avoid duplicates
     const existingPayment = await PaymentInformation.findOne({
@@ -117,6 +121,27 @@ router.get('/info/:orderCode', async (req, res) => {
         console.warn('Could not parse payment details JSON:', e);
       }
       
+      // If payment is completed and we have a reservationId, update reservation status
+      if (existingPayment.status === 'completed' && (reservationId || existingPayment.reservationId)) {
+        try {
+          const resId = reservationId || existingPayment.reservationId;
+          
+          // Update reservation if not already linked
+          if (!existingPayment.reservationId && reservationId) {
+            await existingPayment.update({ reservationId });
+          }
+          
+          // Update reservation status
+          const reservation = await Reservation.findByPk(resId);
+          if (reservation && reservation.status === 'pending') {
+            await reservation.update({ status: 'confirmed' });
+            console.log(`Updated reservation #${resId} status to confirmed`);
+          }
+        } catch (error) {
+          console.error('Error updating reservation status:', error);
+        }
+      }
+      
       // Return a formatted response that matches what the frontend expects
       return res.json({
         success: true,
@@ -128,6 +153,7 @@ router.get('/info/:orderCode', async (req, res) => {
           amountRemaining: 0,
           status: existingPayment.status === 'completed' ? 'PAID' : existingPayment.status.toUpperCase(),
           createdAt: existingPayment.createdAt,
+          reservationId: existingPayment.reservationId || reservationId || null,
           transactions: [{
             reference: paymentDetailsObj.reference || 'transaction',
             amount: existingPayment.amount,
@@ -153,15 +179,16 @@ router.get('/info/:orderCode', async (req, res) => {
           reference: 'mock-transaction',
           amount: 50000,
           accountNumber: '123456789',
-          description: `Thanh toán ${orderCode}`,
+          description: reservationId ? `Thanh toán đặt bàn reservation=${reservationId}` : `Thanh toán ${orderCode}`,
           transactionDateTime: new Date().toISOString()
         }]
       };
       
       // Save mock payment to database for testing
       try {
+        let payment;
         // Create the payment record directly
-        await PaymentInformation.create({
+        payment = await PaymentInformation.create({
           userId: 1, // Default user ID
           transactionId: orderCode.toString(), // Save order code in transactionId
           paymentMethod: 'bank_transfer',
@@ -170,10 +197,24 @@ router.get('/info/:orderCode', async (req, res) => {
           status: 'completed',
           paymentDate: new Date(),
           paymentDetails: JSON.stringify(mockInfo),
-          notes: mockInfo.transactions[0].description // Save description in notes
+          notes: mockInfo.transactions[0].description, // Save description in notes
+          reservationId: reservationId || null // Link to reservation if ID provided
         });
         
         console.log(`Mock payment information saved for order ${orderCode}`);
+        
+        // If we have a reservation ID, update the reservation status
+        if (reservationId) {
+          try {
+            const reservation = await Reservation.findByPk(reservationId);
+            if (reservation) {
+              await reservation.update({ status: 'confirmed' });
+              console.log(`Updated reservation #${reservationId} status to confirmed`);
+            }
+          } catch (error) {
+            console.error('Error updating reservation status:', error);
+          }
+        }
         
         // Find user email and send payment confirmation email
         try {
@@ -197,79 +238,198 @@ router.get('/info/:orderCode', async (req, res) => {
       
       return res.json({
         success: true,
-        data: mockInfo
+        data: {
+          ...mockInfo,
+          reservationId: reservationId || null
+        }
       });
     }
     
-    const paymentLinkInfo = await payos.getPaymentLinkInformation(orderCode);
-    
-    // If payment is successful, save to database
-    if (paymentLinkInfo && 
-        (paymentLinkInfo.status === 'PAID' || 
-         paymentLinkInfo.amountPaid >= paymentLinkInfo.amount)) {
-      try {
-        // Extract transaction data if available
-        const transaction = paymentLinkInfo.transactions && paymentLinkInfo.transactions.length > 0 
-          ? paymentLinkInfo.transactions[0] 
-          : null;
-        
-        // Find a user (simplified approach)
-        const user = await User.findOne();
-        const userId = user ? user.id : 1;
-        
-        // Check if payment already exists in database
-        const existingPayment = await PaymentInformation.findOne({
-          where: { transactionId: orderCode.toString() }
-        });
-        
-        if (!existingPayment) {
-          // Create the payment record directly
-          await PaymentInformation.create({
-            userId,
-            transactionId: orderCode.toString(), // Save order code in transactionId
-            paymentMethod: 'bank_transfer',
-            amount: paymentLinkInfo.amount,
-            currency: 'VND',
-            status: 'completed',
-            paymentDate: transaction?.transactionDateTime 
-              ? new Date(transaction.transactionDateTime) 
-              : new Date(paymentLinkInfo.createdAt),
-            paymentDetails: JSON.stringify(paymentLinkInfo),
-            notes: transaction?.description || `Thanh toán ${orderCode}` // Save description in notes
+    try {
+      const paymentLinkInfo = await payos.getPaymentLinkInformation(orderCode);
+      
+      // If payment is successful, save to database
+      if (paymentLinkInfo && 
+          (paymentLinkInfo.status === 'PAID' || 
+           paymentLinkInfo.amountPaid >= paymentLinkInfo.amount)) {
+        try {
+          // Extract transaction data if available
+          const transaction = paymentLinkInfo.transactions && paymentLinkInfo.transactions.length > 0 
+            ? paymentLinkInfo.transactions[0] 
+            : null;
+          
+          // Get reservation ID from additionalData if available
+          let resId = reservationId;
+          try {
+            if (!resId && paymentLinkInfo.additionalData) {
+              const additionalData = JSON.parse(paymentLinkInfo.additionalData);
+              if (additionalData && additionalData.reservationId) {
+                resId = additionalData.reservationId;
+              }
+            }
+          } catch (parseError) {
+            console.error('Error parsing additionalData:', parseError);
+          }
+          
+          // Find a user (simplified approach)
+          const user = await User.findOne();
+          const userId = user ? user.id : 1;
+          
+          // Check if payment already exists in database
+          const existingPayment = await PaymentInformation.findOne({
+            where: { transactionId: orderCode.toString() }
           });
           
-          console.log(`Payment information saved for order ${orderCode} from info endpoint`);
+          let payment;
           
-          // Send payment confirmation email
-          try {
-            // Get user email
-            if (user && user.email) {
-              await sendPaymentConfirmationEmail(user.email, {
-                transactionId: orderCode.toString(),
-                amount: paymentLinkInfo.amount,
-                paymentMethod: 'bank_transfer',
-                paymentDate: transaction?.transactionDateTime 
-                  ? new Date(transaction.transactionDateTime) 
-                  : new Date(paymentLinkInfo.createdAt),
-                status: 'completed'
-              });
-              console.log(`Payment confirmation email sent to ${user.email}`);
+          if (!existingPayment) {
+            // Create the payment record directly
+            payment = await PaymentInformation.create({
+              userId,
+              transactionId: orderCode.toString(), // Save order code in transactionId
+              paymentMethod: 'bank_transfer',
+              amount: paymentLinkInfo.amount,
+              currency: 'VND',
+              status: 'completed',
+              paymentDate: transaction?.transactionDateTime 
+                ? new Date(transaction.transactionDateTime) 
+                : new Date(paymentLinkInfo.createdAt),
+              paymentDetails: JSON.stringify(paymentLinkInfo),
+              notes: transaction?.description || `Thanh toán ${orderCode}`, // Save description in notes
+              reservationId: resId || null
+            });
+            
+            console.log(`Payment information saved for order ${orderCode} from info endpoint`);
+            
+            // Send payment confirmation email
+            try {
+              // Get user email
+              if (user && user.email) {
+                await sendPaymentConfirmationEmail(user.email, {
+                  transactionId: orderCode.toString(),
+                  amount: paymentLinkInfo.amount,
+                  paymentMethod: 'bank_transfer',
+                  paymentDate: transaction?.transactionDateTime 
+                    ? new Date(transaction.transactionDateTime) 
+                    : new Date(paymentLinkInfo.createdAt),
+                  status: 'completed'
+                });
+                console.log(`Payment confirmation email sent to ${user.email}`);
+              }
+            } catch (emailError) {
+              console.error('Error sending payment confirmation email:', emailError);
             }
-          } catch (emailError) {
-            console.error('Error sending payment confirmation email:', emailError);
+          } else {
+            console.log(`Payment for order ${orderCode} already exists in database, skipping`);
+            payment = existingPayment;
           }
-        } else {
-          console.log(`Payment for order ${orderCode} already exists in database, skipping`);
+          
+          // If we have a reservation ID, update the reservation status
+          if (resId && payment) {
+            try {
+              // Update payment with reservation ID if not already set
+              if (!payment.reservationId) {
+                await payment.update({ reservationId: resId });
+              }
+              
+              // Update reservation status
+              const reservation = await Reservation.findByPk(resId);
+              if (reservation && reservation.status === 'pending') {
+                await reservation.update({ status: 'confirmed' });
+                console.log(`Updated reservation #${resId} status to confirmed`);
+              }
+            } catch (error) {
+              console.error('Error updating reservation status:', error);
+            }
+          }
+        } catch (dbError) {
+          console.error('Error saving payment from info endpoint:', dbError);
         }
-      } catch (dbError) {
-        console.error('Error saving payment from info endpoint:', dbError);
       }
+      
+      // Add reservationId to the response if provided
+      const responseData = {
+        ...paymentLinkInfo,
+        reservationId: resId || null
+      };
+      
+      res.json({
+        success: true,
+        data: responseData
+      });
+    } catch (payosError) {
+      console.error('Error getting payment info from PayOS API:', payosError);
+      
+      // Check if this was a valid payment by looking for information in the URL parameters
+      // that are sent back from the payment provider
+      const isFromCallback = req.query.code === '00' || req.query.status === 'PAID';
+      
+      if (isFromCallback) {
+        // If we're coming from a payment provider callback with successful status
+        // but can't find the payment in PayOS, create a record based on the URL parameters
+        const mockInfo = {
+          id: req.query.id || 'payment-id',
+          orderCode: orderCode,
+          amount: 5000, // Default deposit amount
+          amountPaid: 5000,
+          amountRemaining: 0,
+          status: 'PAID',
+          createdAt: new Date().toISOString(),
+          transactions: [{
+            reference: req.query.id || 'transaction',
+            amount: 5000,
+            description: `Đặt cọc #${orderCode.toString().slice(-6)}`,
+            transactionDateTime: new Date().toISOString()
+          }]
+        };
+        
+        try {
+          // Create the payment record
+          const payment = await PaymentInformation.create({
+            userId: 1, // Default user ID
+            transactionId: orderCode.toString(),
+            paymentMethod: 'bank_transfer',
+            amount: mockInfo.amount,
+            currency: 'VND',
+            status: 'completed',
+            paymentDate: new Date(),
+            paymentDetails: JSON.stringify(mockInfo),
+            notes: mockInfo.transactions[0].description,
+            reservationId: reservationId || null
+          });
+          
+          console.log(`Created fallback payment record for order ${orderCode}`);
+          
+          // If we have a reservation ID, update its status
+          if (reservationId) {
+            try {
+              const reservation = await Reservation.findByPk(reservationId);
+              if (reservation) {
+                await reservation.update({ status: 'confirmed' });
+                console.log(`Updated reservation #${reservationId} status to confirmed`);
+              }
+            } catch (error) {
+              console.error('Error updating reservation status:', error);
+            }
+          }
+          
+          return res.json({
+            success: true,
+            data: {
+              ...mockInfo,
+              reservationId: reservationId || null
+            }
+          });
+        } catch (dbError) {
+          console.error('Error creating fallback payment record:', dbError);
+        }
+      }
+      
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy thông tin thanh toán'
+      });
     }
-    
-    res.json({
-      success: true,
-      data: paymentLinkInfo
-    });
   } catch (error) {
     console.error('Error getting payment info:', error);
     res.status(500).json({
@@ -340,9 +500,11 @@ router.post('/webhook', async (req, res) => {
             where: { transactionId: orderCode.toString() }
           });
           
+          let payment;
+          
           if (!existingPayment) {
             // Save to payment_information table
-            await PaymentInformation.create({
+            payment = await PaymentInformation.create({
               userId,
               transactionId: orderCode.toString(), // Save order code in transactionId as specified
               paymentMethod: 'bank_transfer',
@@ -373,9 +535,54 @@ router.post('/webhook', async (req, res) => {
             }
           } else {
             console.log(`Payment for order ${orderCode} already exists in database, skipping`);
+            payment = existingPayment;
+          }
+          
+          // Check if this payment is associated with a reservation
+          // First try to parse additionalData if available
+          let reservationId = null;
+          try {
+            if (webhookData.additionalData) {
+              const additionalData = JSON.parse(webhookData.additionalData);
+              if (additionalData && additionalData.reservationId) {
+                reservationId = parseInt(additionalData.reservationId);
+              }
+            }
+          } catch (parseError) {
+            console.error('Error parsing additionalData:', parseError);
+          }
+
+          // If not found in additionalData, try to parse from description or order code
+          if (!reservationId) {
+            const reservationIdMatch = /reservation[=:_-]?(\d+)/i.exec(description || orderCode);
+            reservationId = reservationIdMatch ? parseInt(reservationIdMatch[1]) : null;
+          }
+          
+          if (reservationId) {
+            // Find the reservation
+            const reservation = await Reservation.findByPk(reservationId);
+            
+            // If found, update status and link payment to reservation
+            if (reservation) {
+              console.log(`Found reservation #${reservationId} for payment ${orderCode}`);
+              
+              // Update reservation status to confirmed
+              await reservation.update({ status: 'confirmed' });
+              
+              // Link payment to reservation if not already linked
+              if (payment && !payment.reservationId) {
+                await payment.update({ reservationId });
+              }
+              
+              console.log(`Updated reservation #${reservationId} status to confirmed`);
+            } else {
+              console.log(`No reservation found with ID ${reservationId}`);
+            }
+          } else {
+            console.log(`No reservation ID found in payment description: ${description || orderCode}`);
           }
         } catch (dbError) {
-          console.error('Error saving payment to database:', dbError);
+          console.error('Error processing payment and reservation:', dbError);
         }
       } else {
         console.log(`Payment webhook received but payment not successful. Status: ${code} - ${desc}`);
