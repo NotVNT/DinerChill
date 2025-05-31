@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { categoriesAPI } from '../api';
+import { categoriesAPI } from '../services/api';
 import RestaurantCard from '../components/RestaurantCard';
 import FilterBox from '../components/FilterBox';
 import { useApp } from '../context/AppContext';

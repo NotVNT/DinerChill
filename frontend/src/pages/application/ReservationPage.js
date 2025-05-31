@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import '../../styles/ReservationPage.css';
-import { restaurantsAPI } from '../../api';
+import { restaurantsAPI } from '../../services/api';
 
 function ReservationPage() {
   const { user, addReservation, addReservationHistory } = useApp();

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { adminAPI } from '../../api';
+import { adminAPI } from '../../services/api';
 
 function AdminReviews() {
   const [reviews, setReviews] = useState([]);

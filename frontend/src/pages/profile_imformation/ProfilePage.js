@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
-import { reservationAPI, favoriteAPI, authAPI } from '../../api';
+import { reservationAPI, favoriteAPI, authAPI } from '../../services/api';
 import '../../styles/profile_imformation/ProfilePage.css';
 import LogoutHandler from '../identity/LogoutHandler';
 

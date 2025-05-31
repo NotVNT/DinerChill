@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { authAPI } from '../../api';
+import { authAPI } from '../../services/api';
 import '../../styles/identity/AuthPages.css';
 
 function ForgotPasswordPage() {

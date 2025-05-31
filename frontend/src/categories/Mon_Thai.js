@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { categoriesAPI } from '../api';
+import { categoriesAPI } from '../services/api';
 import RestaurantCard from '../components/RestaurantCard';
 import '../styles/pages/CategoryPage.css';
 

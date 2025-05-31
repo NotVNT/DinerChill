@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import RestaurantCard from '../components/RestaurantCard';
 import SearchBar from '../components/SearchBar';
-import { restaurantsAPI } from '../api';
+import { restaurantsAPI } from '../services/api';
 import '../styles/SearchResultsPage.css';
 
 function SearchResultsPage() {

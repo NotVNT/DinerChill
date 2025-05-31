@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { reservationAPI } from '../../api';
+import { reservationAPI } from '../../services/api';
 import { useApp } from '../../context/AppContext';
 import '../../styles/profile_imformation/MyReservationsPage.css';
 import LogoutHandler from '../identity/LogoutHandler';
-import { paymentAPI } from '../../api';
+import { paymentAPI } from '../../services/api';
 
 // Get actual current date and time
 const currentDate = new Date();

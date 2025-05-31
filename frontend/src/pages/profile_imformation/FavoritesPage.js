@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { favoriteAPI } from '../../api';
+import { favoriteAPI } from '../../services/api';
 import { useApp } from '../../context/AppContext';
 import '../../styles/profile_imformation/FavoritesPage.css';
 import LogoutHandler from '../identity/LogoutHandler';

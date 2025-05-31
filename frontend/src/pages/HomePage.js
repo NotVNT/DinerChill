@@ -4,7 +4,7 @@ import FilterBox from '../components/FilterBox';
 import RestaurantCard from '../components/RestaurantCard';
 import SearchBar from '../components/SearchBar';
 import { useApp } from '../context/AppContext';
-import { restaurantsAPI } from '../api';
+import { restaurantsAPI } from '../services/api';
 import '../styles/HomePage.css';
 
 function HomePage() {

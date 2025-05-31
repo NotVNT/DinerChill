@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { paymentAPI, reservationAPI } from '../../api';
+import { paymentAPI, reservationAPI } from '../../services/api';
 import '../../styles/PaymentResultPage.css';
 
 const PaymentResultPage = () => {

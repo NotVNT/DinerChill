@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback} from 'react';
-import { fetchWithAuth } from '../../api';
+import { fetchWithAuth } from '../../services/api';
 import '../../styles/admin_layout/admin_payment.css';
 
 function AdminPayments() {

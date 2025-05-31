@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useApp } from "../context/AppContext";
-import { restaurantsAPI } from "../api";
+import { restaurantsAPI } from "../services/api";
 import "../styles/RestaurantDetailPage.css";
 
 function RestaurantDetailPage() {
