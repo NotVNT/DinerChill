@@ -1,11 +1,11 @@
-import { Link } from 'react-router-dom';
-import { useState, useEffect } from 'react';
-import FilterBox from '../components/FilterBox';
-import RestaurantCard from '../components/RestaurantCard';
-import SearchBar from '../components/SearchBar';
-import { useApp } from '../context/AppContext';
-import { restaurantsAPI } from '../services/api';
-import '../styles/HomePage.css';
+import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import FilterBox from "../components/FilterBox";
+import RestaurantCard from "../components/RestaurantCard";
+import SearchBar from "../components/SearchBar";
+import { useApp } from "../context/AppContext";
+import { restaurantsAPI } from "../services/api";
+import "../styles/HomePage.css";
 
 function HomePage() {
   const [showPasswordBanner, setShowPasswordBanner] = useState(true);
@@ -25,10 +25,7 @@ function HomePage() {
   //   cuisineStyle: '',
   // });
 
-  const {
-    recentlyViewed,
-    clearRecentlyViewed,
-  } = useApp();
+  const { recentlyViewed, clearRecentlyViewed } = useApp();
 
   const [allRestaurants, setAllRestaurants] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -55,8 +52,8 @@ function HomePage() {
   });
 
   useEffect(() => {
-    const isBannerDismissed = localStorage.getItem('passwordBannerDismissed');
-    if (isBannerDismissed === 'true') {
+    const isBannerDismissed = localStorage.getItem("passwordBannerDismissed");
+    if (isBannerDismissed === "true") {
       setShowPasswordBanner(false);
     }
 
@@ -65,32 +62,34 @@ function HomePage() {
         setLoading(true);
         const data = await restaurantsAPI.getAll();
         if (!data || data.length === 0) {
-          throw new Error('Không có dữ liệu từ API.');
+          throw new Error("Không có dữ liệu từ API.");
         }
-        console.log('Fetched restaurants from API:', data);
-        
+        console.log("Fetched restaurants from API:", data);
+
         setAllRestaurants(data);
-        
+
         // Phân loại nhà hàng
-        const dealsData = data.filter(item => item.promotions?.length > 0);
+        const dealsData = data.filter((item) => item.promotions?.length > 0);
         setHotDeals(dealsData);
-        
-        const seafoodData = data.filter(r => 
-          r.cuisineType?.toLowerCase().includes('hải sản') || 
-          r.description?.toLowerCase().includes('hải sản')
+
+        const seafoodData = data.filter(
+          (r) =>
+            r.cuisineType?.toLowerCase().includes("hải sản") ||
+            r.description?.toLowerCase().includes("hải sản")
         );
         setSeafoodRestaurants(seafoodData);
-        
-        const partyData = data.filter(r => 
-          r.description?.toLowerCase().includes('tiệc') || 
-          r.name?.toLowerCase().includes('tiệc')
+
+        const partyData = data.filter(
+          (r) =>
+            r.description?.toLowerCase().includes("tiệc") ||
+            r.name?.toLowerCase().includes("tiệc")
         );
         setPartyRestaurants(partyData);
-        
+
         setLoading(false);
       } catch (err) {
-        console.error('Lỗi khi tải danh sách nhà hàng:', err);
-        setError(err.message || 'Lỗi khi tải dữ liệu');
+        console.error("Lỗi khi tải danh sách nhà hàng:", err);
+        setError(err.message || "Lỗi khi tải dữ liệu");
         setAllRestaurants([]);
         setLoading(false);
       }
@@ -101,19 +100,28 @@ function HomePage() {
 
   const handleDismissBanner = () => {
     setShowPasswordBanner(false);
-    localStorage.setItem('passwordBannerDismissed', 'true');
+    localStorage.setItem("passwordBannerDismissed", "true");
   };
 
   const handleLoadMore = (category, dataList) => {
-    setDisplayCounts(prev => ({
+    setDisplayCounts((prev) => ({
       ...prev,
       [category]: prev[category] + 4,
     }));
   };
 
-  const renderSection = (title, subtitle, link, queryParams, dataList, className, category) => {
+  const renderSection = (
+    title,
+    subtitle,
+    link,
+    queryParams,
+    dataList,
+    className,
+    category
+  ) => {
     // Fallback to allRestaurants if the specific category list is empty
-    const finalDataList = dataList && dataList.length > 0 ? dataList : allRestaurants;
+    const finalDataList =
+      dataList && dataList.length > 0 ? dataList : allRestaurants;
     const displayedData = finalDataList.slice(0, displayCounts[category]);
     const hasMoreData = finalDataList.length > displayedData.length;
 
@@ -124,7 +132,10 @@ function HomePage() {
             <h2>{title}</h2>
             <p>{subtitle}</p>
           </div>
-          <Link to={`${link}${queryParams ? `?${queryParams}` : ''}`} className="view-all">
+          <Link
+            to={`${link}${queryParams ? `?${queryParams}` : ""}`}
+            className="view-all"
+          >
             Xem tất cả
           </Link>
         </div>
@@ -143,7 +154,7 @@ function HomePage() {
             className="load-more-btn"
             disabled={loading}
           >
-            {loading ? 'Đang tải...' : 'Tải thêm'}
+            {loading ? "Đang tải..." : "Tải thêm"}
           </button>
         )}
       </div>
@@ -174,19 +185,23 @@ function HomePage() {
     );
   };
 
-  if (loading) return (
-    <div className="loading-container">
-      <div className="loading-spinner"></div>
-      <p>Đang tải dữ liệu nhà hàng...</p>
-    </div>
-  );
-  
-  if (error) return (
-    <div className="error-container">
-      <p>Lỗi: {error}</p>
-      <button className="btn" onClick={() => window.location.reload()}>Thử lại</button>
-    </div>
-  );
+  if (loading)
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+        <p>Đang tải dữ liệu nhà hàng...</p>
+      </div>
+    );
+
+  if (error)
+    return (
+      <div className="error-container">
+        <p>Lỗi: {error}</p>
+        <button className="btn" onClick={() => window.location.reload()}>
+          Thử lại
+        </button>
+      </div>
+    );
 
   return (
     <div className="home-page">
@@ -197,62 +212,68 @@ function HomePage() {
             <span className="password-notification-icon">🔒</span>
             <div className="password-notification-text">
               <p>
-                Để bảo mật tài khoản, hãy cập nhật mật khẩu của bạn thường xuyên.{' '}
-                <Link to="/update-password">Cập nhật ngay</Link>
+                Để bảo mật tài khoản, hãy cập nhật mật khẩu của bạn thường
+                xuyên. <Link to="/update-password">Cập nhật ngay</Link>
               </p>
             </div>
-            <button className="password-notification-dismiss" onClick={handleDismissBanner}>
+            <button
+              className="password-notification-dismiss"
+              onClick={handleDismissBanner}
+            >
               ✕
             </button>
           </div>
         </div>
       )}
-      
+
       <div className="container">
         <FilterBox />
       </div>
 
       {renderSection(
-        'Nhà hàng',
-        'Khám phá tất cả các nhà hàng trên DinerChill',
-        '/restaurants',
-        '',
+        "Nhà hàng",
+        "Khám phá tất cả các nhà hàng trên DinerChill",
+        "/restaurants",
+        "",
         allRestaurants,
-        'all-restaurants-section',
-        'hotDeals'
+        "all-restaurants-section",
+        "hotDeals"
       )}
 
       {allRestaurants.length > 0 && (
         <>
-          {hotDeals.length > 0 && renderSection(
-            'Ưu đãi Hot',
-            'Khám phá các nhà hàng và sản phẩm đang có ưu đãi hấp dẫn ngay',
-            '/deals',
-            'promotion=Ưu đãi',
-            hotDeals,
-            'hot-deals-section',
-            'hotDeals'
-          )}
+          {hotDeals.length > 0 &&
+            renderSection(
+              "Ưu đãi Hot",
+              "Khám phá các nhà hàng và sản phẩm đang có ưu đãi hấp dẫn ngay",
+              "/deals",
+              "promotion=Ưu đãi",
+              hotDeals,
+              "hot-deals-section",
+              "hotDeals"
+            )}
 
-          {seafoodRestaurants.length > 0 && renderSection(
-            'Nhà hàng hải sản ngon nhất',
-            'Tham khảo ngay các nhà hàng hải sản được yêu thích!',
-            '/restaurants',
-            'cuisine=Hải sản&minRating=4',
-            seafoodRestaurants,
-            'seafood-restaurants-section',
-            'seafoodRestaurants'
-          )}
+          {seafoodRestaurants.length > 0 &&
+            renderSection(
+              "Nhà hàng hải sản ngon nhất",
+              "Tham khảo ngay các nhà hàng hải sản được yêu thích!",
+              "/restaurants",
+              "cuisine=Hải sản&minRating=4",
+              seafoodRestaurants,
+              "seafood-restaurants-section",
+              "seafoodRestaurants"
+            )}
 
-          {partyRestaurants.length > 0 && renderSection(
-            'Nhà hàng phù hợp đặt tiệc',
-            'Ưu đãi đa dạng giúp bạn dễ dàng lựa chọn địa điểm tiệc',
-            '/restaurants',
-            'suitableFor=tiệc&minCapacity=50',
-            partyRestaurants,
-            'party-restaurants-section',
-            'partyRestaurants'
-          )}
+          {partyRestaurants.length > 0 &&
+            renderSection(
+              "Nhà hàng phù hợp đặt tiệc",
+              "Ưu đãi đa dạng giúp bạn dễ dàng lựa chọn địa điểm tiệc",
+              "/restaurants",
+              "suitableFor=tiệc&minCapacity=50",
+              partyRestaurants,
+              "party-restaurants-section",
+              "partyRestaurants"
+            )}
         </>
       )}
 

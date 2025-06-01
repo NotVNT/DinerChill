@@ -1,13 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import '../styles/RestaurantCard.css';
+import '../styles/components/RestaurantCard.css';
 
 function RestaurantCard({ restaurant }) {
   const navigate = useNavigate();
   const { addToRecentlyViewed } = useApp();
 
-  const [imageSrc, setImageSrc] = useState(restaurant?.image || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?fit=crop&w=300&h=200&q=80');
+  // Use a default image URL to avoid empty string warning
+  const [imageSrc, setImageSrc] = useState('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?fit=crop&w=300&h=200&q=80');
+
+  // Set image source from restaurant images or default to fallback
+  useEffect(() => {
+    if (restaurant?.images && restaurant.images.length > 0) {
+      // Use the first image from the images array
+      setImageSrc(restaurant.images[0].image_path);
+    } else if (restaurant?.image) {
+      // Fallback to the image property if available
+      setImageSrc(restaurant.image);
+    }
+    // No need for else case as we already have a default image set in the initial state
+  }, [restaurant]);
 
   const handleCardClick = () => {
     if (!restaurant?.id) return;

@@ -20,7 +20,6 @@ async function fetchAPI(endpoint, options = {}) {
 
   try {
     console.log(`Gọi API: ${url}`);
-    console.log(`Gọi API: ${url}`);
     const response = await fetch(url, config);
 
     // Always attempt to parse the JSON even if the status is not OK
@@ -40,12 +39,17 @@ async function fetchAPI(endpoint, options = {}) {
     }
 
     if (!response.ok) {
-      console.error(`Lỗi API ${endpoint}:`, response.status, response.statusText);
+      console.error(
+        `Lỗi API ${endpoint}:`,
+        response.status,
+        response.statusText
+      );
       // Use error message from the response data if available
-      const errorMessage = data && data.message 
-        ? data.message 
-        : `Lỗi ${response.status}: ${response.statusText}`;
-      
+      const errorMessage =
+        data && data.message
+          ? data.message
+          : `Lỗi ${response.status}: ${response.statusText}`;
+
       return Promise.reject({
         message: errorMessage,
         status: response.status,
@@ -203,10 +207,10 @@ export const paymentAPI = {
       method: "POST",
       body: JSON.stringify(paymentData),
     }),
-    
+
   getPaymentInfo: (orderCode) =>
     fetchAPI(`/payment/info/${orderCode}?include=reservation`),
-    
+
   confirmPayment: (paymentData) =>
     fetchAPI("/reservation/confirm", {
       method: "POST",
@@ -685,10 +689,12 @@ export const favoriteAPI = {
 // API for categories
 export const categoriesAPI = {
   getAll: () => fetchAPI("/categories"),
-  
+
   getById: (id) => fetchAPI(`/categories/${id}`),
-  
-  getRestaurantsByCategory: (categoryId) => fetchAPI(`/categories/${categoryId}/restaurants`),
-  
-  getRestaurantsByCategoryName: (categoryName) => fetchAPI(`/categories/name/${categoryName}/restaurants`),
+
+  getRestaurantsByCategory: (categoryId) =>
+    fetchAPI(`/categories/${categoryId}/restaurants`),
+
+  getRestaurantsByCategoryName: (categoryName) =>
+    fetchAPI(`/categories/name/${categoryName}/restaurants`),
 };
