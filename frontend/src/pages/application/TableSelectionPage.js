@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { restaurantsAPI } from "../../services/api";
-import "../../styles/TableSelectionPage.css";
+import "../../styles/pages/TableSelectionPage.css";
 
 function TableSelectionPage() {
   const navigate = useNavigate();

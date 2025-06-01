@@ -1,8 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useApp } from '../context/AppContext';
-import '../styles/layout/logout-confirmation.css';
-import LogoutConfirmation from '../pages/identity/LogoutConfirmation';
+import React, { useState, useRef, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useApp } from "../context/AppContext";
+import "../styles/layout/logout-confirmation.css";
+import LogoutConfirmation from "../pages/identity/LogoutConfirmation";
 
 function Header() {
   const { user, logout } = useApp();
@@ -23,25 +23,25 @@ function Header() {
   const userTimeoutRef = useRef(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  
+
   // Close menu when clicking outside
   useEffect(() => {
     function handleClickOutside(event) {
       if (foodMenuRef.current && !foodMenuRef.current.contains(event.target)) {
         setShowFoodMenu(false);
       }
-      
+
       if (blogMenuRef.current && !blogMenuRef.current.contains(event.target)) {
         setShowBlogMenu(false);
       }
     }
-    
-    document.addEventListener('mousedown', handleClickOutside);
+
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
-  
+
   // Effect to control food menu visibility based on hover states
   useEffect(() => {
     if (isHoveringFood || isHoveringDropdown) {
@@ -65,7 +65,7 @@ function Header() {
       }
     };
   }, [isHoveringFood, isHoveringDropdown]);
-  
+
   // Add a new effect for blog menu dropdown
   useEffect(() => {
     if (isHoveringBlog || isHoveringBlogDropdown) {
@@ -89,7 +89,7 @@ function Header() {
       }
     };
   }, [isHoveringBlog, isHoveringBlogDropdown]);
-  
+
   // Thêm effect để kiểm soát hiển thị user menu khi hover
   useEffect(() => {
     if (isHoveringUser || isHoveringUserDropdown) {
@@ -110,44 +110,44 @@ function Header() {
       }
     };
   }, [isHoveringUser, isHoveringUserDropdown]);
-  
+
   const handleLogout = () => {
     setShowMenu(false);
     setShowLogoutConfirm(true);
   };
-  
+
   const confirmLogout = () => {
     logout();
-    navigate('/');
+    navigate("/");
     setShowLogoutConfirm(false);
   };
 
   const cancelLogout = () => {
     setShowLogoutConfirm(false);
   };
-  
+
   const toggleMenu = () => {
     setShowMenu(!showMenu);
   };
-  
+
   const toggleFoodMenu = () => {
     setShowFoodMenu(!showFoodMenu);
   };
-  
+
   const toggleBlogMenu = () => {
     setShowBlogMenu(!showBlogMenu);
   };
-  
+
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
   };
-  
+
   const goToHomePage = (e) => {
     e.preventDefault(); // Prevent default link behavior
     // Force a direct navigation to homepage with current origin
-    window.location.href = window.location.origin + '/';
+    window.location.href = window.location.origin + "/";
   };
-  
+
   return (
     <header className="site-header">
       <div className="container">
@@ -155,23 +155,23 @@ function Header() {
           <a href="/" className="logo-link" onClick={goToHomePage}>
             <h1 className="logo">DinerChill</h1>
           </a>
-          
-          <nav className={`main-nav ${mobileMenuOpen ? 'mobile-active' : ''}`}>
+
+          <nav className={`main-nav ${mobileMenuOpen ? "mobile-active" : ""}`}>
             <ul>
-              <li 
-                className="food-menu-container" 
+              <li
+                className="food-menu-container"
                 ref={foodMenuRef}
                 onMouseEnter={() => setIsHoveringFood(true)}
                 onMouseLeave={() => setIsHoveringFood(false)}
               >
-                <span 
-                  className="nav-link"
-                  onClick={toggleFoodMenu}
-                >
-                  <i className="nav-icon">🍽️</i> Ăn uống <i className={`dropdown-arrow ${showFoodMenu ? 'open' : ''}`}>▼</i>
+                <span className="nav-link" onClick={toggleFoodMenu}>
+                  <i className="nav-icon">🍽️</i> Ăn uống{" "}
+                  <i className={`dropdown-arrow ${showFoodMenu ? "open" : ""}`}>
+                    ▼
+                  </i>
                 </span>
                 {showFoodMenu && (
-                  <div 
+                  <div
                     className="food-dropdown-menu"
                     onMouseEnter={() => setIsHoveringDropdown(true)}
                     onMouseLeave={() => setIsHoveringDropdown(false)}
@@ -195,31 +195,31 @@ function Header() {
                   </div>
                 )}
               </li>
-              <li 
-                className="food-menu-container blog-menu-container" 
+              <li
+                className="food-menu-container blog-menu-container"
                 ref={blogMenuRef}
                 onMouseEnter={() => setIsHoveringBlog(true)}
                 onMouseLeave={() => setIsHoveringBlog(false)}
               >
-                <span 
-                  className="nav-link"
-                  onClick={toggleBlogMenu}
-                >
-                  <i className="nav-icon">📰</i> Tin tức & Blog <i className={`dropdown-arrow ${showBlogMenu ? 'open' : ''}`}>▼</i>
+                <span className="nav-link" onClick={toggleBlogMenu}>
+                  <i className="nav-icon">📰</i> Tin tức & Blog{" "}
+                  <i className={`dropdown-arrow ${showBlogMenu ? "open" : ""}`}>
+                    ▼
+                  </i>
                 </span>
                 {showBlogMenu && (
-                  <div 
+                  <div
                     className="food-dropdown-menu blog-dropdown-menu"
                     onMouseEnter={() => setIsHoveringBlogDropdown(true)}
                     onMouseLeave={() => setIsHoveringBlogDropdown(false)}
                   >
                     <div className="food-grid blog-grid">
                       <Link to="/blog/tin-tuc-moi-nhat">Tin tức mới nhất</Link>
-                      <Link to="/blog/meo-kinh-nghiem">Mẹo & Kinh nghiệm ẩm thực</Link>
-                      <Link to="/blog/cong-thuc">Công thức món ăn</Link>
+                      <Link to="/blog/kinh-doanh-an-uong">Kinh doanh ăn uống</Link>
+                      <Link to="/blog/dia-diem-an-uong">Địa điểm ăn uống</Link>
                       <Link to="/blog/danh-gia-review">Đánh giá & Review</Link>
                       <Link to="/blog/su-kien-khuyen-mai">Sự kiện & Khuyến mãi</Link>
-                      <Link to="/blog/cau-chuyen-am-thuc">Câu chuyện ẩm thực</Link>
+                      <Link to="/blog/nha-hang-hot-trend">Nhà Hàng Hot Trend</Link>
                       <Link to="/blog/hau-truong-nha-hang">Hậu trường nhà hàng</Link>
                     </div>
                   </div>
@@ -242,11 +242,14 @@ function Header() {
               </li>
             </ul>
           </nav>
-          
+
           <div className="auth-nav">
             {user ? (
               <div className="user-menu">
-                <span className="user-greeting account-btn" onClick={toggleMenu}>
+                <span
+                  className="user-greeting account-btn"
+                  onClick={toggleMenu}
+                >
                   <i className="account-icon">👤</i> {user.name}
                 </span>
                 {showMenu && (
@@ -259,7 +262,10 @@ function Header() {
                         <i className="menu-icon">⚙️</i> Quản trị viên
                       </Link>
                     ) : (
-                      <Link to="/my-reservations" onClick={() => setShowMenu(false)}>
+                      <Link
+                        to="/my-reservations"
+                        onClick={() => setShowMenu(false)}
+                      >
                         <i className="menu-icon">📅</i> Đặt bàn của tôi
                       </Link>
                     )}
@@ -270,7 +276,7 @@ function Header() {
                 )}
               </div>
             ) : (
-              <div 
+              <div
                 className="user-menu"
                 onMouseEnter={() => setIsHoveringUser(true)}
                 onMouseLeave={() => setIsHoveringUser(false)}
@@ -278,7 +284,7 @@ function Header() {
                 <span className="account-btn">
                   <i className="account-icon">👤</i> Tài khoản
                 </span>
-                <div 
+                <div
                   className="dropdown-menu"
                   onMouseEnter={() => setIsHoveringUserDropdown(true)}
                   onMouseLeave={() => setIsHoveringUserDropdown(false)}
@@ -293,17 +299,14 @@ function Header() {
               </div>
             )}
           </div>
-          
+
           <div className="hamburger-menu" onClick={toggleMobileMenu}>
             <span className="hamburger-icon"></span>
           </div>
         </div>
       </div>
       {showLogoutConfirm && (
-        <LogoutConfirmation
-          onCancel={cancelLogout}
-          onConfirm={confirmLogout}
-        />
+        <LogoutConfirmation onCancel={cancelLogout} onConfirm={confirmLogout} />
       )}
     </header>
   );

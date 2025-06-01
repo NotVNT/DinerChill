@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { adminAPI } from '../../services/api';
-import '../../styles/AdminRestaurants.css';
 import '../../styles/admin_layout/admin_restaurant.css';
 
 function AdminRestaurants() {
@@ -509,161 +508,6 @@ function AdminRestaurants() {
 
   return (
     <div className="admin-restaurants-page">
-      <style jsx="true">{`
-        .restaurant-form-container {
-          background-color: #fff;
-          border-radius: 8px;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-          margin-bottom: 24px;
-          max-width: 900px;
-          margin-left: auto;
-          margin-right: auto;
-        }
-
-        .form-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 16px 20px;
-          border-bottom: 1px solid #e9ecef;
-        }
-
-        .form-sections {
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
-          padding: 16px;
-        }
-
-        .form-section {
-          padding: 12px;
-          background-color: #f8f9fa;
-          border-radius: 6px;
-          border: 1px solid #e9ecef;
-        }
-
-        .section-title {
-          margin-bottom: 12px;
-          padding-bottom: 6px;
-          border-bottom: 1px solid #dee2e6;
-          font-size: 15px;
-          font-weight: 600;
-          color: #495057;
-        }
-
-        .form-buttons {
-          display: flex;
-          justify-content: flex-end;
-          gap: 10px;
-          padding: 12px 16px;
-          border-top: 1px solid #e9ecef;
-        }
-
-        .image-upload-container {
-          border: 2px dashed #dee2e6;
-          border-radius: 6px;
-          padding: 12px;
-          text-align: center;
-          background-color: #fff;
-        }
-
-        .image-upload-area {
-          position: relative;
-          cursor: pointer;
-          min-height: 80px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .image-upload-input {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          opacity: 0;
-          cursor: pointer;
-        }
-
-        .image-upload-placeholder {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          color: #6c757d;
-        }
-
-        .image-upload-placeholder i {
-          font-size: 20px;
-          margin-bottom: 6px;
-        }
-
-        .image-preview-container {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 8px;
-          margin-top: 12px;
-        }
-
-        .image-preview-item {
-          position: relative;
-          width: 80px;
-          height: 80px;
-          border-radius: 4px;
-          overflow: hidden;
-        }
-
-        .preview-thumbnail {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-
-        .remove-image-btn {
-          position: absolute;
-          top: 4px;
-          right: 4px;
-          background-color: rgba(0,0,0,0.5);
-          color: white;
-          border: none;
-          border-radius: 50%;
-          width: 20px;
-          height: 20px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-        }
-
-        .form-row {
-          margin-bottom: 8px;
-        }
-
-        /* Make form inputs and controls more compact */
-        .form-control {
-          padding: 6px 12px;
-          font-size: 14px;
-        }
-
-        textarea.form-control {
-          min-height: 60px;
-        }
-
-        .form-group {
-          margin-bottom: 8px;
-        }
-
-        @media (max-width: 768px) {
-          .form-row {
-            flex-direction: column;
-          }
-          
-          .form-group.col-md-6 {
-            width: 100%;
-          }
-        }
-      `}</style>
       <div className="page-header">
         <h1>Quản lý Nhà hàng</h1>
         <button className="btn-action btn-add" onClick={() => setEditingRestaurant({})}>
@@ -675,24 +519,10 @@ function AdminRestaurants() {
       {/* Toast Notification */}
       {toast.show && (
         <div className="toast-notification" style={{
-          position: 'fixed',
-          bottom: '20px',
-          right: '20px',
-          transform: 'none',
           backgroundColor: toast.type === 'success' ? '#28a745' : 
                            toast.type === 'warning' ? '#ffc107' : 
                            toast.type === 'danger' ? '#dc3545' : '#28a745',
-          color: toast.type === 'warning' ? '#212529' : 'white',
-          padding: '15px 20px',
-          borderRadius: '4px',
-          boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-          zIndex: 9999,
-          display: 'flex',
-          alignItems: 'flex-start',
-          gap: '12px',
-          minWidth: '300px',
-          maxWidth: '400px',
-          animation: 'slideInUp 0.3s ease-out'
+          color: toast.type === 'warning' ? '#212529' : 'white'
         }}>
           <div style={{ 
             display: 'flex', 
@@ -720,17 +550,7 @@ function AdminRestaurants() {
           </div>
         </div>
       )}
-      <style jsx="true">{`
-        @keyframes slideInUp {
-          from { transform: translateY(20px); opacity: 0; }
-          to { transform: translateY(0); opacity: 1; }
-        }
-        .toast-notification {
-          animation: slideInUp 0.3s ease-out;
-        }
-      `}</style>
       
-
       {error && (
         <div className="alert alert-danger">
           <i className="fa fa-exclamation-circle alert-icon"></i>
@@ -1136,145 +956,6 @@ function AdminRestaurants() {
         </div>
       )}
 
-      {/* Modal Chi tiết Nhà hàng */}
-      {viewingRestaurant && (
-        <div className="restaurant-detail-modal">
-          <div className="modal-backdrop" onClick={closeDetailView}></div>
-          <div className="modal-content">
-            <div className="modal-header">
-              <h2>Chi tiết nhà hàng</h2>
-              <button type="button" className="close-btn" onClick={closeDetailView}>
-                <i className="fa fa-times"></i>
-              </button>
-            </div>
-            <div className="modal-body">
-              <div className="restaurant-detail-content">
-                <div className="detail-header">
-                  <div className="restaurant-name">{viewingRestaurant.name}</div>
-                  <div className="restaurant-categories">
-                    {viewingRestaurant.categories && viewingRestaurant.categories.length > 0 
-                      ? viewingRestaurant.categories.map(cat => cat.name).join(', ') 
-                      : (viewingRestaurant.cuisine || viewingRestaurant.cuisineType || 'Chưa phân loại')}
-                  </div>
-                </div>
-                
-                {/* Restaurant Images Gallery */}
-                <div className="restaurant-images-gallery">
-                  {viewingRestaurant.images && viewingRestaurant.images.length > 0 ? (
-                    viewingRestaurant.images.map((image, index) => {
-                      const imageSrc = getImageUrl(image);
-                      return (
-                        <div key={index} className="gallery-image-item">
-                          <img 
-                            src={imageSrc} 
-                            alt={`${viewingRestaurant.name} - Ảnh ${index + 1}`} 
-                            className="gallery-image" 
-                          />
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <div className="no-image-placeholder">
-                      <i className="fa fa-image"></i>
-                      <p>Không có hình ảnh</p>
-                    </div>
-                  )}
-                </div>
-                
-                <div className="detail-info-grid">
-                  <div className="detail-section">
-                    <h3>Thông tin cơ bản</h3>
-                    <div className="detail-row">
-                      <div className="detail-label">ID:</div>
-                      <div className="detail-value">{viewingRestaurant.id}</div>
-                    </div>
-                    <div className="detail-row">
-                      <div className="detail-label">Địa chỉ:</div>
-                      <div className="detail-value">{viewingRestaurant.address}</div>
-                    </div>
-                    <div className="detail-row">
-                      <div className="detail-label">Giờ mở cửa:</div>
-                      <div className="detail-value">
-                        {viewingRestaurant.openingTime} - {viewingRestaurant.closingTime}
-                      </div>
-                    </div>
-                    <div className="detail-row">
-                      <div className="detail-label">Số điện thoại:</div>
-                      <div className="detail-value">{viewingRestaurant.phone}</div>
-                    </div>
-                    <div className="detail-row">
-                      <div className="detail-label">Email:</div>
-                      <div className="detail-value">{viewingRestaurant.email}</div>
-                    </div>
-                  </div>
-                  
-                  <div className="detail-section">
-                    <h3>Thông tin bổ sung</h3>
-                    <div className="detail-row">
-                      <div className="detail-label">Sức chứa:</div>
-                      <div className="detail-value">
-                        {viewingRestaurant.capacity ? `${viewingRestaurant.capacity} người` : 'Chưa cập nhật'}
-                      </div>
-                    </div>
-                    <div className="detail-row">
-                      <div className="detail-label">Mức giá:</div>
-                      <div className="detail-value">{viewingRestaurant.priceRange || 'Chưa cập nhật'}</div>
-                    </div>
-                    <div className="detail-row">
-                      <div className="detail-label">Ngày tạo:</div>
-                      <div className="detail-value">
-                        {new Date(viewingRestaurant.createdAt).toLocaleDateString('vi-VN')}
-                      </div>
-                    </div>
-                    <div className="detail-row">
-                      <div className="detail-label">Cập nhật lần cuối:</div>
-                      <div className="detail-value">
-                        {new Date(viewingRestaurant.updatedAt).toLocaleDateString('vi-VN')}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="detail-description">
-                  <h3>Mô tả</h3>
-                  <p>{viewingRestaurant.description || 'Không có mô tả'}</p>
-                </div>
-                
-                <div className="detail-actions">
-                  <button 
-                    className="btn-action btn-edit"
-                    onClick={() => {
-                      handleEditClick(viewingRestaurant);
-                      closeDetailView();
-                    }}
-                  >
-                    <i className="fa fa-edit"></i> Chỉnh sửa
-                  </button>
-                  <button 
-                    className="btn-action btn-delete"
-                    onClick={() => {
-                      if (window.confirm('Bạn có chắc muốn xóa nhà hàng này?')) {
-                        const restaurantId = viewingRestaurant.id;
-                        handleDeleteClick(restaurantId);
-                        closeDetailView();
-                      }
-                    }}
-                  >
-                    <i className="fa fa-trash"></i> Xóa
-                  </button>
-                  <button 
-                    className="btn-action btn-secondary"
-                    onClick={closeDetailView}
-                  >
-                    <i className="fa fa-times"></i> Đóng
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Status Change Modal */}
       {statusChangeModal.isOpen && statusChangeModal.restaurant && (
         <div className="status-change-modal">
@@ -1362,6 +1043,140 @@ function AdminRestaurants() {
               <button className="btn btn-secondary cancel-btn" onClick={closeStatusModal}>
                 <i className="fa fa-times"></i> Hủy
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Restaurant Detail View Modal */}
+      {viewingRestaurant && (
+        <div className="restaurant-detail-modal">
+          <div className="modal-backdrop" onClick={closeDetailView}></div>
+          <div className="modal-content detail-view">
+            <button type="button" className="close-btn detail-close-btn" onClick={closeDetailView}>
+              <i className="fa fa-times"></i>
+            </button>
+            
+            <div className="restaurant-form-container detail-form">
+              <div className="restaurant-detail-header">
+                <h2 className="restaurant-name">{viewingRestaurant.name}</h2>
+                <span className={`status-badge ${viewingRestaurant.status === 'active' ? 'active' : 'maintenance'}`}>
+                  {viewingRestaurant.status === 'active' ? 'Đang hoạt động' : 'Tạm ngừng'}
+                </span>
+              </div>
+              
+              {viewingRestaurant.status === 'maintenance' && viewingRestaurant.closureReason && (
+                <div className="closure-reason-note">
+                  <i className="fa fa-info-circle"></i>
+                  <span>Lý do tạm ngừng: {viewingRestaurant.closureReason}</span>
+                </div>
+              )}
+              
+              {/* Restaurant Images - Integrated with moderate size */}
+              <div className="restaurant-images-section-moderate">
+                {viewingRestaurant.images && viewingRestaurant.images.length > 0 ? (
+                  <div className="restaurant-images-gallery-moderate">
+                    {viewingRestaurant.images.map((image, index) => (
+                      <div key={`image-${index}`} className="gallery-image-moderate">
+                        <img src={getImageUrl(image)} alt={`${viewingRestaurant.name} - Hình ${index + 1}`} />
+                      </div>
+                    ))}
+                  </div>
+                ) : viewingRestaurant.image ? (
+                  <div className="restaurant-single-image-moderate">
+                    <img src={viewingRestaurant.image} alt={viewingRestaurant.name} />
+                  </div>
+                ) : (
+                  <div className="no-image-placeholder-moderate">
+                    <i className="fa fa-image"></i>
+                    <p>Không có hình ảnh</p>
+                  </div>
+                )}
+              </div>
+              
+              <div className="detail-form-content">
+                <div className="detail-section">
+                  <h4 className="section-title"><i className="fa fa-info-circle"></i> Thông tin cơ bản</h4>
+                  <div className="detail-grid">
+                    <div className="detail-item">
+                      <span className="detail-label"><i className="fa fa-map-marker-alt"></i> Địa chỉ:</span>
+                      <span className="detail-value">{viewingRestaurant.address || 'Chưa cập nhật'}</span>
+                    </div>
+                    
+                    <div className="detail-item">
+                      <span className="detail-label"><i className="fa fa-tags"></i> Danh mục:</span>
+                      <span className="detail-value">
+                        {viewingRestaurant.categories && viewingRestaurant.categories.length > 0 ? (
+                          <div className="category-tags">
+                            {viewingRestaurant.categories.map(category => (
+                              <span key={category.id} className="category-tag">{category.name}</span>
+                            ))}
+                          </div>
+                        ) : (
+                          'Chưa phân loại'
+                        )}
+                      </span>
+                    </div>
+                    
+                    <div className="detail-item">
+                      <span className="detail-label"><i className="fa fa-clock"></i> Giờ mở cửa:</span>
+                      <span className="detail-value">
+                        {viewingRestaurant.openingTime && viewingRestaurant.closingTime
+                          ? `${viewingRestaurant.openingTime} - ${viewingRestaurant.closingTime}`
+                          : 'Chưa cập nhật'}
+                      </span>
+                    </div>
+                    
+                    <div className="detail-item">
+                      <span className="detail-label"><i className="fa fa-users"></i> Sức chứa:</span>
+                      <span className="detail-value">
+                        {viewingRestaurant.capacity ? `${viewingRestaurant.capacity} người` : 'Chưa cập nhật'}
+                      </span>
+                    </div>
+                    
+                    <div className="detail-item">
+                      <span className="detail-label"><i className="fa fa-tag"></i> Mức giá:</span>
+                      <span className="detail-value">{viewingRestaurant.priceRange || 'Chưa cập nhật'}</span>
+                    </div>
+                  </div>
+                </div>
+                
+                {viewingRestaurant.description && (
+                  <div className="detail-section">
+                    <h4 className="section-title"><i className="fa fa-align-left"></i> Mô tả</h4>
+                    <div className="restaurant-description">
+                      {viewingRestaurant.description}
+                    </div>
+                  </div>
+                )}
+                
+                <div className="detail-section">
+                  <h4 className="section-title"><i className="fa fa-address-book"></i> Thông tin liên hệ</h4>
+                  <div className="detail-grid">
+                    <div className="detail-item">
+                      <span className="detail-label"><i className="fa fa-phone"></i> Số điện thoại:</span>
+                      <span className="detail-value">{viewingRestaurant.phone || 'Chưa cập nhật'}</span>
+                    </div>
+                    
+                    <div className="detail-item">
+                      <span className="detail-label"><i className="fa fa-envelope"></i> Email:</span>
+                      <span className="detail-value">{viewingRestaurant.email || 'Chưa cập nhật'}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="detail-form-actions">
+                <button 
+                  className="btn btn-primary" 
+                  onClick={() => { handleEditClick(viewingRestaurant); closeDetailView(); }}
+                >
+                  <i className="fa fa-edit"></i> Chỉnh sửa
+                </button>
+                <button className="btn btn-secondary" onClick={closeDetailView}>
+                  <i className="fa fa-times"></i> Đóng
+                </button>
+              </div>
             </div>
           </div>
         </div>

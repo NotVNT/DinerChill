@@ -33,7 +33,6 @@ const storage = multer.diskStorage({
       fs.mkdirSync(uploadDir, { recursive: true });
     }
     cb(null, uploadDir);
-    cb(null, uploadDir);
   },
   filename: function (req, file, cb) {
     const uniqueFilename =

@@ -13,18 +13,19 @@ function RestaurantDetailPage() {
   const [isFavorite, setIsFavorite] = useState(false);
   const [notification, setNotification] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
-  
+  const [currentBannerImageIndex, setCurrentBannerImageIndex] = useState(0); // Track current banner image index
+
   // Get initial date, checking if current time is after 22:00 to select next day
   const getCurrentOrNextDay = () => {
     const now = new Date();
     if (now.getHours() >= 22) {
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
-      return tomorrow.toISOString().split('T')[0];
+      return tomorrow.toISOString().split("T")[0];
     }
-    return now.toISOString().split('T')[0];
+    return now.toISOString().split("T")[0];
   };
-  
+
   const [formData, setFormData] = useState({
     guests: 2,
     children: 0,
@@ -57,7 +58,6 @@ function RestaurantDetailPage() {
     { id: "operating-hours", label: "Giờ hoạt động" },
     { id: "promotions", label: "Ưu đãi" },
     { id: "reviews", label: "Đánh giá" },
-    { id: "images", label: "Hình ảnh" },
     { id: "map", label: "Chỉ đường" },
   ];
 
@@ -76,51 +76,54 @@ function RestaurantDetailPage() {
     }
   }, [location]);
 
-  const generateTimeSlots = useCallback((openTime, closeTime) => {
-    const times = [];
-    const [openHour, openMinute] = openTime.split(":").map(Number);
-    const [closeHour, closeMinute] = closeTime.split(":").map(Number);
+  const generateTimeSlots = useCallback(
+    (openTime, closeTime) => {
+      const times = [];
+      const [openHour, openMinute] = openTime.split(":").map(Number);
+      const [closeHour, closeMinute] = closeTime.split(":").map(Number);
 
-    let currentHour = openHour;
-    let currentMinute = openMinute;
+      let currentHour = openHour;
+      let currentMinute = openMinute;
 
-    while (
-      currentHour < closeHour ||
-      (currentHour === closeHour && currentMinute <= closeMinute)
-    ) {
-      const timeString = `${currentHour
-        .toString()
-        .padStart(2, "0")}:${currentMinute.toString().padStart(2, "0")}`;
-      times.push(timeString);
+      while (
+        currentHour < closeHour ||
+        (currentHour === closeHour && currentMinute <= closeMinute)
+      ) {
+        const timeString = `${currentHour
+          .toString()
+          .padStart(2, "0")}:${currentMinute.toString().padStart(2, "0")}`;
+        times.push(timeString);
 
-      currentMinute += 30;
-      if (currentMinute >= 60) {
-        currentMinute = 0;
-        currentHour += 1;
+        currentMinute += 30;
+        if (currentMinute >= 60) {
+          currentMinute = 0;
+          currentHour += 1;
+        }
       }
-    }
 
-    // Check if current date is today and if current time is after 22:00
-    const today = new Date().toISOString().split("T")[0];
-    const currentTime = new Date();
-    const currentHourOfDay = currentTime.getHours();
-    
-    // If it's after 22:00, don't filter - we're already using tomorrow's date
-    if (formData.date === today && currentHourOfDay < 22) {
-      const filteredTimes = times.filter(time => {
-        const [hour, minute] = time.split(':').map(Number);
-        const timeDate = new Date(currentTime);
-        timeDate.setHours(hour, minute, 0, 0);
-        const diffHours = (timeDate - currentTime) / (1000 * 60 * 60);
-        return diffHours >= 2;
-      });
-      
-      // Return filtered times if there are any, otherwise return all times
-      return filteredTimes.length > 0 ? filteredTimes : times;
-    }
+      // Check if current date is today and if current time is after 22:00
+      const today = new Date().toISOString().split("T")[0];
+      const currentTime = new Date();
+      const currentHourOfDay = currentTime.getHours();
 
-    return times;
-  }, [formData.date]);
+      // If it's after 22:00, don't filter - we're already using tomorrow's date
+      if (formData.date === today && currentHourOfDay < 22) {
+        const filteredTimes = times.filter((time) => {
+          const [hour, minute] = time.split(":").map(Number);
+          const timeDate = new Date(currentTime);
+          timeDate.setHours(hour, minute, 0, 0);
+          const diffHours = (timeDate - currentTime) / (1000 * 60 * 60);
+          return diffHours >= 2;
+        });
+
+        // Return filtered times if there are any, otherwise return all times
+        return filteredTimes.length > 0 ? filteredTimes : times;
+      }
+
+      return times;
+    },
+    [formData.date]
+  );
 
   useEffect(() => {
     const fetchRestaurant = async () => {
@@ -292,15 +295,15 @@ function RestaurantDetailPage() {
   const handleFormChange = (e) => {
     e.stopPropagation();
     const { name, value } = e.target;
-    
+
     // Special handling for date to prevent selecting a date earlier than the current selected date
-    if (name === 'date') {
+    if (name === "date") {
       // Don't allow selecting dates earlier than the current value
       if (value < formData.date) {
         return; // Don't update if trying to select an earlier date
       }
     }
-    
+
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -309,14 +312,17 @@ function RestaurantDetailPage() {
       // Check if reservation time is at least 2 hours in the future
       const currentTime = new Date();
       const reservationTime = new Date(`${formData.date}T${formData.time}:00`);
-      const timeDifferenceInHours = (reservationTime - currentTime) / (1000 * 60 * 60);
-      
+      const timeDifferenceInHours =
+        (reservationTime - currentTime) / (1000 * 60 * 60);
+
       if (timeDifferenceInHours < 2) {
-        setNotification("Thời gian đặt bàn phải ít nhất 2 giờ sau thời gian hiện tại");
+        setNotification(
+          "Thời gian đặt bàn phải ít nhất 2 giờ sau thời gian hiện tại"
+        );
         setTimeout(() => setNotification(null), 3000);
         return;
       }
-      
+
       // Pass both guests and children params - partySize will be calculated as guests + children in ReservationPage
       const query = new URLSearchParams({
         date: formData.date,
@@ -386,20 +392,23 @@ function RestaurantDetailPage() {
       setNotification("Không có ưu đãi nào được chọn.");
       return;
     }
-    
+
     try {
       // Check if reservation time is at least 2 hours in the future
       const currentTime = new Date();
       const reservationTime = new Date(`${formData.date}T${formData.time}:00`);
-      const timeDifferenceInHours = (reservationTime - currentTime) / (1000 * 60 * 60);
-      
+      const timeDifferenceInHours =
+        (reservationTime - currentTime) / (1000 * 60 * 60);
+
       if (timeDifferenceInHours < 2) {
-        setNotification("Thời gian đặt bàn phải ít nhất 2 giờ sau thời gian hiện tại");
+        setNotification(
+          "Thời gian đặt bàn phải ít nhất 2 giờ sau thời gian hiện tại"
+        );
         setTimeout(() => setNotification(null), 3000);
         closePromotionModal();
         return;
       }
-      
+
       // Pass both guests and children params - partySize will be calculated as guests + children in ReservationPage
       const query = new URLSearchParams({
         date: formData.date,
@@ -527,6 +536,26 @@ function RestaurantDetailPage() {
     return "";
   };
 
+  // Functions to navigate banner images
+  const nextBannerImage = (e) => {
+    e.stopPropagation();
+    if (restaurant?.images && restaurant.images.length > 0) {
+      setCurrentBannerImageIndex(
+        (prev) => (prev + 1) % restaurant.images.length
+      );
+    }
+  };
+
+  const prevBannerImage = (e) => {
+    e.stopPropagation();
+    if (restaurant?.images && restaurant.images.length > 0) {
+      setCurrentBannerImageIndex(
+        (prev) =>
+          (prev - 1 + restaurant.images.length) % restaurant.images.length
+      );
+    }
+  };
+
   if (loading) {
     return (
       <div className="loading-container">
@@ -581,8 +610,8 @@ function RestaurantDetailPage() {
   const remainingImagesCount = images.length - 9;
 
   const bannerImage =
-    restaurant.images && restaurant.images.length > 0
-      ? getImageUrl(restaurant.images[0])
+    restaurant?.images && restaurant.images.length > 0
+      ? getImageUrl(restaurant.images[currentBannerImageIndex])
       : "";
 
   // Star Rating component
@@ -618,6 +647,26 @@ function RestaurantDetailPage() {
             e.target.src = "/placeholder-restaurant.jpg";
           }}
         />
+        {/* Add navigation arrows for banner images */}
+        {restaurant?.images && restaurant.images.length > 1 && (
+          <>
+            <button
+              className="banner-nav banner-prev"
+              onClick={prevBannerImage}
+            >
+              <i className="fas fa-chevron-left"></i>
+            </button>
+            <button
+              className="banner-nav banner-next"
+              onClick={nextBannerImage}
+            >
+              <i className="fas fa-chevron-right"></i>
+            </button>
+            <div className="banner-image-counter">
+              {currentBannerImageIndex + 1}/{restaurant.images.length}
+            </div>
+          </>
+        )}
         <div className="banner-overlay">
           <h1>{restaurant.name}</h1>
           <p>{restaurant.address || "Địa chỉ không có"}</p>
@@ -980,43 +1029,6 @@ function RestaurantDetailPage() {
           </section>
         )}
 
-        {activeTab === "images" && (
-          <section id="images-section" className="content-section">
-            <h2>Hình ảnh</h2>
-            <div className="image-grid">
-              {visibleImages.map((img, index) => (
-                <div
-                  key={index}
-                  className="image-item"
-                  onClick={() => handleImageClick(index, "images")}
-                >
-                  <img
-                    src={getImageUrl(img)}
-                    alt={`${restaurant.name} - Ảnh ${index + 1}`}
-                    className="grid-image"
-                    onError={(e) => {
-                      e.target.src = "/placeholder-image.jpg";
-                    }}
-                  />
-                </div>
-              ))}
-              {remainingImagesCount > 0 && (
-                <div
-                  className="image-item remaining"
-                  onClick={() => handleImageClick(0, "images")}
-                >
-                  <div className="remaining-count">+{remainingImagesCount}</div>
-                  <img
-                    src={getImageUrl(images[8])}
-                    alt={`${restaurant.name} - Ảnh bổ sung`}
-                    className="grid-image"
-                  />
-                </div>
-              )}
-            </div>
-          </section>
-        )}
-
         {activeTab === "map" && (
           <section id="map-section" className="content-section">
             <h2>Chỉ đường</h2>
@@ -1164,61 +1176,88 @@ function RestaurantDetailPage() {
             <div className="modal-overlay" onClick={closePromotionModal}></div>
             <div className="modal promotion-modal">
               <div className="modal-content">
-                <button className="close-modal" onClick={closePromotionModal}>×</button>
-                
+                <button className="close-modal" onClick={closePromotionModal}>
+                  ×
+                </button>
+
                 <div className="promotion-modal-header">
                   <h3>Chi tiết ưu đãi</h3>
-                  <div className="promotion-title">{selectedPromotion.name}</div>
+                  <div className="promotion-title">
+                    {selectedPromotion.name}
+                  </div>
                 </div>
-                
+
                 {selectedPromotion.code && (
                   <div className="promotion-modal-code">
                     <div className="code-label">Mã khuyến mãi:</div>
                     <div className="code-value-container">
-                      <span className="code-value">{selectedPromotion.code}</span>
+                      <span className="code-value">
+                        {selectedPromotion.code}
+                      </span>
                     </div>
                   </div>
                 )}
-                
+
                 <div className="promotion-modal-content">
                   <div className="promotion-description">
                     <p>{selectedPromotion.description || "Không có mô tả"}</p>
                   </div>
-                  
+
                   <div className="promotion-details">
                     {selectedPromotion.discountType === "percent" && (
                       <div className="promotion-detail-item highlight">
                         <i className="fas fa-percentage"></i>
-                        <span>Giảm giá: <strong>{selectedPromotion.discountValue}%</strong>
-                        {selectedPromotion.maxDiscountValue &&
-                          ` (tối đa ${selectedPromotion.maxDiscountValue.toLocaleString(
-                            "vi-VN"
-                          )}đ)`}
+                        <span>
+                          Giảm giá:{" "}
+                          <strong>{selectedPromotion.discountValue}%</strong>
+                          {selectedPromotion.maxDiscountValue &&
+                            ` (tối đa ${selectedPromotion.maxDiscountValue.toLocaleString(
+                              "vi-VN"
+                            )}đ)`}
                         </span>
                       </div>
                     )}
-                    
+
                     {selectedPromotion.discountType === "fixed" && (
                       <div className="promotion-detail-item highlight">
                         <i className="fas fa-money-bill-wave"></i>
-                        <span>Giảm giá: <strong>{selectedPromotion.discountValue.toLocaleString("vi-VN")}đ</strong></span>
+                        <span>
+                          Giảm giá:{" "}
+                          <strong>
+                            {selectedPromotion.discountValue.toLocaleString(
+                              "vi-VN"
+                            )}
+                            đ
+                          </strong>
+                        </span>
                       </div>
                     )}
-                    
+
                     {selectedPromotion.minOrderValue && (
                       <div className="promotion-detail-item">
                         <i className="fas fa-shopping-cart"></i>
-                        <span>Đơn hàng tối thiểu: {selectedPromotion.minOrderValue.toLocaleString("vi-VN")}đ</span>
+                        <span>
+                          Đơn hàng tối thiểu:{" "}
+                          {selectedPromotion.minOrderValue.toLocaleString(
+                            "vi-VN"
+                          )}
+                          đ
+                        </span>
                       </div>
                     )}
-                    
+
                     <div className="promotion-detail-item">
                       <i className="fas fa-calendar-alt"></i>
-                      <span>Hiệu lực đến: {new Date(selectedPromotion.endDate).toLocaleDateString("vi-VN")}</span>
+                      <span>
+                        Hiệu lực đến:{" "}
+                        {new Date(selectedPromotion.endDate).toLocaleDateString(
+                          "vi-VN"
+                        )}
+                      </span>
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="promotion-modal-footer">
                   <button
                     className="btn btn-secondary"

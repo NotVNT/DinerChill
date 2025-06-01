@@ -1,7 +1,10 @@
-import React, { useState, useEffect, useRef } from "react";
-import "../styles/LocationPage.css";
+import React, { useState, useEffect, useRef, useCallback } from "react"; // Add useCallback
+import { useNavigate } from "react-router-dom"; // Import useNavigate
+import "../styles/components/LocationPage.css";
+import { restaurantsAPI } from "../services/api"; // Import the restaurant API service
 
 function LocationPage() {
+  const navigate = useNavigate(); // Initialize useNavigate
   const [currentLocation, setCurrentLocation] = useState(null);
   const [locationError, setLocationError] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -18,6 +21,24 @@ function LocationPage() {
   const suggestionTimeoutRef = useRef(null);
   const inputRef = useRef(null);
   const [nearbyRestaurants, setNearbyRestaurants] = useState([]);
+  const [isLoadingRestaurants, setIsLoadingRestaurants] = useState(false);
+  const [restaurantError, setRestaurantError] = useState(null);
+
+  // Helper function to calculate distance between two coordinates using Haversine formula
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371; // Radius of the earth in km
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = R * c; // Distance in km
+    return distance.toFixed(1) + " km";
+  };
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -525,6 +546,14 @@ function LocationPage() {
     }, 100);
   };
 
+  // Function to navigate to restaurant detail page - wrapped in useCallback
+  const handleBookRestaurant = useCallback(
+    (restaurantId) => {
+      navigate(`/restaurant/${restaurantId}`);
+    },
+    [navigate]
+  ); // Only recreate when navigate changes
+
   const addSearchResultsToMap = (results) => {
     if (!mapInstanceRef.current || !window.L) return;
 
@@ -577,6 +606,66 @@ function LocationPage() {
     }
   };
 
+  // Fetch restaurants when location is available
+  useEffect(() => {
+    const fetchRestaurants = async () => {
+      if (!currentLocation) return;
+
+      setIsLoadingRestaurants(true);
+      setRestaurantError(null);
+
+      try {
+        const restaurants = await restaurantsAPI.getAll();
+
+        if (restaurants && Array.isArray(restaurants)) {
+          // Process restaurant data and add position information
+          const processedRestaurants = restaurants
+            .map((restaurant) => {
+              // Generate a position near the user's location since we don't have coordinates in the database
+              const position = {
+                lat: currentLocation.lat + (Math.random() - 0.5) * 0.005,
+                lng: currentLocation.lng + (Math.random() - 0.5) * 0.005,
+              };
+
+              // Calculate distance from user
+              const distance = calculateDistance(
+                currentLocation.lat,
+                currentLocation.lng,
+                position.lat,
+                position.lng
+              );
+
+              return {
+                id: restaurant.id,
+                position,
+                title: restaurant.name,
+                type: restaurant.description || "Nhà hàng",
+                address: restaurant.address || "Chưa có địa chỉ",
+                distance,
+              };
+            })
+            .slice(0, 5); // Limit to maximum 5 restaurants
+
+          setNearbyRestaurants(processedRestaurants);
+        } else {
+          console.error("Invalid restaurant data format:", restaurants);
+          setRestaurantError("Dữ liệu nhà hàng không hợp lệ");
+        }
+      } catch (error) {
+        console.error("Error fetching restaurants:", error);
+        setRestaurantError(
+          "Không thể tải danh sách nhà hàng. Vui lòng thử lại sau."
+        );
+      } finally {
+        setIsLoadingRestaurants(false);
+      }
+    };
+
+    if (currentLocation) {
+      fetchRestaurants();
+    }
+  }, [currentLocation]);
+
   useEffect(() => {
     if (currentLocation && showMap && mapRef.current) {
       loadLeafletScript().then(() => {
@@ -610,71 +699,6 @@ function LocationPage() {
             .bindPopup("Vị trí của bạn")
             .openPopup();
 
-          const restaurantsData = [
-            {
-              position: {
-                lat: currentLocation.lat + 0.001,
-                lng: currentLocation.lng + 0.002,
-              },
-              title: "Sân Thủy - Lê Ngô Cát",
-              type: "Gỏi món Việt, Chuyên Hải sản",
-              address: "12 Lê Ngô Cát, Quận 3, TP. Hồ Chí Minh",
-              distance: "1.2 km",
-            },
-            {
-              position: {
-                lat: currentLocation.lat - 0.002,
-                lng: currentLocation.lng + 0.001,
-              },
-              title: "Cheer House Restaurant",
-              type: "Gỏi Á, Âu (Chuyền rượu vang)",
-              address: "50 Hồ Xuân Hương, Quận 3, TP. Hồ Chí Minh",
-              distance: "0.8 km",
-            },
-            {
-              position: {
-                lat: currentLocation.lat + 0.0015,
-                lng: currentLocation.lng - 0.0015,
-              },
-              title: "Cơm Niêu Sài Gòn - Hồ Xuân Hương",
-              type: "Cơm Việt, món kiểu Sài Gòn",
-              address: "24 Hồ Xuân Hương, Quận 3, TP. Hồ Chí Minh",
-              distance: "1.5 km",
-            },
-            {
-              position: {
-                lat: currentLocation.lat + 0.0025,
-                lng: currentLocation.lng + 0.001,
-              },
-              title: "Phở Lệ Nguyễn Trãi",
-              type: "Phở, Đặc sản Việt Nam",
-              address: "303 Nguyễn Trãi, Quận 1, TP. Hồ Chí Minh",
-              distance: "1.7 km",
-            },
-            {
-              position: {
-                lat: currentLocation.lat - 0.001,
-                lng: currentLocation.lng - 0.002,
-              },
-              title: "Bếp Nhà Lê",
-              type: "Món Việt truyền thống",
-              address: "18 Trương Định, Quận 3, TP. Hồ Chí Minh",
-              distance: "0.9 km",
-            },
-            {
-              position: {
-                lat: currentLocation.lat - 0.0018,
-                lng: currentLocation.lng + 0.0025,
-              },
-              title: "The Coffee House",
-              type: "Quán cà phê, Bánh ngọt",
-              address: "15 Nguyễn Thị Minh Khai, Quận 1, TP. Hồ Chí Minh",
-              distance: "1.3 km",
-            },
-          ];
-
-          setNearbyRestaurants(restaurantsData);
-
           // Thêm nút "Quay về vị trí của bạn"
           const locationButton = L.control({ position: "bottomright" });
 
@@ -707,17 +731,51 @@ function LocationPage() {
             shadowSize: [41, 41],
           });
 
-          restaurantsData.forEach((restaurant) => {
-            L.marker([restaurant.position.lat, restaurant.position.lng], {
-              icon: restaurantIcon,
-            }).addTo(map).bindPopup(`
-               <div class="popup-content">
-                 <h3>${restaurant.title}</h3>
-                 <p>${restaurant.type}</p>
-                 <button class="popup-button">Đặt chỗ</button>
-               </div>
-             `);
-          });
+          // Add restaurant markers from real data
+          if (nearbyRestaurants && nearbyRestaurants.length > 0) {
+            nearbyRestaurants.forEach((restaurant) => {
+              const marker = L.marker(
+                [restaurant.position.lat, restaurant.position.lng],
+                {
+                  icon: restaurantIcon,
+                }
+              ).addTo(map);
+
+              // Create popup content element
+              const popupContent = L.DomUtil.create("div", "popup-content");
+
+              // Add title
+              const title = L.DomUtil.create("h3", "", popupContent);
+              title.textContent = restaurant.title;
+
+              // Add type if available
+              if (restaurant.type) {
+                const typeP = L.DomUtil.create("p", "", popupContent);
+                typeP.textContent = restaurant.type;
+              }
+
+              // Add address if available
+              if (restaurant.address) {
+                const addressP = L.DomUtil.create("p", "", popupContent);
+                addressP.textContent = restaurant.address;
+              }
+
+              // Add button with proper event handling
+              const button = L.DomUtil.create(
+                "button",
+                "popup-button",
+                popupContent
+              );
+              button.textContent = "Đặt chỗ";
+
+              // Use local event listener, no global function needed
+              L.DomEvent.on(button, "click", function () {
+                handleBookRestaurant(restaurant.id);
+              });
+
+              marker.bindPopup(popupContent);
+            });
+          }
 
           mapInstanceRef.current = map;
         }
@@ -730,7 +788,13 @@ function LocationPage() {
         mapInstanceRef.current = null;
       }
     };
-  }, [currentLocation, showMap]);
+  }, [
+    currentLocation,
+    showMap,
+    nearbyRestaurants,
+    navigate,
+    handleBookRestaurant,
+  ]); // Add handleBookRestaurant to deps
 
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {
@@ -845,22 +909,46 @@ function LocationPage() {
         <div className="location-content-container">
           <div className="location-content-wrapper">
             <div className="restaurant-list-section">
-              <div className="restaurant-list-cards">
-                {nearbyRestaurants.map((restaurant, index) => (
-                  <div key={index} className="restaurant-card">
-                    <h4 className="restaurant-name">{restaurant.title}</h4>
-                    <p className="restaurant-address">{restaurant.address}</p>
-                    <div className="restaurant-info">
-                      <span className="restaurant-distance">
-                        <i className="distance-icon">📍</i>{" "}
-                        {restaurant.distance}
-                      </span>
+              {isLoadingRestaurants ? (
+                <div className="loading-restaurants">
+                  Đang tải danh sách nhà hàng...
+                </div>
+              ) : restaurantError ? (
+                <div className="restaurant-error">{restaurantError}</div>
+              ) : (
+                <div className="restaurant-list-cards">
+                  {nearbyRestaurants.length > 0 ? (
+                    nearbyRestaurants.map((restaurant, index) => (
+                      <div
+                        key={restaurant.id || index}
+                        className="restaurant-card"
+                      >
+                        <h4 className="restaurant-name">{restaurant.title}</h4>
+                        <p className="restaurant-address">
+                          {restaurant.address}
+                        </p>
+                        <div className="restaurant-info">
+                          <span className="restaurant-distance">
+                            <i className="distance-icon">📍</i>{" "}
+                            {restaurant.distance}
+                          </span>
+                        </div>
+                        <p className="restaurant-type">{restaurant.type}</p>
+                        <button
+                          className="book-button"
+                          onClick={() => handleBookRestaurant(restaurant.id)}
+                        >
+                          Đặt chỗ
+                        </button>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="no-restaurants">
+                      Không tìm thấy nhà hàng gần đây
                     </div>
-                    <p className="restaurant-type">{restaurant.type}</p>
-                    <button className="book-button">Đặt chỗ</button>
-                  </div>
-                ))}
-              </div>
+                  )}
+                </div>
+              )}
             </div>
             <div className="map-section">
               <div className="map-container">

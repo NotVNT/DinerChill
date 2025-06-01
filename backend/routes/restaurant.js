@@ -260,7 +260,6 @@ router.delete("/:id", authenticate, async (req, res) => {
     }
 
     // Delete the restaurant
-    // Delete the restaurant
     await restaurant.destroy();
     res.json({ message: "Restaurant deleted successfully" });
   } catch (error) {
