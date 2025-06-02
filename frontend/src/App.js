@@ -50,6 +50,7 @@ import BehindTheScenesPage from "./blog/BehindTheScenesPage";
 import ReviewsRatingsPage from "./blog/ReviewsRatingsPage";
 import FoodBusinessPage from "./blog/FoodBusinessPage";
 import EventsPromotionsPage from "./blog/EventsPromotionsPage";
+import AdminAmenities from "./pages/admin/AdminAmenities";
 
 // Lazy load category components
 const Lau = React.lazy(() => import("./categories/Lau"));
@@ -122,6 +123,7 @@ function App() {
             <Route index element={<AdminDashboard />} />
             <Route path="restaurants" element={<AdminRestaurants />} />
             <Route path="categories" element={<AdminCategories />} />
+            <Route path="amenities" element={<AdminAmenities />} />
             <Route path="promotions" element={<AdminPromotions />} />
             <Route path="reservations" element={<AdminReservations />} />
             <Route path="payments" element={<AdminPayments />} />
@@ -161,20 +163,59 @@ function App() {
 
             {/* Blog Routes */}
             <Route path="blog/tin-tuc-moi-nhat" element={<LatestNewsPage />} />
-            <Route path="blog/dinerchill-ra-mat" element={<ArticleDetailPage />} />
+            <Route
+              path="blog/dinerchill-ra-mat"
+              element={<ArticleDetailPage />}
+            />
             <Route path="blog/article/:id" element={<ArticleDetailPage />} />
-            <Route path="blog/dia-diem-an-uong" element={<DiningPlacesPage />} />
-            <Route path="blog/dia-diem-an-uong/:id" element={<ArticleDetailPage />} />
-            <Route path="blog/kinh-doanh-an-uong" element={<FoodBusinessPage />} />
-            <Route path="blog/kinh-doanh-an-uong/:id" element={<ArticleDetailPage />} />
-            <Route path="blog/su-kien-khuyen-mai" element={<EventsPromotionsPage />} />
-            <Route path="blog/su-kien-khuyen-mai/:id" element={<ArticleDetailPage />} />
-            <Route path="blog/nha-hang-hot-trend" element={<HotTrendRestaurantsPage />} />
-            <Route path="blog/nha-hang-hot-trend/:id" element={<ArticleDetailPage />} />
-            <Route path="blog/hau-truong-nha-hang" element={<BehindTheScenesPage />} />
-            <Route path="blog/hau-truong-nha-hang/:id" element={<ArticleDetailPage />} />
-            <Route path="blog/danh-gia-review" element={<ReviewsRatingsPage />} />
-            <Route path="blog/danh-gia-review/:id" element={<ArticleDetailPage />} />
+            <Route
+              path="blog/dia-diem-an-uong"
+              element={<DiningPlacesPage />}
+            />
+            <Route
+              path="blog/dia-diem-an-uong/:id"
+              element={<ArticleDetailPage />}
+            />
+            <Route
+              path="blog/kinh-doanh-an-uong"
+              element={<FoodBusinessPage />}
+            />
+            <Route
+              path="blog/kinh-doanh-an-uong/:id"
+              element={<ArticleDetailPage />}
+            />
+            <Route
+              path="blog/su-kien-khuyen-mai"
+              element={<EventsPromotionsPage />}
+            />
+            <Route
+              path="blog/su-kien-khuyen-mai/:id"
+              element={<ArticleDetailPage />}
+            />
+            <Route
+              path="blog/nha-hang-hot-trend"
+              element={<HotTrendRestaurantsPage />}
+            />
+            <Route
+              path="blog/nha-hang-hot-trend/:id"
+              element={<ArticleDetailPage />}
+            />
+            <Route
+              path="blog/hau-truong-nha-hang"
+              element={<BehindTheScenesPage />}
+            />
+            <Route
+              path="blog/hau-truong-nha-hang/:id"
+              element={<ArticleDetailPage />}
+            />
+            <Route
+              path="blog/danh-gia-review"
+              element={<ReviewsRatingsPage />}
+            />
+            <Route
+              path="blog/danh-gia-review/:id"
+              element={<ArticleDetailPage />}
+            />
 
             {/* Category Routes */}
             <Route

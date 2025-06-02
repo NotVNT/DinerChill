@@ -340,12 +340,6 @@ function RestaurantDetailPage() {
     }
   };
 
-  const handleImageClick = (index, source) => {
-    setCurrentModalImageIndex(index);
-    setSelectedImageSource(source);
-    setSelectedImage(true);
-  };
-
   const closeImageModal = () => {
     setSelectedImage(null);
     setSelectedImageSource(null);
@@ -593,9 +587,6 @@ function RestaurantDetailPage() {
   }
 
   const currentDate = new Date();
-  const currentDay = currentDate.toLocaleDateString("vi-VN", {
-    weekday: "long",
-  });
   const currentHour = currentDate.getHours();
   const currentMinute = currentDate.getMinutes();
 
@@ -605,10 +596,6 @@ function RestaurantDetailPage() {
   const displayedAmenities = showAllAmenities
     ? amenitiesEntries
     : amenitiesEntries.slice(0, 6);
-  const images = restaurant.images || [];
-  const visibleImages = images.slice(0, 9);
-  const remainingImagesCount = images.length - 9;
-
   const bannerImage =
     restaurant?.images && restaurant.images.length > 0
       ? getImageUrl(restaurant.images[currentBannerImageIndex])
@@ -787,35 +774,85 @@ function RestaurantDetailPage() {
           <section id="operating-hours-section" className="content-section">
             <h2>Giờ hoạt động</h2>
             <div className="operating-hours-card">
-              {(restaurant.operatingHours || []).map((day, index) => {
-                const [startTime, endTime] = (day.time || "").split(" - ");
-                const [startHour, startMin] = startTime
-                  ? startTime.split(":").map(Number)
-                  : [0, 0];
-                const [endHour, endMin] = endTime
-                  ? endTime.split(":").map(Number)
-                  : [0, 0];
-                const isCurrentDay =
-                  day.day.toLowerCase() === currentDay.toLowerCase();
-                const isWithinTime =
-                  isCurrentDay &&
-                  startTime &&
-                  endTime &&
-                  ((currentHour > startHour && currentHour < endHour) ||
-                    (currentHour === startHour && currentMinute >= startMin) ||
-                    (currentHour === endHour && currentMinute <= endMin));
+              {(() => {
+                // Tạo mảng các ngày trong tuần
+                const daysOfWeek = [
+                  "Thứ Hai",
+                  "Thứ Ba",
+                  "Thứ Tư",
+                  "Thứ Năm",
+                  "Thứ Sáu",
+                  "Thứ Bảy",
+                  "Chủ Nhật",
+                ];
 
-                return (
-                  <p
-                    key={index}
-                    className={`${isCurrentDay ? "current-day" : ""} ${
-                      isWithinTime ? "current-time" : ""
-                    }`}
-                  >
-                    {day.day}: {day.time || "Chưa cập nhật"}
-                  </p>
-                );
-              }) || <p>Chưa có thông tin giờ hoạt động.</p>}
+                // Lấy ngày hiện tại trong tuần (0 = Chủ Nhật, 1 = Thứ Hai,...)
+                const today = new Date();
+                const currentDayIndex = today.getDay();
+                // Chuyển đổi định dạng để phù hợp với mảng (0 = Thứ Hai, 6 = Chủ Nhật)
+                const adjustedDayIndex =
+                  currentDayIndex === 0 ? 6 : currentDayIndex - 1;
+
+                // Hiển thị giờ hoạt động cho mỗi ngày
+                return daysOfWeek.map((day, index) => {
+                  const isCurrentDay = index === adjustedDayIndex;
+
+                  // Xác định trạng thái đang mở cửa hay không
+                  let isWithinOpeningHours = false;
+
+                  if (
+                    isCurrentDay &&
+                    restaurant.openingTime &&
+                    restaurant.closingTime
+                  ) {
+                    const [openHour, openMin] = restaurant.openingTime
+                      .split(":")
+                      .map(Number);
+                    const [closeHour, closeMin] = restaurant.closingTime
+                      .split(":")
+                      .map(Number);
+
+                    // Kiểm tra giờ hiện tại có nằm trong giờ mở cửa không
+                    isWithinOpeningHours =
+                      (currentHour > openHour ||
+                        (currentHour === openHour &&
+                          currentMinute >= openMin)) &&
+                      (currentHour < closeHour ||
+                        (currentHour === closeHour &&
+                          currentMinute <= closeMin));
+
+                    // Xử lý trường hợp đặc biệt khi giờ đóng cửa là ngày hôm sau
+                    if (closeHour < openHour) {
+                      isWithinOpeningHours =
+                        (currentHour >= openHour && currentHour <= 23) ||
+                        (currentHour >= 0 && currentHour < closeHour) ||
+                        (currentHour === closeHour &&
+                          currentMinute <= closeMin);
+                    }
+                  }
+
+                  return (
+                    <p
+                      key={index}
+                      className={`${isCurrentDay ? "current-day" : ""} ${
+                        isCurrentDay && isWithinOpeningHours
+                          ? "current-time"
+                          : ""
+                      }`}
+                    >
+                      {day}: {restaurant.openingTime || "Chưa cập nhật"} -{" "}
+                      {restaurant.closingTime || "Chưa cập nhật"}
+                      {isCurrentDay && (
+                        <span className="operating-status">
+                          {isWithinOpeningHours
+                            ? " (Đang mở cửa)"
+                            : " (Đã đóng cửa)"}
+                        </span>
+                      )}
+                    </p>
+                  );
+                });
+              })()}
             </div>
           </section>
         )}

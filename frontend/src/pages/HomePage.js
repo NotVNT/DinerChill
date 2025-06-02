@@ -213,7 +213,7 @@ function HomePage() {
             <div className="password-notification-text">
               <p>
                 Để bảo mật tài khoản, hãy cập nhật mật khẩu của bạn thường
-                xuyên. <Link to="/update-password">Cập nhật ngay</Link>
+                xuyên. <Link to="/change-password">Cập nhật ngay</Link>
               </p>
             </div>
             <button

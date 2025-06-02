@@ -54,6 +54,29 @@ const CategoryTemplate = ({ categoryName, categoryId }) => {
         // Get restaurants by category name
         let data = await categoriesAPI.getRestaurantsByCategoryName(categoryName);
         
+        // Process each restaurant to ensure images are properly formatted
+        data = data.map(restaurant => {
+          // Create a copy of the restaurant to avoid mutating the original
+          const processedRestaurant = { ...restaurant };
+          
+          // Process image paths to ensure they're properly formatted
+          if (processedRestaurant.images && Array.isArray(processedRestaurant.images)) {
+            processedRestaurant.images = processedRestaurant.images.map((img) => {
+              if (typeof img === "object" && img.image_path) {
+                return img;
+              } else if (typeof img === "string") {
+                return { image_path: img };
+              }
+              return img;
+            });
+          } else if (!processedRestaurant.images || !Array.isArray(processedRestaurant.images)) {
+            // If no images array or it's not an array, initialize as empty array
+            processedRestaurant.images = [];
+          }
+          
+          return processedRestaurant;
+        });
+        
         // Apply additional filters
         if (locationParam) {
           data = data.filter(restaurant => 

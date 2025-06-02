@@ -42,6 +42,14 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "restaurant_id",
         as: "images",
       });
+
+      // Định nghĩa quan hệ với bảng Amenity (nhiều-nhiều)
+      Restaurant.belongsToMany(models.Amenity, {
+        through: "restaurant_amenities",
+        foreignKey: "restaurantId",
+        otherKey: "amenityId",
+        as: "amenities",
+      });
     }
   }
 
