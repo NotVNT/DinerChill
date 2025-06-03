@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "../context/AppContext";
+import { amenitiesAPI } from "../services/api";
 import "../styles/modules/filterBox.css";
 import "../styles/modules/booth_categories.css";
 
@@ -8,7 +9,7 @@ function FilterBox() {
   const {
     filters = {
       location: "",
-      distance: "",
+      amenities: "",
       rating: "",
       cuisine: "",
       price: "",
@@ -23,6 +24,7 @@ function FilterBox() {
   const [isCategoryTransitioning, setIsCategoryTransitioning] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isAtEnd, setIsAtEnd] = useState(false);
+  const [amenitiesList, setAmenitiesList] = useState([]); // State for storing amenities
   const navigate = useNavigate();
   const filtersSliderRef = useRef(null);
   const categoriesSliderRef = useRef(null);
@@ -32,10 +34,24 @@ function FilterBox() {
     setLocalFilters(filters);
   }, [filters]);
 
-  // Danh sách các bộ lọc (thêm 2 bộ lọc mới: giá và giờ hoạt động)
+  // Fetch amenities from the API
+  useEffect(() => {
+    const fetchAmenities = async () => {
+      try {
+        const data = await amenitiesAPI.getAll();
+        setAmenitiesList(data);
+      } catch (error) {
+        console.error("Error fetching amenities:", error);
+      }
+    };
+
+    fetchAmenities();
+  }, []);
+
+  // Danh sách các bộ lọc (thay đổi distance thành amenities)
   const filterOptions = [
     { id: "location", name: "Khu vực" },
-    { id: "distance", name: "Khoảng cách" },
+    { id: "amenities", name: "Tiện ích" },
     { id: "price", name: "Mức giá" },
     { id: "rating", name: "Đánh giá" },
     { id: "operatingHours", name: "Giờ hoạt động" },
@@ -147,8 +163,8 @@ function FilterBox() {
       params.append("location", localFilters.location);
     }
 
-    if (localFilters.distance && localFilters.distance !== "all") {
-      params.append("distance", localFilters.distance);
+    if (localFilters.amenities && localFilters.amenities !== "all") {
+      params.append("amenityId", localFilters.amenities);
     }
 
     if (localFilters.price && localFilters.price !== "all") {
@@ -169,23 +185,6 @@ function FilterBox() {
 
     // Navigate to filter results page with query parameters
     navigate(`/filter-results?${params.toString()}`);
-  };
-
-  // Reset all filters to default values
-  const resetFilters = () => {
-    const defaultFilters = {
-      location: "",
-      distance: "all",
-      cuisine: "all",
-      rating: "all",
-      price: "all",
-      operatingHours: "all",
-      keyword: "",
-    };
-    setLocalFilters(defaultFilters);
-    if (setFilters) {
-      setFilters(defaultFilters);
-    }
   };
 
   const handleCuisineSelect = (cuisineId) => {
@@ -312,19 +311,19 @@ function FilterBox() {
                     <option value="Đà Nẵng">Đà Nẵng</option>
                   </>
                 )}
-                {filter.id === "distance" && (
+                {filter.id === "amenities" && (
                   <>
                     <option value="">{filter.name}</option>
-                    <option value="all">Tất cả</option>
-                    <option value="near">Gần nhất</option>
-                    <option value="under5km">Dưới 5km</option>
-                    <option value="under10km">Dưới 10km</option>
+                    {amenitiesList.map((amenity) => (
+                      <option key={amenity.id} value={amenity.id}>
+                        {amenity.name}
+                      </option>
+                    ))}
                   </>
                 )}
                 {filter.id === "rating" && (
                   <>
                     <option value="">{filter.name}</option>
-                    <option value="all">Tất cả</option>
                     <option value="above4">Trên 4 sao</option>
                     <option value="above3">Trên 3 sao</option>
                   </>
@@ -332,7 +331,6 @@ function FilterBox() {
                 {filter.id === "price" && (
                   <>
                     <option value="">{filter.name}</option>
-                    <option value="all">Tất cả</option>
                     <option value="low">Dưới 100.000đ</option>
                     <option value="medium">100.000đ - 300.000đ</option>
                     <option value="high">300.000đ - 500.000đ</option>
@@ -342,7 +340,6 @@ function FilterBox() {
                 {filter.id === "operatingHours" && (
                   <>
                     <option value="">{filter.name}</option>
-                    <option value="all">Tất cả</option>
                     <option value="morning">Buổi sáng (6:00 - 11:00)</option>
                     <option value="lunch">Buổi trưa (11:00 - 14:00)</option>
                     <option value="evening">Buổi tối (17:00 - 22:00)</option>
@@ -362,13 +359,6 @@ function FilterBox() {
               onClick={applyFilters}
             >
               Lọc
-            </button>
-            <button
-              type="button"
-              className="filter-action-btn reset-btn"
-              onClick={resetFilters}
-            >
-              Đặt lại
             </button>
           </div>
 

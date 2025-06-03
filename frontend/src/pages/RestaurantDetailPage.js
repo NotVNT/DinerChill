@@ -543,6 +543,47 @@ function RestaurantDetailPage() {
     }
   };
 
+  // Time validation function
+  // eslint-disable-next-line no-unused-vars
+  const _isValidTime = (date, time, openingTime, closingTime) => {
+    if (!date || !time || !openingTime || !closingTime) return true;
+    try {
+      const reservationTime = new Date(`${date} ${time}`).getTime();
+
+      // Extract hours and minutes from time strings
+      const [openHour, openMin] = openingTime.split(":").map(Number);
+      const [closeHour, closeMin] = closingTime.split(":").map(Number);
+
+      // Convert to minutes for easier comparison
+      const openTimeInMinutes = openHour * 60 + (openMin || 0);
+      const closeTimeInMinutes = closeHour * 60 + (closeMin || 0);
+
+      // Convert reservation time to hours and minutes
+      const reservationDate = new Date(reservationTime);
+      const reservationHour = reservationDate.getHours();
+      const reservationMin = reservationDate.getMinutes();
+      const reservationInMinutes = reservationHour * 60 + reservationMin;
+
+      // Handle overnight hours (when closing time is earlier than opening time)
+      if (closeTimeInMinutes < openTimeInMinutes) {
+        // The restaurant closes after midnight
+        return (
+          reservationInMinutes >= openTimeInMinutes ||
+          reservationInMinutes <= closeTimeInMinutes
+        );
+      } else {
+        // Normal case
+        return (
+          reservationInMinutes >= openTimeInMinutes &&
+          reservationInMinutes <= closeTimeInMinutes
+        );
+      }
+    } catch (err) {
+      console.error("Error parsing opening hours:", err);
+      return true;
+    }
+  };
+
   if (loading) {
     return (
       <div className="loading-container">

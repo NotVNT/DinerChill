@@ -813,7 +813,7 @@ app.use("/api/payment", paymentRoutes);
 app.use("/api/reservation", reservationRoutes);
 app.use("/api/restaurants", restaurantRoutes);
 app.use("/api/categories", categoryRoutes);
-app.use("/api/admin/amenities", amenitiesRoutes);
+app.use("/api/amenities", amenitiesRoutes);
 
 // Explicitly disable review functionality
 app.post("/api/restaurants/:id/reviews", (req, res) => {

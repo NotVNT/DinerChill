@@ -40,7 +40,9 @@ const upload = multer({
 // Get all restaurants
 router.get("/", async (req, res) => {
   try {
-    const restaurants = await db.Restaurant.findAll({
+    const { amenityId } = req.query;
+    
+    let queryOptions = {
       include: [
         {
           model: db.RestaurantImage,
@@ -57,7 +59,34 @@ router.get("/", async (req, res) => {
           through: { attributes: [] },
         },
       ],
-    });
+    };
+    
+    // Filter by amenity if provided
+    if (amenityId) {
+      // Add a where condition to only include restaurants with the specified amenity
+      queryOptions = {
+        ...queryOptions,
+        include: [
+          {
+            model: db.RestaurantImage,
+            as: "images",
+          },
+          {
+            model: db.Amenity,
+            as: "amenities",
+            through: { attributes: [] },
+            where: { id: amenityId }
+          },
+          {
+            model: db.Category,
+            as: "categories",
+            through: { attributes: [] },
+          },
+        ],
+      };
+    }
+
+    const restaurants = await db.Restaurant.findAll(queryOptions);
 
     // Normalize paths for web URLs
     for (const restaurant of restaurants) {

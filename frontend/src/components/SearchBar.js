@@ -1,27 +1,27 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import '../styles/components/searchbar.css';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import "../styles/components/searchbar.css";
 
 const SearchBar = () => {
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedDate, setSelectedDate] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedDate, setSelectedDate] = useState("");
   const [guestCount, setGuestCount] = useState(2);
-  const [selectedTime, setSelectedTime] = useState('');
+  const [selectedTime, setSelectedTime] = useState("");
 
   // Get today's date in YYYY-MM-DD format for the date input min attribute
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date().toISOString().split("T")[0];
 
   const handleSearch = (e) => {
     e.preventDefault();
-    
+
     // Build query parameters
     const params = new URLSearchParams();
-    if (searchQuery) params.append('q', searchQuery);
-    if (selectedDate) params.append('date', selectedDate);
-    if (guestCount) params.append('guests', guestCount);
-    if (selectedTime) params.append('time', selectedTime);
-    
+    if (searchQuery) params.append("q", searchQuery);
+    if (selectedDate) params.append("date", selectedDate);
+    if (guestCount) params.append("guests", guestCount);
+    if (selectedTime) params.append("time", selectedTime);
+
     // Navigate to search results page with query parameters
     navigate(`/search?${params.toString()}`);
   };
@@ -37,7 +37,7 @@ const SearchBar = () => {
             <input
               id="search-location"
               type="text"
-              placeholder="Nhập tên nhà hàng hoặc món ăn..."
+              placeholder="Nhập tên nhà hàng"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -45,7 +45,6 @@ const SearchBar = () => {
 
           <div className="search-input-group date">
             <label htmlFor="search-date">
-             
               <span>Ngày</span>
             </label>
             <input
@@ -59,7 +58,6 @@ const SearchBar = () => {
 
           <div className="search-input-group time">
             <label htmlFor="search-time">
-            
               <span>Giờ</span>
             </label>
             <select
@@ -114,4 +112,4 @@ const SearchBar = () => {
   );
 };
 
-export default SearchBar; 
+export default SearchBar;

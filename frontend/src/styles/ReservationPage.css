@@ -429,13 +429,7 @@
   text-align: center;
 }
 
-.review-header-line {
-  height: 4px;
-  width: 60px;
-  background-color: #e71a0f;
-  margin: 10px auto 0;
-  border-radius: 2px;
-}
+
 
 .review-content {
   padding: 20px 30px;

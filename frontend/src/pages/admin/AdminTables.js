@@ -281,7 +281,6 @@ function AdminTables() {
     }
 
     const now = new Date();
-    const currentTime = now.getHours() * 60 + now.getMinutes();
 
     // Parse opening and closing times to minutes since midnight
     const parseTimeToMinutes = (timeString) => {
@@ -291,6 +290,7 @@ function AdminTables() {
       return hours * 60 + (minutes || 0);
     };
 
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
     const openingMinutes = parseTimeToMinutes(restaurant.openingTime);
     const closingMinutes = parseTimeToMinutes(restaurant.closingTime);
 
@@ -301,13 +301,14 @@ function AdminTables() {
 
     // Handle case where closing time is on the next day
     if (closingMinutes < openingMinutes) {
-      return currentTime >= openingMinutes || currentTime < closingMinutes
+      // Restaurant operates overnight
+      return currentMinutes >= openingMinutes || currentMinutes < closingMinutes
         ? "open"
         : "closed";
     }
 
     // Normal case
-    return currentTime >= openingMinutes && currentTime < closingMinutes
+    return currentMinutes >= openingMinutes && currentMinutes < closingMinutes
       ? "open"
       : "closed";
   };

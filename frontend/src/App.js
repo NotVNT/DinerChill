@@ -10,8 +10,8 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 import HomePage from "./pages/HomePage";
 import RestaurantDetailPage from "./pages/RestaurantDetailPage";
-import SearchResultsPage from "./pages/SearchResultsPage";
-import FilterResultsPage from "./pages/FilterResultsPage";
+import SearchResultsPage from "./filter/SearchResultsPage";
+import FilterResultsPage from "./filter/FilterResultsPage";
 import { AppProvider } from "./context/AppContext";
 import ReservationPage from "./pages/application/ReservationPage";
 import ReservationSuccessPage from "./pages/application/ReservationSuccessPage";
@@ -53,20 +53,22 @@ import EventsPromotionsPage from "./blog/EventsPromotionsPage";
 import AdminAmenities from "./pages/admin/AdminAmenities";
 
 // Lazy load category components
-const Lau = React.lazy(() => import("./categories/Lau"));
-const Buffet = React.lazy(() => import("./categories/Buffet"));
-const HaiSan = React.lazy(() => import("./categories/Hai_San"));
-const LauNuong = React.lazy(() => import("./categories/Lau_Nuong"));
-const QuanNhau = React.lazy(() => import("./categories/Quan_Nhau"));
-const MonChay = React.lazy(() => import("./categories/Mon_Chay"));
-const DoTiec = React.lazy(() => import("./categories/Do_tiec"));
-const HanQuoc = React.lazy(() => import("./categories/Han_Quoc"));
-const NhatBan = React.lazy(() => import("./categories/Nhat_Ban"));
-const MonViet = React.lazy(() => import("./categories/Mon_Viet"));
-const MonThai = React.lazy(() => import("./categories/Mon_Thai"));
-const MonTrungHoa = React.lazy(() => import("./categories/Mon_TrungHoa"));
-const TiecCuoi = React.lazy(() => import("./categories/Tiec_Cuoi"));
-const DoUong = React.lazy(() => import("./categories/Do_Uong"));
+const Lau = React.lazy(() => import("./filter/categories/Lau"));
+const Buffet = React.lazy(() => import("./filter/categories/Buffet"));
+const HaiSan = React.lazy(() => import("./filter/categories/Hai_San"));
+const LauNuong = React.lazy(() => import("./filter/categories/Lau_Nuong"));
+const QuanNhau = React.lazy(() => import("./filter/categories/Quan_Nhau"));
+const MonChay = React.lazy(() => import("./filter/categories/Mon_Chay"));
+const DoTiec = React.lazy(() => import("./filter/categories/Do_tiec"));
+const HanQuoc = React.lazy(() => import("./filter/categories/Han_Quoc"));
+const NhatBan = React.lazy(() => import("./filter/categories/Nhat_Ban"));
+const MonViet = React.lazy(() => import("./filter/categories/Mon_Viet"));
+const MonThai = React.lazy(() => import("./filter/categories/Mon_Thai"));
+const MonTrungHoa = React.lazy(() =>
+  import("./filter/categories/Mon_TrungHoa")
+);
+const TiecCuoi = React.lazy(() => import("./filter/categories/Tiec_Cuoi"));
+const DoUong = React.lazy(() => import("./filter/categories/Do_Uong"));
 
 // Loading component for suspense
 const Loading = () => (

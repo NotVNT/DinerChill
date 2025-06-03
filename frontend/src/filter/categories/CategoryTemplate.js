@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { categoriesAPI } from "../services/api";
-import RestaurantCard from "../components/RestaurantCard";
-import FilterBox from "../components/FilterBox";
-import { useApp } from "../context/AppContext";
-import "../styles/pages/CategoryPage.css";
+import { categoriesAPI } from "../../services/api";
+import RestaurantCard from "../../components/RestaurantCard";
+import FilterBox from "../../components/FilterBox";
+import { useApp } from "../../context/AppContext";
+import "../../styles/pages/CategoryPage.css";
 
 /**
  * Template for category pages that uses the filter system
@@ -150,27 +150,58 @@ const CategoryTemplate = ({ categoryName, categoryId }) => {
         // Filter by operating hours
         if (operatingHoursParam !== "all") {
           data = data.filter((restaurant) => {
-            // Convert time strings to hours (format: "11:00:00")
+            // Convert time strings to hours and minutes (format: "11:00:00" or "11:00")
             const openingTime = restaurant.openingTime || "";
             const closingTime = restaurant.closingTime || "";
 
             if (!openingTime || !closingTime) return false;
 
-            // Extract hours from time strings
-            const openHour = parseInt(openingTime.split(":")[0], 10) || 0;
-            const closeHour = parseInt(closingTime.split(":")[0], 10) || 24;
+            // Extract hours and minutes from time strings
+            const [openHour, openMinute] = openingTime.split(":").map(Number);
+            const [closeHour, closeMinute] = closingTime.split(":").map(Number);
 
-            return operatingHoursParam === "morning"
-              ? openHour <= 6 && closeHour >= 11
-              : operatingHoursParam === "lunch"
-              ? openHour <= 11 && closeHour >= 14
-              : operatingHoursParam === "evening"
-              ? openHour <= 17 && closeHour >= 22
-              : operatingHoursParam === "latenight"
-              ? openHour <= 22 && closeHour >= 2
-              : operatingHoursParam === "24h"
-              ? openHour === 0 && closeHour === 24
-              : true;
+            // Convert to minutes for easier comparison
+            const openTimeInMinutes = openHour * 60 + (openMinute || 0);
+            const closeTimeInMinutes = closeHour * 60 + (closeMinute || 0);
+
+            // Define time ranges in minutes for filtering
+            const timeRanges = {
+              morning: { start: 6 * 60, end: 11 * 60 }, // 6:00 - 11:00
+              lunch: { start: 11 * 60, end: 14 * 60 }, // 11:00 - 14:00
+              evening: { start: 17 * 60, end: 22 * 60 }, // 17:00 - 22:00
+              latenight: { start: 22 * 60, end: 2 * 60 }, // 22:00 - 2:00
+              "24h": { start: 0, end: 24 * 60 }, // 24h
+            };
+
+            const selectedRange = timeRanges[operatingHoursParam];
+            if (!selectedRange) return true;
+
+            // Check if restaurant is open during the entire selected time range
+            // For overnight ranges like latenight
+            if (selectedRange.end < selectedRange.start) {
+              // Overnight case (e.g., 22:00 - 2:00)
+              if (closeTimeInMinutes < openTimeInMinutes) {
+                // Restaurant also operates overnight
+                return (
+                  openTimeInMinutes <= selectedRange.start ||
+                  closeTimeInMinutes >= selectedRange.end
+                );
+              } else {
+                // Restaurant closes on the same day
+                return (
+                  openTimeInMinutes <= selectedRange.start &&
+                  closeTimeInMinutes >= 24 * 60
+                );
+              }
+            } else {
+              // Normal case (e.g., 11:00 - 14:00)
+              // Check if restaurant is open during the entire selected time range
+              return (
+                openTimeInMinutes <= selectedRange.start &&
+                (closeTimeInMinutes >= selectedRange.end ||
+                  closeTimeInMinutes < openTimeInMinutes) // handles overnight hours
+              );
+            }
           });
         }
 

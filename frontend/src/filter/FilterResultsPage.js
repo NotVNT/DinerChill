@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import RestaurantCard from "../components/RestaurantCard";
 import FilterBox from "../components/FilterBox";
 import { useApp } from "../context/AppContext";
-import { restaurantsAPI } from "../services/api";
+import { restaurantsAPI, amenitiesAPI } from "../services/api";
 import "../styles/FilterResultsPage.css";
 
 function FilterResultsPage() {
@@ -12,16 +12,38 @@ function FilterResultsPage() {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [amenityName, setAmenityName] = useState(""); // Store the amenity name for display
 
   // Parse filter parameters from URL if present
   const query = new URLSearchParams(location.search);
   const locationParam = query.get("location") || filters.location || "";
-  const distanceParam = query.get("distance") || filters.distance || "all";
+  const amenityIdParam = query.get("amenityId") || filters.amenities || "";
   const priceParam = query.get("price") || filters.price || "all";
   const ratingParam = query.get("rating") || filters.rating || "all";
   const operatingHoursParam =
     query.get("operatingHours") || filters.operatingHours || "all";
   const cuisineParam = query.get("cuisine") || filters.cuisine || "all";
+
+  // Fetch amenity name if amenityId is provided
+  useEffect(() => {
+    const fetchAmenityName = async () => {
+      if (amenityIdParam) {
+        try {
+          const amenities = await amenitiesAPI.getAll();
+          const amenity = amenities.find(
+            (a) => a.id.toString() === amenityIdParam.toString()
+          );
+          if (amenity) {
+            setAmenityName(amenity.name);
+          }
+        } catch (error) {
+          console.error("Error fetching amenity name:", error);
+        }
+      }
+    };
+
+    fetchAmenityName();
+  }, [amenityIdParam]);
 
   // Fetch filtered results from database
   useEffect(() => {
@@ -29,11 +51,17 @@ function FilterResultsPage() {
       try {
         setLoading(true);
 
-        // Get all restaurants from API
-        const allRestaurants = await restaurantsAPI.getAll();
+        let filteredResults = [];
 
-        // Apply filters
-        let filteredResults = allRestaurants;
+        // If amenity filter is applied, use the dedicated API endpoint
+        if (amenityIdParam) {
+          filteredResults = await restaurantsAPI.getAll({
+            amenityId: amenityIdParam,
+          });
+        } else {
+          // Get all restaurants from API
+          filteredResults = await restaurantsAPI.getAll();
+        }
 
         // Filter by location
         if (locationParam && locationParam !== "") {
@@ -42,20 +70,6 @@ function FilterResultsPage() {
               restaurant.address?.includes(locationParam) ||
               restaurant.location?.includes(locationParam)
           );
-        }
-
-        // Filter by distance
-        if (distanceParam !== "all") {
-          filteredResults = filteredResults.filter((restaurant) => {
-            const distance = restaurant.distance || 0;
-            return distanceParam === "near"
-              ? distance <= 2
-              : distanceParam === "under5km"
-              ? distance <= 5
-              : distanceParam === "under10km"
-              ? distance <= 10
-              : true;
-          });
         }
 
         // Filter by price
@@ -100,27 +114,58 @@ function FilterResultsPage() {
         // Filter by operating hours
         if (operatingHoursParam !== "all") {
           filteredResults = filteredResults.filter((restaurant) => {
-            // Convert time strings to hours (format: "11:00:00")
+            // Convert time strings to hours and minutes (format: "11:00:00" or "11:00")
             const openingTime = restaurant.openingTime || "";
             const closingTime = restaurant.closingTime || "";
 
             if (!openingTime || !closingTime) return false;
 
-            // Extract hours from time strings
-            const openHour = parseInt(openingTime.split(":")[0], 10) || 0;
-            const closeHour = parseInt(closingTime.split(":")[0], 10) || 24;
+            // Extract hours and minutes from time strings
+            const [openHour, openMinute] = openingTime.split(":").map(Number);
+            const [closeHour, closeMinute] = closingTime.split(":").map(Number);
 
-            return operatingHoursParam === "morning"
-              ? openHour <= 6 && closeHour >= 11
-              : operatingHoursParam === "lunch"
-              ? openHour <= 11 && closeHour >= 14
-              : operatingHoursParam === "evening"
-              ? openHour <= 17 && closeHour >= 22
-              : operatingHoursParam === "latenight"
-              ? openHour <= 22 && closeHour >= 2
-              : operatingHoursParam === "24h"
-              ? openHour === 0 && closeHour === 24
-              : true;
+            // Convert to minutes for easier comparison
+            const openTimeInMinutes = openHour * 60 + (openMinute || 0);
+            const closeTimeInMinutes = closeHour * 60 + (closeMinute || 0);
+
+            // Define time ranges in minutes for filtering
+            const timeRanges = {
+              morning: { start: 6 * 60, end: 11 * 60 }, // 6:00 - 11:00
+              lunch: { start: 11 * 60, end: 14 * 60 }, // 11:00 - 14:00
+              evening: { start: 17 * 60, end: 22 * 60 }, // 17:00 - 22:00
+              latenight: { start: 22 * 60, end: 2 * 60 }, // 22:00 - 2:00
+              "24h": { start: 0, end: 24 * 60 }, // 24h
+            };
+
+            const selectedRange = timeRanges[operatingHoursParam];
+            if (!selectedRange) return true;
+
+            // Check if restaurant is open during the entire selected time range
+            // For overnight ranges like latenight
+            if (selectedRange.end < selectedRange.start) {
+              // Overnight case (e.g., 22:00 - 2:00)
+              if (closeTimeInMinutes < openTimeInMinutes) {
+                // Restaurant also operates overnight
+                return (
+                  openTimeInMinutes <= selectedRange.start ||
+                  closeTimeInMinutes >= selectedRange.end
+                );
+              } else {
+                // Restaurant closes on the same day
+                return (
+                  openTimeInMinutes <= selectedRange.start &&
+                  closeTimeInMinutes >= 24 * 60
+                );
+              }
+            } else {
+              // Normal case (e.g., 11:00 - 14:00)
+              // Check if restaurant is open during the entire selected time range
+              return (
+                openTimeInMinutes <= selectedRange.start &&
+                (closeTimeInMinutes >= selectedRange.end ||
+                  closeTimeInMinutes < openTimeInMinutes)
+              ); // handles overnight hours
+            }
           });
         }
 
@@ -148,7 +193,7 @@ function FilterResultsPage() {
     fetchFilteredResults();
   }, [
     locationParam,
-    distanceParam,
+    amenityIdParam,
     priceParam,
     ratingParam,
     operatingHoursParam,
@@ -161,15 +206,8 @@ function FilterResultsPage() {
 
     if (locationParam) activeFilters.push(`Khu vực: ${locationParam}`);
 
-    if (distanceParam !== "all") {
-      const distanceLabels = {
-        near: "Gần nhất",
-        under5km: "Dưới 5km",
-        under10km: "Dưới 10km",
-      };
-      activeFilters.push(
-        `Khoảng cách: ${distanceLabels[distanceParam] || distanceParam}`
-      );
+    if (amenityIdParam && amenityName) {
+      activeFilters.push(`Tiện ích: ${amenityName}`);
     }
 
     if (priceParam !== "all") {
