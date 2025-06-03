@@ -59,9 +59,9 @@ function Footer() {
           
           <div className="footer-content-col">
             <ul className="footer-links">
-              <li><Link to="/trung-tam-ho-tro">Trung tâm hỗ trợ Đối tác</Link></li>
+              <li><Link to="/trung-tam-ho-tro" style={{color: '#D02028', fontWeight: 500}}>Trung tâm hỗ trợ Đối tác</Link></li>
               <li><Link to="/huong-dan-nha-hang">Hướng dẫn nhà hàng hợp tác</Link></li>
-              <li><Link to="/dang-ky-hop-tac">Nhà hàng đăng ký hợp tác</Link></li>
+              <li><a href="https://forms.gle/hb2HGrGNaF5YWfQs7" target="_blank" rel="noopener noreferrer">Nhà hàng đăng ký hợp tác</a></li>
               <li><Link to="/lien-he">Liên hệ về Đầu tư & Hợp tác</Link></li>
             </ul>
           </div>
@@ -71,4 +71,4 @@ function Footer() {
   );
 }
 
-export default Footer; 
+export default Footer;

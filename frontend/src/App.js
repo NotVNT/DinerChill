@@ -50,6 +50,8 @@ import BehindTheScenesPage from "./blog/BehindTheScenesPage";
 import ReviewsRatingsPage from "./blog/ReviewsRatingsPage";
 import FoodBusinessPage from "./blog/FoodBusinessPage";
 import EventsPromotionsPage from "./blog/EventsPromotionsPage";
+import SupportCenterPage from "./pages/SupportCenterPage";
+import TaskPricingPage from "./pages/TaskPricingPage";
 
 // Lazy load category components
 const Lau = React.lazy(() => import("./categories/Lau"));
@@ -158,6 +160,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route path="bang-gia" element={<TaskPricingPage />} />
 
             {/* Blog Routes */}
             <Route path="blog/tin-tuc-moi-nhat" element={<LatestNewsPage />} />
@@ -347,6 +350,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route path="trung-tam-ho-tro" element={<SupportCenterPage />} />
 
             {/* Route 404 */}
             <Route
