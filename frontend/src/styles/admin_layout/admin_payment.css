@@ -290,7 +290,8 @@
   margin-bottom: 1.5rem;
 }
 
-.payment-detail-left, .payment-detail-right {
+.payment-detail-left,
+.payment-detail-right {
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -393,16 +394,6 @@
   gap: 10px;
 }
 
-.btn {
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-weight: 500;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-size: 0.95rem;
-}
-
 .btn-success {
   background-color: #28a745;
   color: white;
@@ -436,30 +427,30 @@
     grid-template-columns: 1fr;
     gap: 16px;
   }
-  
+
   .payment-detail-modal {
     width: 95%;
     max-height: 90vh;
   }
-  
+
   .detail-row {
     flex-direction: column;
   }
-  
+
   .detail-row .label,
   .detail-row .value {
     width: 100%;
   }
-  
+
   .detail-row .label {
     margin-bottom: 6px;
   }
-  
+
   .action-buttons {
     flex-direction: column;
     width: 100%;
   }
-  
+
   .action-buttons .btn {
     width: 100%;
     margin-bottom: 8px;

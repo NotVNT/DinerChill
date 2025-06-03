@@ -40,14 +40,13 @@
 }
 
 .payment-result-card h1::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: -10px;
   left: 50%;
   transform: translateX(-50%);
   width: 80px;
   height: 3px;
-  background: linear-gradient(to right, #ff4b2b, #ff416c);
   border-radius: 3px;
 }
 
@@ -211,43 +210,15 @@
   justify-content: center;
 }
 
-.back-button {
-  background-color: #f1f1f1;
-  color: #333;
-  border: none;
-  border-radius: 50px;
-  padding: 12px 30px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.back-button:hover {
-  background-color: #e0e0e0;
-  transform: translateY(-3px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-}
-
-.back-button.primary {
-  background: linear-gradient(to right, #ff4b2b, #ff416c);
-  color: white;
-}
-
-.back-button.primary:hover {
-  background: linear-gradient(to right, #ff416c, #ff4b2b);
-}
-
 /* Error and cancelled states */
-.payment-error h2, 
+.payment-error h2,
 .payment-cancelled h2 {
   margin-bottom: 1rem;
   color: #333;
   font-size: 1.8rem;
 }
 
-.payment-error p, 
+.payment-error p,
 .payment-cancelled p {
   color: #666;
   margin-bottom: 1rem;
@@ -309,11 +280,11 @@
   .payment-result-card {
     padding: 1.5rem;
   }
-  
+
   .payment-details {
     padding: 1rem;
   }
-  
+
   .payment-icon-container {
     width: 60px;
     height: 60px;
@@ -332,7 +303,7 @@
   .payment-detail-item {
     flex-direction: column;
   }
-  
+
   .detail-value {
     text-align: left;
     margin-top: 0.3rem;
@@ -342,21 +313,21 @@
     flex-direction: column;
     width: 100%;
   }
-  
+
   .back-button {
     width: 100%;
   }
-  
+
   .payment-message {
     padding: 1rem;
   }
-  
-  .payment-cancelled h2, 
+
+  .payment-cancelled h2,
   .payment-error h2 {
     font-size: 1.5rem;
   }
-  
-  .payment-cancelled p, 
+
+  .payment-cancelled p,
   .payment-error p {
     font-size: 1rem;
   }

@@ -46,6 +46,16 @@ router.get("/", async (req, res) => {
           model: db.RestaurantImage,
           as: "images",
         },
+        {
+          model: db.Amenity,
+          as: "amenities",
+          through: { attributes: [] },
+        },
+        {
+          model: db.Category,
+          as: "categories",
+          through: { attributes: [] },
+        },
       ],
     });
 
@@ -103,6 +113,16 @@ router.get("/:id", async (req, res) => {
           },
           required: false,
         },
+        {
+          model: db.Amenity,
+          as: "amenities",
+          through: { attributes: [] },
+        },
+        {
+          model: db.Category,
+          as: "categories",
+          through: { attributes: [] },
+        },
       ],
     });
 
@@ -132,12 +152,22 @@ router.get("/:id", async (req, res) => {
 router.post("/", authenticate, upload.single("image"), async (req, res) => {
   try {
     const { name, address, description } = req.body;
+    let amenityIds = [];
 
     // Validate required fields
     if (!name || !address) {
       return res.status(400).json({
         message: "Name and address are required fields",
       });
+    }
+
+    // Parse amenityIds if provided
+    if (req.body.amenityIds) {
+      try {
+        amenityIds = JSON.parse(req.body.amenityIds);
+      } catch (parseError) {
+        console.error("Failed to parse amenityIds:", parseError);
+      }
     }
 
     // Create the restaurant
@@ -166,6 +196,16 @@ router.post("/", authenticate, upload.single("image"), async (req, res) => {
       }
     }
 
+    // Associate amenities if any were provided
+    if (amenityIds && amenityIds.length > 0) {
+      try {
+        await restaurant.setAmenities(amenityIds);
+      } catch (amenityError) {
+        console.error("Failed to associate amenities:", amenityError);
+        // Continue with the response as this is not a critical error
+      }
+    }
+
     res.status(201).json(restaurant);
   } catch (error) {
     console.error("Error creating restaurant:", error);
@@ -179,10 +219,21 @@ router.post("/", authenticate, upload.single("image"), async (req, res) => {
 router.put("/:id", authenticate, upload.single("image"), async (req, res) => {
   try {
     const { name, address, description } = req.body;
+    let amenityIds = [];
+    
     const restaurant = await db.Restaurant.findByPk(req.params.id);
 
     if (!restaurant) {
       return res.status(404).json({ message: "Restaurant not found" });
+    }
+
+    // Parse amenityIds if provided
+    if (req.body.amenityIds) {
+      try {
+        amenityIds = JSON.parse(req.body.amenityIds);
+      } catch (parseError) {
+        console.error("Failed to parse amenityIds:", parseError);
+      }
     }
 
     // Handle image update if provided
@@ -226,7 +277,38 @@ router.put("/:id", authenticate, upload.single("image"), async (req, res) => {
     if (description !== undefined) restaurant.description = description;
 
     await restaurant.save();
-    res.json(restaurant);
+
+    // Update amenities if provided
+    if (amenityIds && Array.isArray(amenityIds)) {
+      try {
+        await restaurant.setAmenities(amenityIds);
+      } catch (amenityError) {
+        console.error("Failed to update amenities:", amenityError);
+        // Continue with the response as this is not a critical error
+      }
+    }
+
+    // Fetch the updated restaurant with all associations
+    const updatedRestaurant = await db.Restaurant.findByPk(restaurant.id, {
+      include: [
+        {
+          model: db.RestaurantImage,
+          as: "images",
+        },
+        {
+          model: db.Amenity,
+          as: "amenities",
+          through: { attributes: [] },
+        },
+        {
+          model: db.Category,
+          as: "categories",
+          through: { attributes: [] },
+        },
+      ],
+    });
+
+    res.json(updatedRestaurant);
   } catch (error) {
     console.error("Error updating restaurant:", error);
     res
@@ -259,6 +341,9 @@ router.delete("/:id", authenticate, async (req, res) => {
       await image.destroy();
     }
 
+    // Delete associated amenities (junction table entries will be automatically removed)
+    await restaurant.setAmenities([]);
+    
     // Delete the restaurant
     await restaurant.destroy();
     res.json({ message: "Restaurant deleted successfully" });

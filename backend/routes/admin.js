@@ -9,6 +9,7 @@ const {
   Table,
   Promotion,
   PaymentInformation,
+  Amenity,
 } = require("../models");
 const authenticateAdmin =
   require("../middleware/authenticate").authenticateAdmin;
@@ -58,6 +59,7 @@ router.get("/restaurants", authenticateAdmin, async (req, res) => {
           as: "categories",
           attributes: ["id", "name", "description"], // Only include columns that exist in database
         },
+        { model: Amenity, as: "amenities" },
       ],
     });
 
@@ -100,6 +102,7 @@ router.post(
         capacity,
         status,
         categoryIds,
+        amenityIds,
       } = req.body;
 
       // Validate required fields
@@ -144,6 +147,28 @@ router.post(
         }
       }
 
+      // Associate restaurant with amenities if provided
+      if (amenityIds) {
+        try {
+          let amenityIdsArray = [];
+          if (typeof amenityIds === "string") {
+            amenityIdsArray = JSON.parse(amenityIds);
+          } else if (Array.isArray(amenityIds)) {
+            amenityIdsArray = amenityIds;
+          }
+
+          if (amenityIdsArray.length > 0) {
+            await newRestaurant.setAmenities(amenityIdsArray);
+            console.log(
+              `Associated restaurant ${newRestaurant.id} with amenities:`,
+              amenityIdsArray
+            );
+          }
+        } catch (amenityError) {
+          console.error("Error associating amenities:", amenityError);
+        }
+      }
+
       // Lưu hình ảnh vào uploads và tạo bản ghi trong database
       if (req.files && req.files.length > 0) {
         try {
@@ -173,6 +198,7 @@ router.post(
               as: "categories",
               attributes: ["id", "name", "description"], // Only include columns that exist in database
             },
+            { model: Amenity, as: "amenities" },
           ],
         }
       );
@@ -211,6 +237,7 @@ router.put(
         existingImages,
         closureReason,
         categoryIds,
+        amenityIds,
       } = req.body;
 
       console.log("Update restaurant request received:", {
@@ -219,6 +246,7 @@ router.put(
         status,
         closureReason,
         categoryIds,
+        amenityIds,
       });
 
       // Tìm nhà hàng theo id
@@ -245,6 +273,26 @@ router.put(
           );
         } catch (categoryError) {
           console.error("Error updating categories:", categoryError);
+        }
+      }
+
+      // Update amenities if provided
+      if (amenityIds) {
+        try {
+          let amenityIdsArray = [];
+          if (typeof amenityIds === "string") {
+            amenityIdsArray = JSON.parse(amenityIds);
+          } else if (Array.isArray(amenityIds)) {
+            amenityIdsArray = amenityIds;
+          }
+
+          await restaurant.setAmenities(amenityIdsArray);
+          console.log(
+            `Updated amenities for restaurant ${id}:`,
+            amenityIdsArray
+          );
+        } catch (amenityError) {
+          console.error("Error updating amenities:", amenityError);
         }
       }
 
@@ -376,6 +424,7 @@ router.put(
             as: "categories",
             attributes: ["id", "name", "description"], // Only include columns that exist in database
           },
+          { model: Amenity, as: "amenities" },
         ],
       });
 

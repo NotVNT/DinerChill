@@ -12,10 +12,11 @@ function TableSelectionPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [restaurant, setRestaurant] = useState(null);
-  
+
   // Get query parameters from URL
   const queryParams = new URLSearchParams(location.search);
-  const date = queryParams.get("date") || new Date().toISOString().split("T")[0];
+  const date =
+    queryParams.get("date") || new Date().toISOString().split("T")[0];
   const time = queryParams.get("time") || "";
   const guests = queryParams.get("guests") || "2";
   const children = queryParams.get("children") || "0";
@@ -26,28 +27,32 @@ function TableSelectionPage() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        
+
         // Fetch restaurant details
         const restaurantData = await restaurantsAPI.getById(restaurantId);
         setRestaurant(restaurantData);
-        
+
         // Fetch tables for the restaurant
         // In a real application, you would filter by date/time/availability
-        const response = await fetch(`${process.env.REACT_APP_API_URL || "http://localhost:5000"}/api/table?restaurantId=${restaurantId}&date=${date}&time=${time}`);
-        
+        const response = await fetch(
+          `${
+            process.env.REACT_APP_API_URL || "http://localhost:5000"
+          }/api/table?restaurantId=${restaurantId}&date=${date}&time=${time}`
+        );
+
         if (!response.ok) {
           throw new Error("Không thể tải danh sách bàn");
         }
-        
+
         const tablesData = await response.json();
-        
+
         // Filter tables that are available and have enough capacity
         const availableTables = tablesData.filter(
-          table => 
-            table.status === "available" && 
+          (table) =>
+            table.status === "available" &&
             table.capacity >= parseInt(guests, 10)
         );
-        
+
         setTables(availableTables);
         setLoading(false);
       } catch (err) {
@@ -56,7 +61,7 @@ function TableSelectionPage() {
         setLoading(false);
       }
     };
-    
+
     fetchData();
   }, [restaurantId, date, time, guests]);
 
@@ -69,10 +74,10 @@ function TableSelectionPage() {
       alert("Vui lòng chọn bàn trước khi tiếp tục");
       return;
     }
-    
+
     // Find the selected table object to get its code and capacity
-    const selectedTableObj = tables.find(table => table.id === selectedTable);
-    
+    const selectedTableObj = tables.find((table) => table.id === selectedTable);
+
     // Create query parameters for reservation page
     const query = new URLSearchParams({
       restaurant: restaurantId,
@@ -81,13 +86,13 @@ function TableSelectionPage() {
       guests,
       children,
       tableId: selectedTable,
-      tableCode: selectedTableObj?.tableCode || '',
-      tableCapacity: selectedTableObj?.capacity || ''
+      tableCode: selectedTableObj?.tableCode || "",
+      tableCapacity: selectedTableObj?.capacity || "",
     });
-    
+
     if (promotion) query.append("promotion", promotion);
     if (promotionId) query.append("promotionId", promotionId);
-    
+
     // Navigate to reservation page with all parameters
     navigate(`/reservation?${query.toString()}`);
   };
@@ -123,13 +128,21 @@ function TableSelectionPage() {
       <div className="container">
         <div className="page-header">
           <h1>Chọn bàn tại {restaurant?.name}</h1>
-          <p>Ngày: {new Date(date).toLocaleDateString("vi-VN")} | Giờ: {time} | Số người: {parseInt(guests) + parseInt(children)}</p>
+          <p>
+            Ngày: {new Date(date).toLocaleDateString("vi-VN")} | Giờ: {time} |
+            Số người: {parseInt(guests) + parseInt(children)}
+          </p>
         </div>
 
         {tables.length === 0 ? (
           <div className="no-tables-message">
-            <p>Không có bàn trống phù hợp với số lượng người của bạn vào thời gian này.</p>
-            <p>Vui lòng chọn thời gian khác hoặc liên hệ nhà hàng để được hỗ trợ.</p>
+            <p>
+              Không có bàn trống phù hợp với số lượng người của bạn vào thời
+              gian này.
+            </p>
+            <p>
+              Vui lòng chọn thời gian khác hoặc liên hệ nhà hàng để được hỗ trợ.
+            </p>
             <button className="btn" onClick={handleGoBack}>
               Quay lại chọn thời gian
             </button>
@@ -140,7 +153,7 @@ function TableSelectionPage() {
               <div className="layout-info">
                 <p>Sơ đồ bàn tại nhà hàng - Chọn bàn trống để đặt chỗ</p>
               </div>
-              
+
               <div className="table-status-indicators">
                 <div className="status-item">
                   <span className="status-circle available"></span>
@@ -150,14 +163,15 @@ function TableSelectionPage() {
                   <span className="status-circle selected"></span>
                   <span>Bàn đã chọn</span>
                 </div>
-             
               </div>
-              
+
               <div className="tables-grid">
                 {tables.map((table) => (
                   <div
                     key={table.id}
-                    className={`table-item ${selectedTable === table.id ? "selected" : ""}`}
+                    className={`table-item ${
+                      selectedTable === table.id ? "selected" : ""
+                    }`}
                     onClick={() => handleTableSelect(table)}
                   >
                     <div className="table-number">{table.tableCode}</div>
@@ -170,13 +184,10 @@ function TableSelectionPage() {
             </div>
 
             <div className="table-selection-footer">
-              <button 
-                className="btn-cancel"
-                onClick={handleGoBack}
-              >
+              <button className="btn-cancel" onClick={handleGoBack}>
                 Hủy
               </button>
-              <button 
+              <button
                 className="btn-continue"
                 onClick={handleContinue}
                 disabled={!selectedTable}
@@ -191,4 +202,4 @@ function TableSelectionPage() {
   );
 }
 
-export default TableSelectionPage; 
+export default TableSelectionPage;

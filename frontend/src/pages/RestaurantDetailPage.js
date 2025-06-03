@@ -34,7 +34,6 @@ function RestaurantDetailPage() {
   });
   const [selectedImage, setSelectedImage] = useState(null);
   const [selectedImageSource, setSelectedImageSource] = useState(null);
-  const [selectedPromotion, setSelectedPromotion] = useState(null);
   const [availableTimes, setAvailableTimes] = useState([]);
   const [reviewForm, setReviewForm] = useState({
     rating: 0,
@@ -374,11 +373,8 @@ function RestaurantDetailPage() {
 
   const handlePromotionClick = (e, promo) => {
     e.stopPropagation();
-    setSelectedPromotion(promo);
-  };
-
-  const closePromotionModal = () => {
-    setSelectedPromotion(null);
+    // Instead of showing modal, go directly to booking with promotion
+    applyPromotionAndBook(promo);
   };
 
   const applyPromotionAndBook = (promo) => {
@@ -399,7 +395,6 @@ function RestaurantDetailPage() {
           "Thời gian đặt bàn phải ít nhất 2 giờ sau thời gian hiện tại"
         );
         setTimeout(() => setNotification(null), 3000);
-        closePromotionModal();
         return;
       }
 
@@ -412,8 +407,6 @@ function RestaurantDetailPage() {
         promotion: promo.code,
       }).toString();
 
-      // Close the promotion modal before navigating
-      closePromotionModal();
       navigate(`/restaurant/${id}/tables?${query}`);
     } catch (error) {
       console.error("Error applying promotion:", error);
@@ -590,12 +583,11 @@ function RestaurantDetailPage() {
   const currentHour = currentDate.getHours();
   const currentMinute = currentDate.getMinutes();
 
-  const amenitiesEntries = restaurant.amenities
-    ? Object.entries(restaurant.amenities)
-    : [];
+  // Update the amenities processing logic to handle amenities as an array
+  const amenitiesList = restaurant.amenities || [];
   const displayedAmenities = showAllAmenities
-    ? amenitiesEntries
-    : amenitiesEntries.slice(0, 6);
+    ? amenitiesList
+    : amenitiesList.slice(0, 6);
   const bannerImage =
     restaurant?.images && restaurant.images.length > 0
       ? getImageUrl(restaurant.images[currentBannerImageIndex])
@@ -704,7 +696,9 @@ function RestaurantDetailPage() {
               </p>
               <p>
                 <i className="fas fa-utensils"></i> Loại hình:{" "}
-                {restaurant.cuisineType || "Chưa cập nhật"}
+                {restaurant.categories && restaurant.categories.length > 0
+                  ? restaurant.categories.map((cat) => cat.name).join(", ")
+                  : "Chưa cập nhật"}
               </p>
               <p>
                 <i className="fas fa-money-bill-wave"></i> Giá:{" "}
@@ -740,21 +734,17 @@ function RestaurantDetailPage() {
           <section id="amenities-section" className="content-section">
             <h2>Tiện ích</h2>
             <div className="amenities-card">
-              {amenitiesEntries.length > 0 ? (
+              {amenitiesList.length > 0 ? (
                 <>
                   <div className="amenities-list">
-                    {displayedAmenities.map(([key, value]) => (
-                      <div key={key} className="amenity-item">
-                        <i
-                          className={`fas ${value ? "fa-check" : "fa-times"}`}
-                        ></i>
-                        <span>
-                          {key}: {value ? "Có" : "Không"}
-                        </span>
+                    {displayedAmenities.map((amenity) => (
+                      <div key={amenity.id} className="amenity-item">
+                        <i className="fas fa-check"></i>
+                        <span>{amenity.name}</span>
                       </div>
                     ))}
                   </div>
-                  {amenitiesEntries.length > 6 && (
+                  {amenitiesList.length > 6 && (
                     <button
                       className="btn btn-show-more"
                       onClick={() => setShowAllAmenities(!showAllAmenities)}
@@ -1180,140 +1170,69 @@ function RestaurantDetailPage() {
             </div>
           </section>
         )}
-
-        {selectedImage && restaurant.images && restaurant.images.length > 0 && (
-          <>
-            <div className="modal-overlay" onClick={closeImageModal}></div>
-            <div className="modal image-modal">
-              <button className="modal-prev" onClick={prevImage}>
-                <i className="fas fa-chevron-left"></i>
-              </button>
-              <div className="modal-content">
-                <img
-                  src={getImageUrl(restaurant.images[currentModalImageIndex])}
-                  alt="Hình ảnh"
-                  className="modal-image"
-                  onError={(e) => {
-                    e.target.src = "/placeholder-image.jpg";
-                  }}
-                />
-                <button className="close-modal" onClick={closeImageModal}>
-                  ×
-                </button>
-              </div>
-              <button className="modal-next" onClick={nextImage}>
-                <i className="fas fa-chevron-right"></i>
-              </button>
-            </div>
-          </>
-        )}
-
-        {selectedPromotion && (
-          <>
-            <div className="modal-overlay" onClick={closePromotionModal}></div>
-            <div className="modal promotion-modal">
-              <div className="modal-content">
-                <button className="close-modal" onClick={closePromotionModal}>
-                  ×
-                </button>
-
-                <div className="promotion-modal-header">
-                  <h3>Chi tiết ưu đãi</h3>
-                  <div className="promotion-title">
-                    {selectedPromotion.name}
-                  </div>
-                </div>
-
-                {selectedPromotion.code && (
-                  <div className="promotion-modal-code">
-                    <div className="code-label">Mã khuyến mãi:</div>
-                    <div className="code-value-container">
-                      <span className="code-value">
-                        {selectedPromotion.code}
-                      </span>
-                    </div>
-                  </div>
-                )}
-
-                <div className="promotion-modal-content">
-                  <div className="promotion-description">
-                    <p>{selectedPromotion.description || "Không có mô tả"}</p>
-                  </div>
-
-                  <div className="promotion-details">
-                    {selectedPromotion.discountType === "percent" && (
-                      <div className="promotion-detail-item highlight">
-                        <i className="fas fa-percentage"></i>
-                        <span>
-                          Giảm giá:{" "}
-                          <strong>{selectedPromotion.discountValue}%</strong>
-                          {selectedPromotion.maxDiscountValue &&
-                            ` (tối đa ${selectedPromotion.maxDiscountValue.toLocaleString(
-                              "vi-VN"
-                            )}đ)`}
-                        </span>
-                      </div>
-                    )}
-
-                    {selectedPromotion.discountType === "fixed" && (
-                      <div className="promotion-detail-item highlight">
-                        <i className="fas fa-money-bill-wave"></i>
-                        <span>
-                          Giảm giá:{" "}
-                          <strong>
-                            {selectedPromotion.discountValue.toLocaleString(
-                              "vi-VN"
-                            )}
-                            đ
-                          </strong>
-                        </span>
-                      </div>
-                    )}
-
-                    {selectedPromotion.minOrderValue && (
-                      <div className="promotion-detail-item">
-                        <i className="fas fa-shopping-cart"></i>
-                        <span>
-                          Đơn hàng tối thiểu:{" "}
-                          {selectedPromotion.minOrderValue.toLocaleString(
-                            "vi-VN"
-                          )}
-                          đ
-                        </span>
-                      </div>
-                    )}
-
-                    <div className="promotion-detail-item">
-                      <i className="fas fa-calendar-alt"></i>
-                      <span>
-                        Hiệu lực đến:{" "}
-                        {new Date(selectedPromotion.endDate).toLocaleDateString(
-                          "vi-VN"
-                        )}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="promotion-modal-footer">
-                  <button
-                    className="btn btn-secondary"
-                    onClick={closePromotionModal}
-                  >
-                    Đóng
-                  </button>
-                  <button
-                    className="btn btn-primary"
-                    onClick={() => applyPromotionAndBook(selectedPromotion)}
-                  >
-                    Áp dụng ngay
-                  </button>
-                </div>
-              </div>
-            </div>
-          </>
-        )}
       </div>
+
+      {/* Restaurant Gallery Section - Outside of tab system */}
+      <div className="restaurant-gallery-section">
+        <div className="gallery-container">
+          <h2>Hình ảnh nhà hàng</h2>
+          <div className="gallery-grid">
+            {restaurant.images && restaurant.images.length > 0 ? (
+              restaurant.images.map((image, index) => (
+                <div
+                  key={index}
+                  className="gallery-item"
+                  onClick={() => {
+                    setSelectedImage(image);
+                    setSelectedImageSource("gallery");
+                    setCurrentModalImageIndex(index);
+                  }}
+                >
+                  <img
+                    src={getImageUrl(image)}
+                    alt={`${restaurant.name} - Hình ${index + 1}`}
+                    className="gallery-image"
+                    onError={(e) => {
+                      e.target.src = "/placeholder-image.jpg";
+                    }}
+                  />
+                </div>
+              ))
+            ) : (
+              <p className="no-images">
+                Chưa có hình ảnh nào cho nhà hàng này.
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {selectedImage && restaurant.images && restaurant.images.length > 0 && (
+        <>
+          <div className="modal-overlay" onClick={closeImageModal}></div>
+          <div className="modal image-modal">
+            <button className="modal-prev" onClick={prevImage}>
+              <i className="fas fa-chevron-left"></i>
+            </button>
+            <div className="modal-content">
+              <img
+                src={getImageUrl(restaurant.images[currentModalImageIndex])}
+                alt="Hình ảnh"
+                className="modal-image"
+                onError={(e) => {
+                  e.target.src = "/placeholder-image.jpg";
+                }}
+              />
+              <button className="close-modal" onClick={closeImageModal}>
+                ×
+              </button>
+            </div>
+            <button className="modal-next" onClick={nextImage}>
+              <i className="fas fa-chevron-right"></i>
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }
