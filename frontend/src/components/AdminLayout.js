@@ -108,6 +108,7 @@ function AdminLayout() {
     if (path.includes("/admin/reservations")) return "Quản lý đặt bàn";
     if (path.includes("/admin/reviews")) return "Quản lý đánh giá";
     if (path.includes("/admin/categories")) return "Quản lý danh mục";
+    if (path.includes("/admin/amenities")) return "Quản lý tiện ích";
     if (path.includes("/admin/promotions")) return "Quản lý khuyến mãi";
     if (path.includes("/admin/payments")) return "Quản lý thanh toán";
     if (path.includes("/admin/tables")) return "Quản lý bàn";
@@ -161,6 +162,12 @@ function AdminLayout() {
               <NavLink to="/admin/categories">
                 <i>📁</i>
                 <span>Quản lý danh mục</span>
+              </NavLink>
+            </li>
+            <li>
+              <NavLink to="/admin/amenities">
+                <i>🧰</i>
+                <span>Quản lý tiện ích</span>
               </NavLink>
             </li>
             <li>

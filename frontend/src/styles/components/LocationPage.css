@@ -490,7 +490,6 @@
   background: white;
   border-radius: 5px;
   border: 1px solid #eee;
-  padding: 15px;
   margin-bottom: 15px;
   transition: all 0.2s ease;
   display: flex;
@@ -514,7 +513,7 @@
   font-size: 14px;
   color: #666;
   margin: 0 0 8px 0;
-  text-align: center; 
+  text-align: center;
 }
 
 .restaurant-info {
@@ -580,16 +579,16 @@
   .location-content-wrapper {
     flex-direction: column-reverse;
   }
-  
+
   .restaurant-list-section {
     width: 100%;
   }
-  
+
   .restaurant-list-cards {
     max-height: none;
     overflow-y: visible;
   }
-  
+
   .leaflet-map {
     height: 350px;
     margin-bottom: 20px;

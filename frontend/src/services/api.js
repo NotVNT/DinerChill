@@ -668,6 +668,26 @@ export const adminAPI = {
     fetchWithAuth(`/admin/tables/${id}`, {
       method: "DELETE",
     }),
+
+  // Amenities methods
+  getAmenities: () => fetchWithAuth("/admin/amenities"),
+
+  createAmenity: (amenityData) =>
+    fetchWithAuth("/admin/amenities", {
+      method: "POST",
+      body: JSON.stringify(amenityData),
+    }),
+
+  updateAmenity: (id, amenityData) =>
+    fetchWithAuth(`/admin/amenities/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(amenityData),
+    }),
+
+  deleteAmenity: (id) =>
+    fetchWithAuth(`/admin/amenities/${id}`, {
+      method: "DELETE",
+    }),
 };
 
 // Thêm API cho danh sách yêu thích
