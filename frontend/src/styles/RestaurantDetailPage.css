@@ -39,6 +39,12 @@
   height: 500px;
   overflow: hidden;
   background: linear-gradient(180deg, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.7));
+  cursor: grab;
+  user-select: none;
+}
+
+.restaurant-banner:active {
+  cursor: grabbing;
 }
 
 .banner-image {
@@ -49,10 +55,100 @@
   top: 0;
   left: 0;
   transition: transform 0.5s ease;
+  pointer-events: none;
 }
 
 .restaurant-banner:hover .banner-image {
   transform: scale(1.05) translateY(-10px);
+}
+
+/* Banner Navigation Controls */
+.banner-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.7);
+  border: none;
+  color: white;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 18px;
+  transition: all 0.3s ease;
+  z-index: 10;
+  backdrop-filter: blur(5px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.banner-nav:hover {
+  background: rgba(255, 107, 107, 0.9);
+  transform: translateY(-50%) scale(1.1);
+  box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+}
+
+.banner-nav:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+.banner-prev {
+  left: 20px;
+}
+
+.banner-next {
+  right: 20px;
+}
+
+/* Image Counter */
+.banner-image-counter {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  backdrop-filter: blur(5px);
+  z-index: 10;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* Image Dots Indicator */
+.banner-dots {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 10;
+}
+
+.banner-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.banner-dot.active {
+  background: #ff6b6b;
+  transform: scale(1.2);
+  border-color: rgba(255, 255, 255, 0.8);
+}
+
+.banner-dot:hover {
+  background: rgba(255, 255, 255, 0.8);
+  transform: scale(1.1);
 }
 
 .banner-overlay {
@@ -2050,4 +2146,97 @@
 
 .promotion-highlight {
   animation: highlight 0.5s ease-in-out;
+}
+
+/* Responsive Banner Navigation */
+@media (max-width: 768px) {
+  .restaurant-banner {
+    height: 300px;
+  }
+
+  .banner-nav {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+  }
+
+  .banner-prev {
+    left: 10px;
+  }
+
+  .banner-next {
+    right: 10px;
+  }
+
+  .banner-image-counter {
+    bottom: 60px;
+    right: 15px;
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .banner-dots {
+    bottom: 15px;
+    gap: 6px;
+  }
+
+  .banner-dot {
+    width: 10px;
+    height: 10px;
+  }
+
+  .banner-overlay {
+    bottom: 20px;
+    left: 20px;
+    padding: 20px;
+    max-width: calc(100% - 40px);
+  }
+
+  .banner-overlay h1 {
+    font-size: 2rem;
+  }
+
+  .banner-overlay p {
+    font-size: 1.1rem;
+  }
+
+  .banner-actions {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .btn-outline {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .restaurant-banner {
+    height: 250px;
+  }
+
+  .banner-nav {
+    width: 35px;
+    height: 35px;
+    font-size: 14px;
+  }
+
+  .banner-overlay h1 {
+    font-size: 1.8rem;
+  }
+
+  .banner-overlay p {
+    font-size: 1rem;
+  }
+
+  .banner-image-counter {
+    bottom: 50px;
+    font-size: 11px;
+    padding: 4px 8px;
+  }
+
+  .banner-dots {
+    bottom: 10px;
+  }
 }

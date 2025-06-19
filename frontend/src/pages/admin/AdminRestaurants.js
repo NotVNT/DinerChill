@@ -9,6 +9,10 @@ function AdminRestaurants() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Add pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
   const [toast, setToast] = useState({
     show: false,
     message: "",
@@ -522,6 +526,58 @@ function AdminRestaurants() {
     }
   });
 
+  // Pagination logic
+  const totalItems = filteredRestaurants.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentRestaurants = filteredRestaurants.slice(startIndex, endIndex);
+
+  // Reset current page when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
+  // Pagination handlers
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  const handleItemsPerPageChange = (newItemsPerPage) => {
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1); // Reset to first page
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  // Generate page numbers for pagination
+  const getPageNumbers = () => {
+    const pageNumbers = [];
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      pageNumbers.push(i);
+    }
+
+    return pageNumbers;
+  };
+
   // Function to show toast message
   const showToast = (message, type = "success") => {
     setToast({ show: true, message, type });
@@ -1032,8 +1088,36 @@ function AdminRestaurants() {
               <div className="search-results-info">
                 <i className="fa fa-search"></i> Tìm thấy{" "}
                 {filteredRestaurants.length} nhà hàng
+                {filteredRestaurants.length > 0 && (
+                  <span> - Hiển thị {startIndex + 1}-{Math.min(endIndex, totalItems)} trong tổng số {totalItems} nhà hàng</span>
+                )}
               </div>
             )}
+            
+            {/* Pagination and Items per page controls */}
+            {!searchQuery && totalItems > 0 && (
+              <div className="table-controls">
+                <div className="items-per-page-control">
+                  <label htmlFor="itemsPerPage">Hiển thị:</label>
+                  <select
+                    id="itemsPerPage"
+                    value={itemsPerPage}
+                    onChange={(e) => handleItemsPerPageChange(parseInt(e.target.value))}
+                    className="items-per-page-select"
+                  >
+                    <option value={5}>5</option>
+                    <option value={10}>10</option>
+                    <option value={20}>20</option>
+                    <option value={50}>50</option>
+                  </select>
+                  <span>nhà hàng mỗi trang</span>
+                </div>
+                <div className="pagination-info">
+                  Hiển thị {startIndex + 1}-{Math.min(endIndex, totalItems)} trong tổng số {totalItems} nhà hàng
+                </div>
+              </div>
+            )}
+            
             <div className="table-responsive">
               <table className="table table-hover admin-table">
                 <thead className="thead-light">
@@ -1047,8 +1131,8 @@ function AdminRestaurants() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredRestaurants && filteredRestaurants.length > 0 ? (
-                    filteredRestaurants.map((restaurant) => (
+                  {currentRestaurants && currentRestaurants.length > 0 ? (
+                    currentRestaurants.map((restaurant) => (
                       <tr key={restaurant.id}>
                         <td>{restaurant.name}</td>
                         <td>
@@ -1192,6 +1276,43 @@ function AdminRestaurants() {
                 </tbody>
               </table>
             </div>
+            
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="pagination-wrapper">
+                <div className="pagination">
+                  <button
+                    className={`pagination-btn ${currentPage === 1 ? 'disabled' : ''}`}
+                    onClick={handlePrevPage}
+                    disabled={currentPage === 1}
+                  >
+                    <i className="fa fa-chevron-left"></i> Trước
+                  </button>
+                  
+                  {getPageNumbers().map((pageNumber) => (
+                    <button
+                      key={pageNumber}
+                      className={`pagination-btn ${currentPage === pageNumber ? 'active' : ''}`}
+                      onClick={() => handlePageChange(pageNumber)}
+                    >
+                      {pageNumber}
+                    </button>
+                  ))}
+                  
+                  <button
+                    className={`pagination-btn ${currentPage === totalPages ? 'disabled' : ''}`}
+                    onClick={handleNextPage}
+                    disabled={currentPage === totalPages}
+                  >
+                    Sau <i className="fa fa-chevron-right"></i>
+                  </button>
+                </div>
+                
+                <div className="pagination-summary">
+                  Trang {currentPage} / {totalPages}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

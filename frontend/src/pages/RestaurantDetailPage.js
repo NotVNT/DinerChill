@@ -14,6 +14,8 @@ function RestaurantDetailPage() {
   const [notification, setNotification] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
   const [currentBannerImageIndex, setCurrentBannerImageIndex] = useState(0); // Track current banner image index
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
 
   // Get initial date, checking if current time is after 22:00 to select next day
   const getCurrentOrNextDay = () => {
@@ -543,6 +545,63 @@ function RestaurantDetailPage() {
     }
   };
 
+  // Navigate to specific image by index
+  const goToImage = (index) => {
+    setCurrentBannerImageIndex(index);
+  };
+
+  // Touch handlers for swipe navigation
+  const handleTouchStart = (e) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+
+    if (isLeftSwipe && restaurant?.images && restaurant.images.length > 1) {
+      // Swipe left - next image
+      setCurrentBannerImageIndex(
+        (prev) => (prev + 1) % restaurant.images.length
+      );
+    }
+    
+    if (isRightSwipe && restaurant?.images && restaurant.images.length > 1) {
+      // Swipe right - previous image  
+      setCurrentBannerImageIndex(
+        (prev) => (prev - 1 + restaurant.images.length) % restaurant.images.length
+      );
+    }
+  };
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (restaurant?.images && restaurant.images.length > 1) {
+        if (e.key === 'ArrowLeft') {
+          setCurrentBannerImageIndex(
+            (prev) => (prev - 1 + restaurant.images.length) % restaurant.images.length
+          );
+        } else if (e.key === 'ArrowRight') {
+          setCurrentBannerImageIndex(
+            (prev) => (prev + 1) % restaurant.images.length
+          );
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [restaurant?.images]);
+
   // Time validation function
   // eslint-disable-next-line no-unused-vars
   const _isValidTime = (date, time, openingTime, closingTime) => {
@@ -658,7 +717,12 @@ function RestaurantDetailPage() {
         </button>
       </div>
 
-      <div className="restaurant-banner">
+      <div 
+        className="restaurant-banner"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
         <img
           src={bannerImage}
           alt={restaurant.name}
@@ -673,17 +737,30 @@ function RestaurantDetailPage() {
             <button
               className="banner-nav banner-prev"
               onClick={prevBannerImage}
+              aria-label="Ảnh trước"
             >
               <i className="fas fa-chevron-left"></i>
             </button>
             <button
               className="banner-nav banner-next"
               onClick={nextBannerImage}
+              aria-label="Ảnh tiếp theo"
             >
               <i className="fas fa-chevron-right"></i>
             </button>
             <div className="banner-image-counter">
               {currentBannerImageIndex + 1}/{restaurant.images.length}
+            </div>
+            {/* Add dot indicators */}
+            <div className="banner-dots">
+              {restaurant.images.map((_, index) => (
+                <button
+                  key={index}
+                  className={`banner-dot ${index === currentBannerImageIndex ? 'active' : ''}`}
+                  onClick={() => goToImage(index)}
+                  aria-label={`Chuyển đến ảnh ${index + 1}`}
+                />
+              ))}
             </div>
           </>
         )}

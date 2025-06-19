@@ -44,6 +44,10 @@ function AdminReservations() {
     const date = new Date(reservation.date);
     const formattedDate = date.toISOString().split('T')[0];
     
+    // Ensure status is one of the allowed values for editing
+    const allowedStatuses = ['cancelled', 'completed'];
+    const defaultStatus = allowedStatuses.includes(reservation.status) ? reservation.status : 'cancelled';
+    
     setEditingReservation(reservation);
     setFormData({
       name: reservation.user?.name || '',
@@ -52,7 +56,7 @@ function AdminReservations() {
       date: formattedDate,
       time: reservation.time,
       guests: reservation.partySize?.toString() || '1',
-      status: reservation.status,
+      status: defaultStatus,
       specialRequests: reservation.notes || ''
     });
   };
@@ -142,8 +146,13 @@ function AdminReservations() {
 
   // Lọc danh sách đặt bàn theo từ khóa tìm kiếm
   const filteredReservations = searchTerm.trim() === '' 
-    ? reservations 
+    ? reservations.filter(reservation => reservation.status !== 'pending')
     : reservations.filter(reservation => {
+        // First filter out pending reservations
+        if (reservation.status === 'pending') {
+          return false;
+        }
+        
         const tableCode = reservation.table?.tableCode || '';
         const customerName = reservation.user?.name || '';
         
@@ -263,8 +272,6 @@ function AdminReservations() {
                 onChange={handleChange}
                 required
               >
-                <option value="pending">Đang chờ</option>
-                <option value="confirmed">Đã xác nhận</option>
                 <option value="cancelled">Đã hủy</option>
                 <option value="completed">Đã hoàn thành</option>
               </select>

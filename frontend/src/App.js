@@ -8,6 +8,7 @@ import {
 import "./App.css";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
+import Chatbox from "./components/Chatbox";
 import HomePage from "./pages/HomePage";
 import RestaurantDetailPage from "./pages/RestaurantDetailPage";
 import SearchResultsPage from "./filter/SearchResultsPage";
@@ -51,6 +52,7 @@ import ReviewsRatingsPage from "./blog/ReviewsRatingsPage";
 import FoodBusinessPage from "./blog/FoodBusinessPage";
 import EventsPromotionsPage from "./blog/EventsPromotionsPage";
 import AdminAmenities from "./pages/admin/AdminAmenities";
+import ScrollToTopButton from "./components/ScrollToTopButton";
 
 // Lazy load category components
 const Lau = React.lazy(() => import("./filter/categories/Lau"));
@@ -87,6 +89,8 @@ function AppLayout() {
         <Outlet />
       </main>
       <Footer />
+      <Chatbox />
+      <ScrollToTopButton />
     </div>
   );
 }
@@ -109,6 +113,8 @@ function App() {
                   <HomePage />
                 </main>
                 <Footer />
+                <Chatbox />
+                <ScrollToTopButton />
               </div>
             }
           />
