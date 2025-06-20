@@ -5,20 +5,16 @@ import "../../styles/admin_layout/admin_restaurant.css";
 function AdminRestaurants() {
   const [restaurants, setRestaurants] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [amenities, setAmenities] = useState([]); // Add amenities state
+  const [amenities, setAmenities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  // Add pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-
   const [toast, setToast] = useState({
     show: false,
     message: "",
     type: "success",
   });
-
   const [editingRestaurant, setEditingRestaurant] = useState(null);
   const [viewingRestaurant, setViewingRestaurant] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -29,10 +25,11 @@ function AdminRestaurants() {
     newStatus: "",
     closureReason: "",
   });
-  const [formData, setFormData] = useState({
+
+  const initialFormData = {
     name: "",
     selectedCategories: [],
-    selectedAmenities: [], // Add selectedAmenities to form data
+    selectedAmenities: [],
     address: "",
     images: [],
     description: "",
@@ -43,12 +40,14 @@ function AdminRestaurants() {
     capacity: "",
     priceRange: "200.000đ - 500.000đ",
     status: "active",
-  });
+  };
+
+  const [formData, setFormData] = useState(initialFormData);
 
   useEffect(() => {
     fetchRestaurants();
     fetchCategories();
-    fetchAmenities(); // Add amenities fetch
+    fetchAmenities();
   }, []);
 
   const fetchRestaurants = async () => {
@@ -88,7 +87,6 @@ function AdminRestaurants() {
   const handleEditClick = (restaurant) => {
     setEditingRestaurant(restaurant);
 
-    // Initialize images array from existing images
     let initialImages = [];
     if (restaurant.images && restaurant.images.length > 0) {
       initialImages = restaurant.images.map((image) => {
@@ -97,7 +95,7 @@ function AdminRestaurants() {
           id: `db-${image.id}`,
           url: imageUrl,
           preview: imageUrl,
-          dbId: image.id, // Lưu ID từ database để có thể xóa sau này
+          dbId: image.id,
         };
       });
     } else if (restaurant.image) {
@@ -110,12 +108,10 @@ function AdminRestaurants() {
       ];
     }
 
-    // Get restaurant categories if available
     const restaurantCategories = restaurant.categories
       ? restaurant.categories.map((category) => category.id)
       : [];
 
-    // Get restaurant amenities if available
     const restaurantAmenities = restaurant.amenities
       ? restaurant.amenities.map((amenity) => amenity.id)
       : [];
@@ -123,7 +119,7 @@ function AdminRestaurants() {
     setFormData({
       name: restaurant.name,
       selectedCategories: restaurantCategories,
-      selectedAmenities: restaurantAmenities, // Add this line
+      selectedAmenities: restaurantAmenities,
       address: restaurant.address || "",
       images: initialImages,
       description: restaurant.description || "",
@@ -175,7 +171,7 @@ function AdminRestaurants() {
 
         reader.onload = (event) => {
           newImages.push({
-            id: Date.now() + i, // Generate a temporary unique ID
+            id: Date.now() + i,
             file: file,
             preview: event.target.result,
           });
@@ -200,49 +196,36 @@ function AdminRestaurants() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null); // Reset any previous error
-
-    setIsSubmitting(true); // Set submitting state to true when form is submitted
+    setError(null);
+    setIsSubmitting(true);
 
     try {
-      // Validate required fields
       if (!formData.name || !formData.address) {
         setError(
           "Vui lòng điền đầy đủ thông tin bắt buộc (tên và địa chỉ nhà hàng)."
         );
-        setIsSubmitting(false); // Reset submitting state
+        setIsSubmitting(false);
         return;
       }
 
-      // Tạo FormData để xử lý tải lên nhiều hình ảnh
       const formDataToSend = new FormData();
-
-      // Thêm thông tin cơ bản
       formDataToSend.append("name", formData.name);
-
-      // Add selected categories as JSON string
       formDataToSend.append(
         "categoryIds",
         JSON.stringify(formData.selectedCategories)
       );
-
-      // Add selected amenities as JSON string
       formDataToSend.append(
         "amenityIds",
         JSON.stringify(formData.selectedAmenities)
       );
-
       formDataToSend.append("address", formData.address);
       formDataToSend.append("description", formData.description || "");
       formDataToSend.append("openingTime", formData.openingTime || "");
       formDataToSend.append("closingTime", formData.closingTime || "");
       formDataToSend.append("phone", formData.phone || "");
-
-      // Use provided email or generate a default one if empty
       formDataToSend.append("email", formData.email || "");
-
       formDataToSend.append("priceRange", formData.priceRange || "");
-      formDataToSend.append("status", "active"); // Always set status to 'active'
+      formDataToSend.append("status", "active");
 
       if (formData.capacity) {
         formDataToSend.append("capacity", formData.capacity);
@@ -250,25 +233,20 @@ function AdminRestaurants() {
 
       console.log("Sending data, image count:", formData.images.length);
 
-      // Xử lý tải lên hình ảnh lên cloud storage
       let hasFiles = false;
       formData.images.forEach((image, index) => {
         if (image.file) {
           hasFiles = true;
-          // Gửi file gốc để backend upload lên cloud
           formDataToSend.append("restaurantImages", image.file);
           console.log("Adding image file:", image.file.name);
         }
       });
 
-      // Nếu không có file mới, hiển thị thông báo
       if (!hasFiles && !editingRestaurant.id) {
         console.log("No image files selected for new restaurant");
       }
 
-      // Nếu đang chỉnh sửa, thêm các IDs của hình ảnh đã tồn tại
       if (editingRestaurant && editingRestaurant.id) {
-        // Lọc ra các ảnh đã lưu trong database (có dbId)
         const existingImages = formData.images
           .filter((img) => img.dbId)
           .map((img) => img.dbId.toString());
@@ -293,7 +271,6 @@ function AdminRestaurants() {
 
       let updatedRestaurant;
       if (editingRestaurant && editingRestaurant.id) {
-        // Cập nhật nhà hàng hiện có
         console.log("Updating restaurant with ID:", editingRestaurant.id);
         updatedRestaurant = await adminAPI.updateRestaurant(
           editingRestaurant.id,
@@ -314,7 +291,6 @@ function AdminRestaurants() {
         );
         createNotification(`Đã cập nhật nhà hàng "${updatedRestaurant.name}"`);
       } else {
-        // Thêm nhà hàng mới
         console.log("Creating new restaurant");
         updatedRestaurant = await adminAPI.createRestaurant(formDataToSend);
         console.log("Restaurant created successfully");
@@ -327,10 +303,8 @@ function AdminRestaurants() {
         createNotification(`Đã thêm nhà hàng mới "${updatedRestaurant.name}"`);
       }
 
-      // Reset form
       resetForm();
 
-      // Auto-hide success message after 5 seconds
       setTimeout(() => {
         setToast({ show: false, message: "", type: "success" });
       }, 5000);
@@ -346,27 +320,13 @@ function AdminRestaurants() {
         setError("Không thể lưu thông tin nhà hàng. Vui lòng thử lại.");
       }
     } finally {
-      setIsSubmitting(false); // Reset submitting state regardless of success or failure
+      setIsSubmitting(false);
     }
   };
 
   const resetForm = () => {
     setEditingRestaurant(null);
-    setFormData({
-      name: "",
-      selectedCategories: [],
-      selectedAmenities: [], // Reset selectedAmenities
-      address: "",
-      images: [],
-      description: "",
-      openingTime: "10:00",
-      closingTime: "22:00",
-      phone: "",
-      email: "",
-      capacity: "",
-      priceRange: "200.000đ - 500.000đ",
-      status: "active",
-    });
+    setFormData(initialFormData);
   };
 
   const handleDeleteClick = async (restaurantId) => {
@@ -374,7 +334,6 @@ function AdminRestaurants() {
       try {
         setError(null);
 
-        // Find restaurant name before deleting
         const restaurantToDelete = restaurants.find(
           (restaurant) => restaurant.id === restaurantId
         );
@@ -452,13 +411,11 @@ function AdminRestaurants() {
         formData.append("closureReason", "");
       }
 
-      // Update restaurant status
       const updatedRestaurant = await adminAPI.updateRestaurant(
         restaurant.id,
         formData
       );
 
-      // Update local state
       setRestaurants((prev) =>
         prev.map((r) => (r.id === restaurant.id ? updatedRestaurant : r))
       );
@@ -475,7 +432,6 @@ function AdminRestaurants() {
         }`
       );
 
-      // Close modal
       closeStatusModal();
     } catch (error) {
       console.error("Error updating restaurant status:", error);
@@ -485,27 +441,23 @@ function AdminRestaurants() {
     }
   };
 
-  // Filter restaurants based on search query
+  const normalizeVietnamese = (str) => {
+    return str
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase();
+  };
+
+  const hasAccents = (str) => {
+    return /[\u0300-\u036f]/.test(str.normalize("NFD"));
+  };
+
   const filteredRestaurants = restaurants.filter((restaurant) => {
     if (!searchQuery.trim()) return true;
-
-    // Function to normalize Vietnamese text (remove diacritics)
-    const normalizeVietnamese = (str) => {
-      return str
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "") // Remove diacritics
-        .toLowerCase();
-    };
-
-    // Check if search query contains diacritics
-    const hasAccents = (str) => {
-      return /[\u0300-\u036f]/.test(str.normalize("NFD"));
-    };
 
     const queryHasAccents = hasAccents(searchQuery);
 
     if (queryHasAccents) {
-      // If query has accents, do exact match (case insensitive)
       const lowerQuery = searchQuery.toLowerCase();
       const lowerName = (restaurant.name || "").toLowerCase();
       const lowerAddress = (restaurant.address || "").toLowerCase();
@@ -514,7 +466,6 @@ function AdminRestaurants() {
         lowerName.includes(lowerQuery) || lowerAddress.includes(lowerQuery)
       );
     } else {
-      // If query has no accents, use normalized search (accent insensitive)
       const normalizedQuery = normalizeVietnamese(searchQuery);
       const normalizedName = normalizeVietnamese(restaurant.name || "");
       const normalizedAddress = normalizeVietnamese(restaurant.address || "");
@@ -526,26 +477,23 @@ function AdminRestaurants() {
     }
   });
 
-  // Pagination logic
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
   const totalItems = filteredRestaurants.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentRestaurants = filteredRestaurants.slice(startIndex, endIndex);
 
-  // Reset current page when search changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery]);
-
-  // Pagination handlers
   const handlePageChange = (page) => {
     setCurrentPage(page);
   };
 
   const handleItemsPerPageChange = (newItemsPerPage) => {
     setItemsPerPage(newItemsPerPage);
-    setCurrentPage(1); // Reset to first page
+    setCurrentPage(1);
   };
 
   const handlePrevPage = () => {
@@ -560,7 +508,6 @@ function AdminRestaurants() {
     }
   };
 
-  // Generate page numbers for pagination
   const getPageNumbers = () => {
     const pageNumbers = [];
     const maxVisiblePages = 5;
@@ -578,7 +525,6 @@ function AdminRestaurants() {
     return pageNumbers;
   };
 
-  // Function to show toast message
   const showToast = (message, type = "success") => {
     setToast({ show: true, message, type });
     setTimeout(() => {
@@ -586,64 +532,177 @@ function AdminRestaurants() {
     }, 5000);
   };
 
-  // Function to create notification
   const createNotification = (message, type = "success") => {
-    // Create and dispatch a custom event
     const notificationEvent = new CustomEvent("newAdminNotification", {
       detail: { message, type },
     });
     window.dispatchEvent(notificationEvent);
   };
 
-  // Function to get image URL from either old or new format
   const getImageUrl = (image) => {
     if (!image) return null;
 
-    // Set a default API URL if not defined in environment
     const apiBaseUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
-    // If it's an object with image_path (from RestaurantImage model)
     if (typeof image === "object" && image.image_path) {
       const path = image.image_path;
 
-      // If already a full URL
       if (path.startsWith("http")) {
         return path;
       }
 
-      // Handle uploads directory paths
       if (path.includes("uploads/") || path.includes("uploads\\")) {
-        // Extract just the filename from the path
         const parts = path.split(/uploads[/\\]/);
         const fileName = parts.length > 1 ? parts[parts.length - 1] : path;
         return `${apiBaseUrl}/uploads/${fileName}`;
       }
 
-      // Default case - just append to API URL
       return `${apiBaseUrl}/${path.replace(/^\//, "")}`;
     }
 
-    // If image is a string (direct path)
     if (typeof image === "string") {
-      // If already a full URL
       if (image.startsWith("http")) {
         return image;
       }
 
-      // Handle uploads directory paths
       if (image.includes("uploads/") || image.includes("uploads\\")) {
-        // Extract just the filename from the path
         const parts = image.split(/uploads[/\\]/);
         const fileName = parts.length > 1 ? parts[parts.length - 1] : image;
         return `${apiBaseUrl}/uploads/${fileName}`;
       }
 
-      // Default case
       return `${apiBaseUrl}/${image.replace(/^\//, "")}`;
     }
 
     return null;
   };
+
+  const renderToast = () => (
+    <div
+      className="toast-notification"
+      style={{
+        backgroundColor:
+          toast.type === "success"
+            ? "#28a745"
+            : toast.type === "warning"
+            ? "#ffc107"
+            : toast.type === "danger"
+            ? "#dc3545"
+            : "#28a745",
+        color: toast.type === "warning" ? "#212529" : "white",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
+          marginTop: "3px",
+        }}
+      >
+        {toast.type === "success" && (
+          <i className="fa fa-check-circle" style={{ fontSize: "20px" }}></i>
+        )}
+        {toast.type === "warning" && (
+          <i
+            className="fa fa-exclamation-circle"
+            style={{ fontSize: "20px" }}
+          ></i>
+        )}
+        {toast.type === "danger" && (
+          <i className="fa fa-times-circle" style={{ fontSize: "20px" }}></i>
+        )}
+      </div>
+      <div style={{ flex: 1 }}>
+        <div
+          style={{
+            fontWeight: "bold",
+            fontSize: "14px",
+            marginBottom: "2px",
+          }}
+        >
+          Thông báo
+        </div>
+        <div style={{ fontSize: "14px" }}>{toast.message}</div>
+      </div>
+      <div
+        style={{
+          alignSelf: "flex-start",
+          fontSize: "14px",
+          fontWeight: "500",
+          marginLeft: "auto",
+          cursor: "pointer",
+        }}
+        onClick={() => setToast({ show: false, message: "", type: "success" })}
+      >
+        Xong
+      </div>
+    </div>
+  );
+
+  const renderFormHeader = () => (
+    <div className="form-header">
+      <h3>{editingRestaurant?.id ? "Chỉnh sửa nhà hàng" : "Thêm nhà hàng mới"}</h3>
+      <button className="close-form-btn" onClick={resetForm}>
+        <i className="fas fa-times"></i>
+      </button>
+    </div>
+  );
+
+  const renderInputField = (id, label, type, name, placeholder, required = false) => (
+    <div className="form-group col-md-6">
+      <label htmlFor={id}>
+        {label} {required && <span className="text-danger">*</span>}
+      </label>
+      <input
+        id={id}
+        type={type}
+        name={name}
+        className="form-control"
+        value={formData[name]}
+        onChange={handleChange}
+        placeholder={placeholder}
+        required={required}
+      />
+    </div>
+  );
+
+  const renderSelectField = (id, label, name, options, value, onChange, size) => (
+    <div className="form-group col-md-6">
+      <label htmlFor={id}>{label}</label>
+      <div className={`${name}-select-container`}>
+        <select
+          id={id}
+          name={name}
+          className={`form-control ${name}-select`}
+          value={value}
+          onChange={onChange}
+          multiple
+          size={size}
+        >
+          {options.map((option) => (
+            <option key={option.id} value={option.id}>
+              {option.name}
+            </option>
+          ))}
+        </select>
+      </div>
+      {value.length > 0 && (
+        <div className={`selected-${name} mt-1`}>
+          <span className={`selected-${name}-label`}>Đã chọn: </span>
+          {value.map((itemId) => {
+            const item = options.find((o) => o.id === itemId);
+            return item ? (
+              <span key={itemId} className="badge badge-primary mr-1">
+                {item.name}
+              </span>
+            ) : null;
+          })}
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <div className="admin-restaurants-page">
@@ -657,78 +716,7 @@ function AdminRestaurants() {
         </button>
       </div>
 
-      {/* Toast Notification */}
-      {toast.show && (
-        <div
-          className="toast-notification"
-          style={{
-            backgroundColor:
-              toast.type === "success"
-                ? "#28a745"
-                : toast.type === "warning"
-                ? "#ffc107"
-                : toast.type === "danger"
-                ? "#dc3545"
-                : "#28a745",
-            color: toast.type === "warning" ? "#212529" : "white",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-              marginTop: "3px",
-            }}
-          >
-            {toast.type === "success" && (
-              <i
-                className="fa fa-check-circle"
-                style={{ fontSize: "20px" }}
-              ></i>
-            )}
-            {toast.type === "warning" && (
-              <i
-                className="fa fa-exclamation-circle"
-                style={{ fontSize: "20px" }}
-              ></i>
-            )}
-            {toast.type === "danger" && (
-              <i
-                className="fa fa-times-circle"
-                style={{ fontSize: "20px" }}
-              ></i>
-            )}
-          </div>
-          <div style={{ flex: 1 }}>
-            <div
-              style={{
-                fontWeight: "bold",
-                fontSize: "14px",
-                marginBottom: "2px",
-              }}
-            >
-              Thông báo
-            </div>
-            <div style={{ fontSize: "14px" }}>{toast.message}</div>
-          </div>
-          <div
-            style={{
-              alignSelf: "flex-start",
-              fontSize: "14px",
-              fontWeight: "500",
-              marginLeft: "auto",
-              cursor: "pointer",
-            }}
-            onClick={() =>
-              setToast({ show: false, message: "", type: "success" })
-            }
-          >
-            Xong
-          </div>
-        </div>
-      )}
+      {toast.show && renderToast()}
 
       {error && (
         <div className="alert alert-danger">
@@ -739,142 +727,49 @@ function AdminRestaurants() {
 
       {editingRestaurant !== null ? (
         <div className="restaurant-form-container">
-          <div className="form-header">
-            <h3>
-              {editingRestaurant?.id
-                ? "Chỉnh sửa nhà hàng"
-                : "Thêm nhà hàng mới"}
-            </h3>
-            <button className="close-form-btn" onClick={resetForm}>
-              <i className="fas fa-times"></i>
-            </button>
-          </div>
-
+          {renderFormHeader()}
           <form onSubmit={handleSubmit} className="restaurant-form">
             <div className="form-sections">
-              {/* Thông tin cơ bản */}
               <div className="form-section">
                 <h4 className="section-title">Thông tin cơ bản</h4>
                 <div className="form-row">
-                  <div className="form-group col-md-6">
-                    <label htmlFor="name">
-                      Tên nhà hàng <span className="text-danger">*</span>
-                    </label>
-                    <input
-                      id="name"
-                      type="text"
-                      name="name"
-                      className="form-control"
-                      value={formData.name}
-                      onChange={handleChange}
-                      placeholder="Nhập tên nhà hàng"
-                      required
-                    />
-                  </div>
-
-                  <div className="form-group col-md-6">
-                    <label htmlFor="address">
-                      Địa chỉ <span className="text-danger">*</span>
-                    </label>
-                    <input
-                      id="address"
-                      type="text"
-                      name="address"
-                      className="form-control"
-                      value={formData.address}
-                      onChange={handleChange}
-                      placeholder="Nhập địa chỉ đầy đủ"
-                      required
-                    />
-                  </div>
+                  {renderInputField(
+                    "name",
+                    "Tên nhà hàng",
+                    "text",
+                    "name",
+                    "Nhập tên nhà hàng",
+                    true
+                  )}
+                  {renderInputField(
+                    "address",
+                    "Địa chỉ",
+                    "text",
+                    "address",
+                    "Nhập địa chỉ đầy đủ",
+                    true
+                  )}
                 </div>
-
                 <div className="form-row">
-                  <div className="form-group col-md-6">
-                    <label htmlFor="selectedCategories">
-                      Danh mục nhà hàng <span className="text-danger">*</span>
-                    </label>
-                    <div className="category-select-container">
-                      <select
-                        id="selectedCategories"
-                        name="selectedCategories"
-                        className="form-control category-select"
-                        value={formData.selectedCategories}
-                        onChange={handleCategoryChange}
-                        multiple
-                        size={Math.min(5, categories.length)}
-                      >
-                        {categories.map((category) => (
-                          <option key={category.id} value={category.id}>
-                            {category.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    {formData.selectedCategories.length > 0 && (
-                      <div className="selected-categories mt-1">
-                        <span className="selected-categories-label">
-                          Đã chọn:{" "}
-                        </span>
-                        {formData.selectedCategories.map((catId) => {
-                          const category = categories.find(
-                            (c) => c.id === catId
-                          );
-                          return category ? (
-                            <span
-                              key={catId}
-                              className="badge badge-primary mr-1"
-                            >
-                              {category.name}
-                            </span>
-                          ) : null;
-                        })}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="form-group col-md-6">
-                    <label htmlFor="selectedAmenities">Tiện ích nhà hàng</label>
-                    <div className="amenity-select-container">
-                      <select
-                        id="selectedAmenities"
-                        name="selectedAmenities"
-                        className="form-control amenity-select"
-                        value={formData.selectedAmenities}
-                        onChange={handleAmenityChange}
-                        multiple
-                        size={Math.min(5, amenities.length)}
-                      >
-                        {amenities.map((amenity) => (
-                          <option key={amenity.id} value={amenity.id}>
-                            {amenity.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    {formData.selectedAmenities.length > 0 && (
-                      <div className="selected-amenities mt-1">
-                        <span className="selected-amenities-label">
-                          Đã chọn:{" "}
-                        </span>
-                        {formData.selectedAmenities.map((amenityId) => {
-                          const amenity = amenities.find(
-                            (a) => a.id === amenityId
-                          );
-                          return amenity ? (
-                            <span
-                              key={amenityId}
-                              className="badge badge-primary mr-1"
-                            >
-                              {amenity.name}
-                            </span>
-                          ) : null;
-                        })}
-                      </div>
-                    )}
-                  </div>
+                  {renderSelectField(
+                    "selectedCategories",
+                    "Danh mục nhà hàng",
+                    "selectedCategories",
+                    categories,
+                    formData.selectedCategories,
+                    handleCategoryChange,
+                    Math.min(5, categories.length)
+                  )}
+                  {renderSelectField(
+                    "selectedAmenities",
+                    "Tiện ích nhà hàng",
+                    "selectedAmenities",
+                    amenities,
+                    formData.selectedAmenities,
+                    handleAmenityChange,
+                    Math.min(5, amenities.length)
+                  )}
                 </div>
-
                 <div className="form-row">
                   <div className="form-group col-md-6">
                     <label htmlFor="openingTime">Giờ mở cửa</label>
@@ -887,7 +782,6 @@ function AdminRestaurants() {
                       onChange={handleChange}
                     />
                   </div>
-
                   <div className="form-group col-md-6">
                     <label htmlFor="closingTime">Giờ đóng cửa</label>
                     <input
@@ -902,7 +796,6 @@ function AdminRestaurants() {
                 </div>
               </div>
 
-              {/* Hình ảnh */}
               <div className="form-section">
                 <h4 className="section-title">Hình ảnh nhà hàng</h4>
                 <div className="image-upload-container">
@@ -921,7 +814,6 @@ function AdminRestaurants() {
                       <p>Kéo thả hình ảnh hoặc click để chọn</p>
                     </div>
                   </div>
-
                   {formData.images && formData.images.length > 0 && (
                     <div className="image-preview-container">
                       {formData.images.map((image, index) => (
@@ -954,7 +846,6 @@ function AdminRestaurants() {
                 )}
               </div>
 
-              {/* Thông tin liên hệ */}
               <div className="form-section">
                 <h4 className="section-title">Thông tin liên hệ</h4>
                 <div className="form-row">
@@ -970,7 +861,6 @@ function AdminRestaurants() {
                       placeholder="Nhập số điện thoại"
                     />
                   </div>
-
                   <div className="form-group col-md-6">
                     <label htmlFor="email">Email</label>
                     <input
@@ -986,7 +876,6 @@ function AdminRestaurants() {
                 </div>
               </div>
 
-              {/* Thông tin khác */}
               <div className="form-section">
                 <h4 className="section-title">Thông tin khác</h4>
                 <div className="form-row">
@@ -1003,7 +892,6 @@ function AdminRestaurants() {
                       placeholder="Nhập sức chứa nhà hàng"
                     />
                   </div>
-
                   <div className="form-group col-md-6">
                     <label htmlFor="priceRange">Mức giá</label>
                     <input
@@ -1017,7 +905,6 @@ function AdminRestaurants() {
                     />
                   </div>
                 </div>
-
                 <div className="form-group">
                   <label htmlFor="description">Mô tả</label>
                   <textarea
@@ -1089,12 +976,15 @@ function AdminRestaurants() {
                 <i className="fa fa-search"></i> Tìm thấy{" "}
                 {filteredRestaurants.length} nhà hàng
                 {filteredRestaurants.length > 0 && (
-                  <span> - Hiển thị {startIndex + 1}-{Math.min(endIndex, totalItems)} trong tổng số {totalItems} nhà hàng</span>
+                  <span>
+                    {" "}
+                    - Hiển thị {startIndex + 1}-{Math.min(endIndex, totalItems)}{" "}
+                    trong tổng số {totalItems} nhà hàng
+                  </span>
                 )}
               </div>
             )}
-            
-            {/* Pagination and Items per page controls */}
+
             {!searchQuery && totalItems > 0 && (
               <div className="table-controls">
                 <div className="items-per-page-control">
@@ -1102,7 +992,9 @@ function AdminRestaurants() {
                   <select
                     id="itemsPerPage"
                     value={itemsPerPage}
-                    onChange={(e) => handleItemsPerPageChange(parseInt(e.target.value))}
+                    onChange={(e) =>
+                      handleItemsPerPageChange(parseInt(e.target.value))
+                    }
                     className="items-per-page-select"
                   >
                     <option value={5}>5</option>
@@ -1113,11 +1005,12 @@ function AdminRestaurants() {
                   <span>nhà hàng mỗi trang</span>
                 </div>
                 <div className="pagination-info">
-                  Hiển thị {startIndex + 1}-{Math.min(endIndex, totalItems)} trong tổng số {totalItems} nhà hàng
+                  Hiển thị {startIndex + 1}-{Math.min(endIndex, totalItems)} trong
+                  tổng số {totalItems} nhà hàng
                 </div>
               </div>
             )}
-            
+
             <div className="table-responsive">
               <table className="table table-hover admin-table">
                 <thead className="thead-light">
@@ -1150,7 +1043,6 @@ function AdminRestaurants() {
                             ? `${restaurant.capacity} người`
                             : "Chưa cập nhật"}
                         </td>
-
                         <td>
                           <span
                             className={`status-badge ${
@@ -1209,10 +1101,6 @@ function AdminRestaurants() {
                               viewBox="0 0 16 16"
                             >
                               <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z" />
-                              <path
-                                fillRule="evenodd"
-                                d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"
-                              />
                               <path
                                 fillRule="evenodd"
                                 d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"
@@ -1276,38 +1164,43 @@ function AdminRestaurants() {
                 </tbody>
               </table>
             </div>
-            
-            {/* Pagination Controls */}
+
             {totalPages > 1 && (
               <div className="pagination-wrapper">
                 <div className="pagination">
                   <button
-                    className={`pagination-btn ${currentPage === 1 ? 'disabled' : ''}`}
+                    className={`pagination-btn ${
+                      currentPage === 1 ? "disabled" : ""
+                    }`}
                     onClick={handlePrevPage}
                     disabled={currentPage === 1}
                   >
                     <i className="fa fa-chevron-left"></i> Trước
                   </button>
-                  
+
                   {getPageNumbers().map((pageNumber) => (
                     <button
                       key={pageNumber}
-                      className={`pagination-btn ${currentPage === pageNumber ? 'active' : ''}`}
+                      className={`pagination-btn ${
+                        currentPage === pageNumber ? "active" : ""
+                      }`}
                       onClick={() => handlePageChange(pageNumber)}
                     >
                       {pageNumber}
                     </button>
                   ))}
-                  
+
                   <button
-                    className={`pagination-btn ${currentPage === totalPages ? 'disabled' : ''}`}
+                    className={`pagination-btn ${
+                      currentPage === totalPages ? "disabled" : ""
+                    }`}
                     onClick={handleNextPage}
                     disabled={currentPage === totalPages}
                   >
                     Sau <i className="fa fa-chevron-right"></i>
                   </button>
                 </div>
-                
+
                 <div className="pagination-summary">
                   Trang {currentPage} / {totalPages}
                 </div>
@@ -1317,7 +1210,6 @@ function AdminRestaurants() {
         </div>
       )}
 
-      {/* Status Change Modal */}
       {statusChangeModal.isOpen && statusChangeModal.restaurant && (
         <div className="status-change-modal">
           <div className="modal-backdrop" onClick={closeStatusModal}></div>
@@ -1426,7 +1318,6 @@ function AdminRestaurants() {
         </div>
       )}
 
-      {/* Restaurant Detail View Modal */}
       {viewingRestaurant && (
         <div className="restaurant-detail-modal">
           <div className="modal-backdrop" onClick={closeDetailView}></div>
@@ -1465,10 +1356,8 @@ function AdminRestaurants() {
                   </div>
                 )}
 
-              {/* Restaurant Images - Integrated with moderate size */}
               <div className="restaurant-images-section-moderate">
-                {viewingRestaurant.images &&
-                viewingRestaurant.images.length > 0 ? (
+                {viewingRestaurant.images && viewingRestaurant.images.length > 0 ? (
                   <div className="restaurant-images-gallery-moderate">
                     {viewingRestaurant.images.map((image, index) => (
                       <div
@@ -1511,7 +1400,6 @@ function AdminRestaurants() {
                         {viewingRestaurant.address || "Chưa cập nhật"}
                       </span>
                     </div>
-
                     <div className="detail-item">
                       <span className="detail-label">
                         <i className="fa fa-tags"></i> Danh mục:
@@ -1531,7 +1419,6 @@ function AdminRestaurants() {
                         )}
                       </span>
                     </div>
-
                     <div className="detail-item">
                       <span className="detail-label">
                         <i className="fa fa-clock"></i> Giờ mở cửa:
@@ -1543,7 +1430,6 @@ function AdminRestaurants() {
                           : "Chưa cập nhật"}
                       </span>
                     </div>
-
                     <div className="detail-item">
                       <span className="detail-label">
                         <i className="fa fa-users"></i> Sức chứa:
@@ -1554,7 +1440,6 @@ function AdminRestaurants() {
                           : "Chưa cập nhật"}
                       </span>
                     </div>
-
                     <div className="detail-item">
                       <span className="detail-label">
                         <i className="fa fa-tag"></i> Mức giá:
@@ -1590,7 +1475,6 @@ function AdminRestaurants() {
                         {viewingRestaurant.phone || "Chưa cập nhật"}
                       </span>
                     </div>
-
                     <div className="detail-item">
                       <span className="detail-label">
                         <i className="fa fa-envelope"></i> Email:

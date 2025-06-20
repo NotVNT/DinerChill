@@ -175,6 +175,17 @@
     0 0 0 1px rgba(255, 255, 255, 0.15) inset;
 }
 
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .banner-overlay h1 {
   margin: 0;
   font-size: 2.8rem;
@@ -213,17 +224,6 @@
   gap: 15px;
 }
 
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 /* Updated btn-outline for banner actions */
 .btn-outline {
   background: rgba(255, 255, 255, 0.1);
@@ -231,7 +231,7 @@
   color: white;
   font-weight: 500;
   border-radius: 8px;
-  padding: 12px 18px;
+  padding: 12px 20px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -278,7 +278,7 @@
   border-radius: 15px;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
-  width: 100%;
+  width: relative;
   position: relative;
   overflow: hidden;
 }
@@ -294,7 +294,7 @@
 }
 
 .content-section:hover {
-  transform: translateY(-10px);
+  transform: translateY(-5px);
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.18);
 }
 
@@ -322,7 +322,7 @@
 /* Enhanced Back Button Design */
 .back-button-container {
   position: fixed;
-  top: 100px; /* Increased from 30px to position below the header */
+  top: 100px;
   left: 30px;
   z-index: 950;
   animation: fadeInLeft 0.5s ease-out forwards;
@@ -344,8 +344,8 @@
   align-items: center;
   background: #ffffff;
   color: #333;
-  padding: 12px; /* Equal padding on all sides for square shape */
-  border-radius: 8px; /* Reduced border-radius for more square appearance */
+  padding: 12px;
+  border-radius: 8px;
   font-weight: 600;
   font-size: 16px;
   cursor: pointer;
@@ -707,182 +707,177 @@
   overflow-y: auto;
 }
 
-/* Tab Menu Styles */
+/* Tabs Container Styling */
 .tabs-container {
+  margin: 30px 0 20px;
   width: 100%;
-  margin-bottom: 30px;
-  background: #fff;
-  border-radius: 15px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-  overflow: hidden;
-  position: relative;
 }
 
 .tabs-menu {
   display: flex;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  background: linear-gradient(to right, #ffffff, #f7f7f7);
-  border-bottom: 1px solid rgba(234, 234, 234, 0.8);
-  padding: 0;
-  scrollbar-width: none; /* For Firefox */
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 0 10px;
+  border-bottom: 1px solid #e0e0e0;
+  margin-bottom: -1px;
   position: relative;
-  z-index: 1;
-}
-
-.tabs-menu::-webkit-scrollbar {
-  display: none; /* For Chrome, Safari, and Opera */
+  z-index: 10;
 }
 
 .tab-button {
-  padding: 18px 30px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 16px;
-  font-weight: 500;
+  padding: 12px 24px;
+  background: #f5f5f5;
+  border: 1px solid #e0e0e0;
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
   color: #666;
-  white-space: nowrap;
+  font-weight: 500;
+  cursor: pointer;
   transition: all 0.3s ease;
   position: relative;
-  overflow: hidden;
-  z-index: 1;
-}
-
-.tab-button::before {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  width: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #ff5722, #ff9800);
-  transition: all 0.3s ease;
-  transform: translateX(-50%);
-  border-radius: 3px 3px 0 0;
-  z-index: -1;
+  text-transform: none;
+  font-size: 15px;
+  outline: none;
 }
 
 .tab-button:hover {
+  background: #f9f9f9;
   color: #333;
 }
 
-.tab-button:hover::before {
-  width: 40px;
-}
-
 .tab-button.active {
-  color: #ff5722;
+  background: #fff;
+  color: #e71a0f;
+  border-bottom: 1px solid #fff;
   font-weight: 600;
 }
 
-.tab-button.active::before {
-  width: 100%;
-}
-
-.tab-button::after {
+.tab-button.active::after {
   content: "";
   position: absolute;
-  top: 0;
+  bottom: -1px;
   left: 0;
   width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    to bottom,
-    rgba(255, 255, 255, 0.1),
-    rgba(255, 255, 255, 0)
-  );
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  z-index: -2;
+  height: 1px;
+  background-color: #fff;
 }
 
-.tab-button:hover::after {
-  opacity: 1;
+/* Tab Content Section */
+.content-section {
+  margin-bottom: 20px;
+  background: white;
+  padding: 25px;
+  border-radius: 0 8px 8px 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e0e0e0;
+  transition: all 0.3s ease;
+  width: 100%;
+  position: relative;
+  top: -1px;
 }
 
-.tab-button.active::after {
-  opacity: 1;
-  background: linear-gradient(
-    to bottom,
-    rgba(255, 87, 34, 0.08),
-    rgba(255, 87, 34, 0)
-  );
+.content-section h2 {
+  font-size: 1.8rem;
+  color: #333;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #f0f0f0;
+  font-weight: 600;
 }
 
+/* Content Cards for Each Section */
+.summary-card,
+.description-card,
+.amenities-card,
+.operating-hours-card,
+.map-card {
+  background: #f9f9f9;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.summary-card p,
+.operating-hours-card p {
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.description-card p {
+  line-height: 1.6;
+  color: #555;
+}
+
+/* Specific Tab Content Styling */
+.amenities-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.amenity-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #555;
+}
+
+.amenity-item i {
+  color: #4caf50;
+}
+
+.btn-show-more {
+  background: #f0f0f0;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  color: #555;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-show-more:hover {
+  background: #e0e0e0;
+}
+
+.operating-hours-card .current-day {
+  font-weight: bold;
+  color: #333;
+}
+
+.operating-hours-card .current-time {
+  color: #4caf50;
+}
+
+.operating-status {
+  font-weight: bold;
+  margin-left: 10px;
+}
+
+/* Responsive Tab Design */
 @media (max-width: 768px) {
   .tabs-menu {
-    padding: 0 10px;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 5px;
   }
 
   .tab-button {
-    padding: 15px 20px;
+    white-space: nowrap;
+    padding: 10px 16px;
     font-size: 14px;
   }
 
   .content-section {
-    padding: 20px;
-  }
-
-  .content-section h2 {
-    font-size: 1.8rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .tab-button {
-    padding: 12px 15px;
-    font-size: 13px;
-  }
-
-  .content-section {
-    padding: 15px;
-    border-radius: 12px;
-  }
-
-  .content-section h2 {
-    font-size: 1.6rem;
-    margin-bottom: 15px;
+    padding: 20px 15px;
+    border-radius: 8px;
   }
 }
 
 /* Modal and overlay styles - updated for tab system */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7);
-  z-index: 1000;
-  animation: fadeIn 0.3s ease;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-.modal {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background-color: white;
-  padding: 30px;
-  border-radius: 10px;
-  box-shadow: 0 5px 30px rgba(0, 0, 0, 0.3);
-  z-index: 1001;
-  max-width: 90%;
-  width: 600px;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
 .image-modal {
   padding: 0;
   background-color: transparent;
@@ -924,8 +919,8 @@
 
 .close-modal {
   position: absolute;
-  top: -40px; /* Đặt nút đóng phía trên ảnh */
-  right: -40px; /* Đặt nút đóng bên phải */
+  top: -40px;
+  right: -40px;
   background: rgba(0, 0, 0, 0.5);
   color: white;
   border: none;
@@ -1276,22 +1271,6 @@
   transform: translateY(-2px);
 }
 
-.btn-outline {
-  background: transparent;
-  border: 1.5px solid white;
-  color: white;
-  font-weight: 500;
-}
-
-.btn-outline:hover {
-  background: rgba(255, 255, 255, 0.15);
-  transform: translateY(-2px);
-}
-
-.favorite-active {
-  color: #ff4d4f;
-}
-
 /* New Sections */
 .summary-card,
 .content-summary-card,
@@ -1490,7 +1469,6 @@
   transform: translateX(-50%);
   width: 60px;
   height: 3px;
-
   border-radius: 3px;
 }
 
