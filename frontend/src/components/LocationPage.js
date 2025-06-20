@@ -3,6 +3,14 @@ import { useNavigate } from "react-router-dom"; // Import useNavigate
 import "../styles/components/LocationPage.css";
 import { restaurantsAPI } from "../services/api"; // Import the restaurant API service
 
+// Utility function to normalize Vietnamese text by removing diacritics
+const normalizeVietnamese = (text) => {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+};
+
 function LocationPage() {
   const navigate = useNavigate(); // Initialize useNavigate
   const [currentLocation, setCurrentLocation] = useState(null);
@@ -206,13 +214,6 @@ function LocationPage() {
             .sort((a, b) => b.priorityScore - a.priorityScore);
 
           // Loại bỏ các kết quả trùng lặp hoặc quá giống nhau
-          const normalizeVietnamese = (text) => {
-            return text
-              .toLowerCase()
-              .normalize("NFD")
-              .replace(/[\u0300-\u036f]/g, "");
-          };
-
           const uniqueResults = [];
           const seenAddresses = new Set();
 
@@ -364,13 +365,6 @@ function LocationPage() {
         );
       } else {
         // Phân tích chuỗi tìm kiếm để lấy thông tin thành phố, quận, phường
-        const normalizeVietnamese = (text) => {
-          return text
-            .toLowerCase()
-            .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "");
-        };
-
         const searchNormalized = normalizeVietnamese(searchValue);
 
         // Phát hiện thành phố

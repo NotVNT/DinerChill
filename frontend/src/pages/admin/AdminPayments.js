@@ -540,12 +540,7 @@ function AdminPayments() {
               <div className="action-buttons-container">
                 {selectedPayment.status === 'completed' && (
                   <div className="action-buttons">
-                    <button
-                      className="btn btn-warning"
-                      onClick={() => handleUpdatePaymentStatus(selectedPayment.id, 'refunded')}
-                    >
-                      Hoàn tiền
-                    </button>
+  
                   </div>
                 )}
 

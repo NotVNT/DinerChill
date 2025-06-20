@@ -3,8 +3,34 @@ const router = express.Router();
 const { Amenity } = require("../models");
 const { authenticateAdmin } = require("../middleware/authenticate");
 
-// Get all amenities
-router.get("/", authenticateAdmin, async (req, res) => {
+// Public route to get all amenities - this should be accessible without authentication
+router.get("/", async (req, res) => {
+  try {
+    const amenities = await Amenity.findAll({
+      order: [["id", "ASC"]],
+    });
+    res.json(amenities);
+  } catch (error) {
+    console.error("Error fetching amenities:", error);
+    res.status(500).json({ message: "Không thể lấy danh sách tiện ích" });
+  }
+});
+
+// Keep the existing /public route for compatibility
+router.get("/", async (req, res) => {
+  try {
+    const amenities = await Amenity.findAll({
+      order: [["id", "ASC"]],
+    });
+    res.json(amenities);
+  } catch (error) {
+    console.error("Error fetching amenities:", error);
+    res.status(500).json({ message: "Không thể lấy danh sách tiện ích" });
+  }
+});
+
+// Admin routes (protected with authentication)
+router.get("/admin", authenticateAdmin, async (req, res) => {
   try {
     const amenities = await Amenity.findAll({
       order: [["id", "ASC"]],

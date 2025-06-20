@@ -6,3 +6,4 @@ const DoTiec = () => {
 };
 
 export default DoTiec;
+

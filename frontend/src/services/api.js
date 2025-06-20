@@ -306,7 +306,7 @@ export async function fetchWithAuth(endpoint, options = {}, retryCount = 2) {
 
 // API nhà hàng công khai
 export const restaurantsAPI = {
-  getAll: async () => {
+  getAll: async (params = {}) => {
     try {
       // Try different possible API endpoints
       const endpoints = [
@@ -315,11 +315,21 @@ export const restaurantsAPI = {
         "/dinerchill-restaurants", // With app prefix
       ];
 
+      // Add query parameters if provided
+      let queryString = "";
+      if (params && Object.keys(params).length > 0) {
+        const searchParams = new URLSearchParams();
+        Object.entries(params).forEach(([key, value]) => {
+          searchParams.append(key, value);
+        });
+        queryString = `?${searchParams.toString()}`;
+      }
+
       // Try each endpoint until one works
       for (const endpoint of endpoints) {
         try {
-          console.log(`Thử kết nối API endpoint: ${endpoint}`);
-          const response = await fetchAPI(endpoint);
+          console.log(`Thử kết nối API endpoint: ${endpoint}${queryString}`);
+          const response = await fetchAPI(`${endpoint}${queryString}`);
           console.log(`Endpoint ${endpoint} hoạt động!`);
           return response;
         } catch (err) {
@@ -670,22 +680,22 @@ export const adminAPI = {
     }),
 
   // Amenities methods
-  getAmenities: () => fetchWithAuth("/admin/amenities"),
+  getAmenities: () => fetchWithAuth("/amenities"),
 
   createAmenity: (amenityData) =>
-    fetchWithAuth("/admin/amenities", {
+    fetchWithAuth("/amenities", {
       method: "POST",
       body: JSON.stringify(amenityData),
     }),
 
   updateAmenity: (id, amenityData) =>
-    fetchWithAuth(`/admin/amenities/${id}`, {
+    fetchWithAuth(`/amenities/${id}`, {
       method: "PUT",
       body: JSON.stringify(amenityData),
     }),
 
   deleteAmenity: (id) =>
-    fetchWithAuth(`/admin/amenities/${id}`, {
+    fetchWithAuth(`/amenities/${id}`, {
       method: "DELETE",
     }),
 };
@@ -717,4 +727,11 @@ export const categoriesAPI = {
 
   getRestaurantsByCategoryName: (categoryName) =>
     fetchAPI(`/categories/name/${categoryName}/restaurants`),
+};
+
+// Thêm API cho tiện ích (amenities)
+export const amenitiesAPI = {
+  getAll: () => fetchAPI("/amenities"),
+  
+  getById: (id) => fetchAPI(`/amenities/${id}`),
 };

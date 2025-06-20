@@ -250,3 +250,4 @@ const CategoryTemplate = ({ categoryName, categoryId }) => {
 };
 
 export default CategoryTemplate;
+

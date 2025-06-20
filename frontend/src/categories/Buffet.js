@@ -6,3 +6,4 @@ const Buffet = () => {
 };
 
 export default Buffet;
+
