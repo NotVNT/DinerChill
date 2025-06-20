@@ -1,13 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
 import "../styles/components/chatbox.css";
-import chatService from "../services/chatService";
 
 const Chatbox = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
     {
       id: 1,
-      text: "Xin chào! Tôi là trợ lý AI của DinerChill. Tôi có thể giúp bạn tìm nhà hàng phù hợp, gợi ý món ăn, và hỗ trợ đặt bàn. Bạn cần tôi giúp gì không?",
+      text: "Xin chào! Tôi là DinerChill AI, trợ lý đặt bàn thông minh. Bạn cần tìm nhà hàng hay đặt bàn? 😊",
       sender: "bot",
       timestamp: new Date().toLocaleTimeString("vi-VN", {
         hour: "2-digit",
@@ -17,6 +16,7 @@ const Chatbox = () => {
   ]);
   const [inputMessage, setInputMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [showQuickReplies, setShowQuickReplies] = useState(true);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -29,6 +29,32 @@ const Chatbox = () => {
 
   const toggleChatbox = () => {
     setIsOpen(!isOpen);
+  };
+
+  const getBotResponse = async (message) => {
+    try {
+      const response = await fetch('/api/chatbox/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: message,
+          userId: localStorage.getItem('userId') || 'anonymous',
+          sessionId: `session_${Date.now()}`
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('API call failed:', error);
+      throw error;
+    }
   };
 
   const handleSendMessage = async (e) => {
@@ -51,8 +77,7 @@ const Chatbox = () => {
     setIsTyping(true);
 
     try {
-      // Use ChatService for response
-      const response = await chatService.getBotResponse(inputMessage, messages);
+      const response = await getBotResponse(inputMessage);
 
       const botMessage = {
         id: newMessages.length + 1,
@@ -65,9 +90,6 @@ const Chatbox = () => {
       };
 
       setMessages((prev) => [...prev, botMessage]);
-
-      // Save conversation for analytics
-      chatService.saveConversation([...newMessages, botMessage]);
     } catch (error) {
       console.error("Chat error:", error);
       const errorMessage = {
@@ -86,11 +108,12 @@ const Chatbox = () => {
   };
 
   const quickReplies = [
-    "Tìm nhà hàng lẩu",
-    "Nhà hàng buffet",
-    "Đặt bàn tiệc",
-    "Nhà hàng gần tôi",
-    "Hướng dẫn đặt bàn",
+    { text: "Nhà hàng lẩu", icon: "🍲" },
+    { text: "Nhà hàng buffet", icon: "🍽️" },
+    { text: "Bàn trống hôm nay", icon: "📋" },
+    { text: "Khuyến mãi", icon: "🎁" },
+    { text: "Đặt bàn", icon: "ℹ️" },
+    { text: "Tiện ích nhà hàng", icon: "✨" },
   ];
 
   const handleQuickReply = (reply) => {
@@ -160,16 +183,31 @@ const Chatbox = () => {
           <div ref={messagesEndRef} />
         </div>
 
-        <div className="quick-replies">
-          {quickReplies.map((reply, index) => (
-            <button
-              key={index}
-              className="quick-reply-btn"
-              onClick={() => handleQuickReply(reply)}
+        <div className={`quick-replies ${showQuickReplies ? 'visible' : 'hidden'}`}>
+          <div className="quick-replies-header">
+            <div className="quick-replies-title">Gợi ý nhanh:</div>
+            <button 
+              className="toggle-suggestions-btn"
+              onClick={() => setShowQuickReplies(!showQuickReplies)}
+              title={showQuickReplies ? "Ẩn gợi ý" : "Hiện gợi ý"}
             >
-              {reply}
+              {showQuickReplies ? "−" : "+"}
             </button>
-          ))}
+          </div>
+          {showQuickReplies && (
+            <div className="quick-replies-grid">
+              {quickReplies.map((reply, index) => (
+                <button
+                  key={index}
+                  className="quick-reply-btn"
+                  onClick={() => handleQuickReply(reply.text)}
+                >
+                  <span className="quick-reply-icon">{reply.icon}</span>
+                  <span className="quick-reply-text">{reply.text}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <form className="chatbox-input" onSubmit={handleSendMessage}>

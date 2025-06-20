@@ -24,6 +24,7 @@ const reservationRoutes = require("./routes/reservation");
 const restaurantRoutes = require("./routes/restaurant");
 const categoryRoutes = require("./routes/categories");
 const amenitiesRoutes = require("./routes/amenities");
+const chatboxRoutes = require("./routes/chatbox");
 const { sequelize } = require("./models");
 
 // Đọc biến môi trường từ file .env
@@ -814,6 +815,7 @@ app.use("/api/reservation", reservationRoutes);
 app.use("/api/restaurants", restaurantRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/amenities", amenitiesRoutes);
+app.use("/api/chatbox", chatboxRoutes);
 
 // Explicitly disable review functionality
 app.post("/api/restaurants/:id/reviews", (req, res) => {
