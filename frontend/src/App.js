@@ -52,6 +52,8 @@ import FoodBusinessPage from "./blog/FoodBusinessPage";
 import EventsPromotionsPage from "./blog/EventsPromotionsPage";
 import SupportCenterPage from "./pages/SupportCenterPage";
 import TaskPricingPage from "./pages/TaskPricingPage";
+import TutorialColab from "./blog/TutorialColab";
+import Contact from "./blog/Contact";
 
 // Lazy load category components
 const Lau = React.lazy(() => import("./categories/Lau"));
@@ -178,6 +180,8 @@ function App() {
             <Route path="blog/hau-truong-nha-hang/:id" element={<ArticleDetailPage />} />
             <Route path="blog/danh-gia-review" element={<ReviewsRatingsPage />} />
             <Route path="blog/danh-gia-review/:id" element={<ArticleDetailPage />} />
+            <Route path="blog/TutorialColab" element={<TutorialColab />} />
+            <Route path="lien-he" element={<Contact />} />
 
             {/* Category Routes */}
             <Route
