@@ -127,7 +127,7 @@
 }
 
 .footer-links a {
-  color: #b8c5d1;
+  color: #ffffff;
   text-decoration: none;
   font-size: 15px;
   line-height: 1.6;
@@ -145,13 +145,12 @@
   bottom: -2px;
   left: 5px;
   width: 0;
-  height: 2px;
-  background: linear-gradient(45deg, #ff6b6b, #feca57);
+ 
   transition: width 0.3s ease;
 }
 
 .footer-links a:hover {
-  color: #ffffff;
+  color: #D02028;
   transform: translateX(5px);
   text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
 }
