@@ -1,0 +1,355 @@
+.pg-red {
+  color: #ed2024;
+}
+
+.nav-dropdown {
+  padding: 0.5rem 0;
+  margin: 0;
+  border: none;
+  border-radius: 0.25rem;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.nav-dropdown .dropdown-item {
+  padding: 0.5rem 1rem;
+}
+
+.nav-dropdown .dropdown-item:hover {
+  background-color: #f8f9fa;
+}
+
+.card {
+  transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+}
+
+.table-lg th,
+.table-lg td {
+  padding: 1rem;
+}
+
+.btn-dark {
+  background-color: #212529;
+  border-color: #212529;
+}
+
+.btn-dark:hover {
+  background-color: #000;
+  border-color: #000;
+}
+
+.dark-custom {
+  color: #212529;
+  border-color: #212529;
+}
+
+.dark-custom:hover {
+  background-color: #212529;
+  color: white;
+}
+
+/* TaskPricingPage custom styles */
+
+.scp-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  margin-bottom: 32px;
+  padding: 32px 32px 24px 32px;
+  border: 1px solid #f2eaea;
+}
+
+.scp-card .scp-title {
+  color: #D02028;
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.scp-card .scp-desc {
+  color: #333;
+  font-size: 1.08rem;
+  margin-bottom: 18px;
+  font-weight: 400;
+  text-align: center;
+}
+
+.scp-card .scp-row {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+.scp-card .scp-img {
+  max-width: 340px;
+  min-width: 220px;
+  width: 100%;
+  max-height: 180px;
+  object-fit: cover;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.scp-card .scp-content {
+  flex: 1 1 0%;
+  min-width: 220px;
+}
+
+.scp-card .scp-btn {
+  margin-top: 16px;
+  padding: 8px 24px;
+  border-radius: 6px;
+  font-weight: 500;
+  background: #fff;
+  color: #D02028;
+  border: 1.5px solid #D02028;
+  transition: 0.2s;
+}
+.scp-card .scp-btn:hover {
+  background: #D02028;
+  color: #fff;
+}
+
+/* Section giải pháp */
+.scp-solutions {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(2, auto);
+  gap: 12px 24px;
+  margin-bottom: 12px;
+}
+.scp-solutions-col {
+  min-width: 0;
+  margin-bottom: 0;
+  padding: 0 8px;
+}
+.scp-solutions-col .scp-sol-title {
+  font-weight: 600;
+  color: #222;
+  font-size: 1.08rem;
+  margin-bottom: 2px;
+}
+.scp-solutions-col .scp-sol-desc {
+  font-size: 0.97rem;
+  color: #444;
+}
+.scp-sol-link {
+  color: #D02028;
+  text-decoration: underline;
+  font-weight: 500;
+  margin-top: 8px;
+  display: inline-block;
+}
+
+/* Bảng dịch vụ */
+.scp-service-packages {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin: 32px 0 0 0;
+}
+.scp-service-package {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+  padding: 18px 18px 12px 18px;
+  text-align: center;
+  font-size: 1.04rem;
+  border: 1px solid #f2eaea;
+}
+.scp-service-table th, .scp-service-table td {
+  font-size: 1.08rem;
+  padding: 12px 8px;
+}
+.scp-service-table th {
+  color: #D02028;
+  font-weight: 700;
+  font-size: 1.15rem;
+  background: #fff6f6;
+}
+.scp-service-table td {
+  background: #fff;
+}
+.scp-service-table .scp-tick {
+  color: #D02028;
+  font-size: 1.3rem;
+  font-weight: bold;
+}
+.scp-sol-link {
+  color: #D02028;
+  text-decoration: underline;
+  font-weight: 500;
+  margin-top: 8px;
+  display: inline-block;
+  text-align: center;
+}
+
+/* Form liên hệ */
+.scp-form-section {
+  display: flex;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+.scp-form-col {
+  flex: 1 1 320px;
+  min-width: 260px;
+}
+.scp-form-label {
+  font-weight: 500;
+  margin-bottom: 4px;
+  color: #222;
+}
+.scp-form-label .scp-required {
+  color: #D02028;
+  margin-left: 2px;
+}
+.scp-form-input, .scp-form-select, .scp-form-textarea {
+  width: 100%;
+  border-radius: 6px;
+  border: 1.2px solid #e0dada;
+  padding: 8px 12px;
+  margin-bottom: 16px;
+  font-size: 1rem;
+}
+.scp-form-btn {
+  display: block;
+  margin: 0 auto;
+  background: #D02028;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 40px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  transition: 0.2s;
+}
+.scp-form-btn:hover {
+  background: #b81a22;
+}
+
+@media (max-width: 1100px) {
+  .scp-solutions {
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(4, auto);
+  }
+}
+@media (max-width: 700px) {
+  .scp-solutions {
+    grid-template-columns: 1fr;
+    grid-template-rows: repeat(8, auto);
+  }
+}
+
+@media (max-width: 900px) {
+  .scp-card .scp-row { flex-direction: column; gap: 16px; }
+  .scp-form-section { flex-direction: column; gap: 0; }
+  .scp-service-packages {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+@media (max-width: 600px) {
+  .scp-card { padding: 16px 6px 12px 6px; }
+  .scp-card .scp-title { font-size: 1.2rem; }
+  .scp-card .scp-desc { font-size: 0.97rem; }
+  .scp-solutions-col { font-size: 0.97rem; }
+}
+
+/* Hero section (section đầu tiên) */
+.scp-hero-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  min-height: 240px;
+}
+@media (max-width: 768px) {
+  .scp-hero-row {
+    flex-direction: column;
+    min-height: unset;
+  }
+}
+.scp-hero-content {
+  flex: 1 1 0;
+  max-width: 60%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 100%;
+}
+@media (max-width: 768px) {
+  .scp-hero-content {
+    max-width: 100%;
+    width: 100%;
+    margin-bottom: 20px;
+  }
+}
+.scp-hero-img {
+  flex: 0 0 380px;
+  max-width: 380px;
+  min-width: 220px;
+  margin-left: auto;
+  display: flex;
+}
+.scp-hero-img img {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+/* section card with image on the right */
+.scp-section-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+/* Footer */
+footer {
+  background-color: #f8f9fa;
+  padding: 20px 0;
+  text-align: center;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+footer a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+footer a:hover {
+  text-decoration: underline;
+}
+
+/* Check icon style */
+.scp-tick {
+  color: #D02028;
+  font-size: 1.3rem;
+  font-weight: bold;
+}
+
+/* Ensure the pricing table is always fully visible and scrollable if needed */
+.table-responsive {
+  overflow-x: auto !important;
+  width: 100% !important;
+  display: block;
+  /* Remove any max-height or overflow-y that could hide content */
+  max-height: none !important;
+  overflow-y: visible !important;
+}
+
+/* Prevent parent .card or .row from clipping content */
+.card, .row, .col-12 {
+  overflow: visible !important;
+}
