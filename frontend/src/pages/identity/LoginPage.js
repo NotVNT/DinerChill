@@ -68,8 +68,59 @@ function LoginPage() {
       // Chuẩn hóa thông tin đăng nhập trước khi gửi
       const normalizedCredentials = normalizeCredentials();
       await login(normalizedCredentials);
-      // Chuyển hướng người dùng sau khi đăng nhập thành công
-      navigate(from, { replace: true });
+      
+      // Check if there's a pending reservation
+      const savedReservationData = sessionStorage.getItem("pendingReservation");
+      
+      if (savedReservationData) {
+        const reservationData = JSON.parse(savedReservationData);
+        
+        // Redirect based on where we were in the reservation process
+        if (reservationData.tableId) {
+          // Already selected a table, construct query for reservation page
+          const query = new URLSearchParams({
+            restaurant: reservationData.restaurantId,
+            date: reservationData.date,
+            time: reservationData.time,
+            guests: reservationData.guests,
+            children: reservationData.children,
+            tableId: reservationData.tableId,
+            tableCode: reservationData.tableCode,
+            tableCapacity: reservationData.tableCapacity
+          });
+          
+          if (reservationData.promotion) {
+            query.append("promotion", reservationData.promotion);
+          }
+          
+          if (reservationData.promotionId) {
+            query.append("promotionId", reservationData.promotionId);
+          }
+          
+          // Navigate to reservation page with stored parameters
+          navigate(`/reservation?${query.toString()}`);
+        } else {
+          // Navigate back to table selection
+          const query = new URLSearchParams({
+            date: reservationData.date,
+            time: reservationData.time,
+            guests: reservationData.guests,
+            children: reservationData.children
+          });
+          
+          if (reservationData.promotion) {
+            query.append("promotion", reservationData.promotion);
+          }
+          
+          navigate(`/restaurant/${reservationData.restaurantId}/tables?${query.toString()}`);
+        }
+        
+        // Clean up
+        sessionStorage.removeItem("pendingReservation");
+      } else {
+        // No pending reservation, follow the normal redirect flow
+        navigate(from, { replace: true });
+      }
     } catch (err) {
       // Tăng số lần thử đăng nhập
       setLoginAttempts(prevAttempts => prevAttempts + 1);
@@ -89,11 +140,21 @@ function LoginPage() {
   
   // Hàm xử lý khi người dùng nhấn đăng nhập với Google
   const handleGoogleLogin = () => {
+    // Before redirecting, save the fact that we are in the middle of OAuth login
+    if (sessionStorage.getItem("pendingReservation")) {
+      sessionStorage.setItem("oauthLoginPending", "true");
+    }
+    
     window.location.href = `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/auth/google`;
   };
   
   // Hàm xử lý khi người dùng nhấn đăng nhập với Zalo
   const handleZaloLogin = () => {
+    // Before redirecting, save the fact that we are in the middle of OAuth login
+    if (sessionStorage.getItem("pendingReservation")) {
+      sessionStorage.setItem("oauthLoginPending", "true");
+    }
+    
     window.location.href = `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/auth/zalo`;
   };
   

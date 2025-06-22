@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { restaurantsAPI } from "../../services/api";
+import { useApp } from "../../context/AppContext";
 import "../../styles/pages/TableSelectionPage.css";
 
 function TableSelectionPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { id: restaurantId } = useParams();
+  const { user } = useApp();
   const [tables, setTables] = useState([]);
   const [selectedTable, setSelectedTable] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -24,6 +26,18 @@ function TableSelectionPage() {
   const promotion = queryParams.get("promotion") || "";
 
   useEffect(() => {
+    // Check if redirected from login with saved reservation data
+    const savedReservationData = sessionStorage.getItem("pendingReservation");
+    if (savedReservationData) {
+      const parsedData = JSON.parse(savedReservationData);
+      
+      // If we have saved data and it's for the current restaurant, use it
+      if (parsedData.restaurantId === restaurantId) {
+        // We're back from login, clear the saved data
+        sessionStorage.removeItem("pendingReservation");
+      }
+    }
+
     const fetchData = async () => {
       try {
         setLoading(true);
@@ -77,6 +91,29 @@ function TableSelectionPage() {
 
     // Find the selected table object to get its code and capacity
     const selectedTableObj = tables.find((table) => table.id === selectedTable);
+
+    // Check if user is logged in
+    if (!user) {
+      // Save reservation data to sessionStorage before redirecting
+      const reservationData = {
+        restaurantId,
+        date,
+        time,
+        guests,
+        children,
+        tableId: selectedTable,
+        tableCode: selectedTableObj?.tableCode || "",
+        tableCapacity: selectedTableObj?.capacity || "",
+        promotion,
+        promotionId,
+      };
+      
+      sessionStorage.setItem("pendingReservation", JSON.stringify(reservationData));
+      
+      // Redirect to login with this page as return destination
+      navigate("/login", { state: { from: location } });
+      return;
+    }
 
     // Create query parameters for reservation page
     const query = new URLSearchParams({
