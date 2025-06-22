@@ -1,0 +1,195 @@
+.amenities-manager {
+  padding: 20px;
+}
+
+.amenities-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.amenities-header h1 {
+  font-size: 24px;
+  margin: 0;
+}
+
+.amenities-form {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.amenities-form-title {
+  margin-top: 0;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e0e0e0;
+  font-size: 18px;
+}
+
+.amenities-form-group {
+  margin-bottom: 15px;
+}
+
+.amenities-form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+
+.amenities-form-group input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.amenities-form-group input:focus {
+  border-color: #ff7043;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(255, 112, 67, 0.2);
+}
+
+.amenities-table {
+  width: 100%;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.amenities-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.amenities-table th,
+.amenities-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.amenities-table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+}
+
+.amenities-table tr:last-child td {
+  border-bottom: none;
+}
+
+.amenities-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.amenity-error-message {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 12px 16px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  border-left: 4px solid #f5c6cb;
+}
+
+.amenity-success-message {
+  background-color: #d4edda;
+  color: #155724;
+  padding: 12px 16px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  border-left: 4px solid #c3e6cb;
+}
+
+.amenities-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: none;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.amenities-btn-primary {
+  background-color: #ff7043;
+  color: white;
+}
+
+.amenities-btn-primary:hover {
+  background-color: #f4511e;
+}
+
+.amenities-btn-secondary {
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+.amenities-btn-secondary:hover {
+  background-color: #e0e0e0;
+}
+
+.amenities-btn-danger {
+  background-color: #dc3545;
+  color: white;
+}
+
+.amenities-btn-danger:hover {
+  background-color: #c82333;
+}
+
+.amenities-btn-warning {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.amenities-btn-warning:hover {
+  background-color: #e0a800;
+}
+
+.amenities-empty-state {
+  text-align: center;
+  padding: 40px 0;
+  color: #666;
+}
+
+.amenities-loader {
+  text-align: center;
+  padding: 40px 0;
+}
+
+.amenities-confirm-dialog {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.amenities-confirm-content {
+  background-color: white;
+  padding: 25px;
+  border-radius: 8px;
+  max-width: 400px;
+  width: 100%;
+}
+
+.amenities-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}

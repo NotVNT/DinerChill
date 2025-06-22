@@ -198,20 +198,57 @@ export function AppProvider({ children }) {
       }
       if (filters.operatingHours !== "all") {
         filteredData = filteredData.filter((item) => {
-          const openHour = item.openHour || 0;
-          const closeHour = item.closeHour || 24;
+          // Convert time strings to hours and minutes
+          const openingTime = item.openingTime || "";
+          const closingTime = item.closingTime || "";
 
-          return filters.operatingHours === "morning"
-            ? openHour <= 6 && closeHour >= 11
-            : filters.operatingHours === "lunch"
-            ? openHour <= 11 && closeHour >= 14
-            : filters.operatingHours === "evening"
-            ? openHour <= 17 && closeHour >= 22
-            : filters.operatingHours === "latenight"
-            ? openHour <= 22 && closeHour >= 2
-            : filters.operatingHours === "24h"
-            ? openHour === 0 && closeHour === 24
-            : true;
+          if (!openingTime || !closingTime) return false;
+
+          // Extract hours and minutes from time strings
+          const [openHour, openMinute] = openingTime.split(":").map(Number);
+          const [closeHour, closeMinute] = closingTime.split(":").map(Number);
+
+          // Convert to minutes for easier comparison
+          const openTimeInMinutes = openHour * 60 + (openMinute || 0);
+          const closeTimeInMinutes = closeHour * 60 + (closeMinute || 0);
+
+          // Define time ranges in minutes for filtering
+          const timeRanges = {
+            morning: { start: 6 * 60, end: 11 * 60 }, // 6:00 - 11:00
+            lunch: { start: 11 * 60, end: 14 * 60 }, // 11:00 - 14:00
+            evening: { start: 17 * 60, end: 22 * 60 }, // 17:00 - 22:00
+            latenight: { start: 22 * 60, end: 2 * 60 }, // 22:00 - 2:00
+            "24h": { start: 0, end: 24 * 60 }, // 24h
+          };
+
+          const selectedRange = timeRanges[filters.operatingHours];
+          if (!selectedRange) return true;
+
+          // Check if restaurant is open during the entire selected time range
+          // For overnight ranges like latenight
+          if (selectedRange.end < selectedRange.start) {
+            // Overnight case (e.g., 22:00 - 2:00)
+            if (closeTimeInMinutes < openTimeInMinutes) {
+              // Restaurant also operates overnight
+              return (
+                openTimeInMinutes <= selectedRange.start ||
+                closeTimeInMinutes >= selectedRange.end
+              );
+            } else {
+              // Restaurant closes on the same day
+              return (
+                openTimeInMinutes <= selectedRange.start &&
+                closeTimeInMinutes >= 24 * 60
+              );
+            }
+          } else {
+            // Normal case (e.g., 11:00 - 14:00)
+            return (
+              openTimeInMinutes <= selectedRange.start &&
+              (closeTimeInMinutes >= selectedRange.end ||
+                closeTimeInMinutes < openTimeInMinutes)
+            ); // handles overnight hours
+          }
         });
       }
       if (filters.keyword) {

@@ -25,19 +25,20 @@
 }
 
 .search-results-info {
-  margin: 0 0 15px;
-  padding: 8px 12px;
-  background-color: #f8f9fa;
-  border-radius: 6px;
-  color: #666;
-  font-size: 14px;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 8px;
+  margin-bottom: 15px;
+  padding: 10px 15px;
+  background-color: #e7f3ff;
+  border: 1px solid #b3d7ff;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #0066cc;
 }
 
 .search-results-info i {
-  color: #4a90e2;
+  color: #0066cc;
 }
 
 /* Restaurant Admin Styles */
@@ -76,12 +77,17 @@
   border-radius: 4px;
   border: 1px solid #ddd;
   padding: 10px 12px;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  width: 100%;
+  font-size: 1rem;
+  color: #495057;
+  background-color: #fff;
 }
 
 .form-control:focus {
   border-color: #80bdff;
   box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+  outline: none;
 }
 
 .form-buttons {
@@ -91,10 +97,18 @@
 }
 
 .btn {
-  padding: 8px 16px;
-  border-radius: 4px;
+  padding: 0.375rem 0.75rem;
+  border: 1px solid transparent;
+  border-radius: 0.25rem;
+  font-size: 1rem;
+  font-weight: 400;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: middle;
+  user-select: none;
+  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out,
+    border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
   cursor: pointer;
-  transition: all 0.2s;
 }
 
 .btn-primary {
@@ -131,6 +145,11 @@
   opacity: 0.9;
 }
 
+.btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
 .alert {
   padding: 12px 15px 12px 45px;
   border-radius: 4px;
@@ -161,8 +180,14 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .table {
@@ -170,7 +195,7 @@
   border-collapse: collapse;
 }
 
-.table th, 
+.table th,
 .table td {
   padding: 12px 15px;
   border-bottom: 1px solid #dee2e6;
@@ -578,7 +603,6 @@
   opacity: 0.5;
 }
 
-/* Responsive adjustments */
 @media (max-width: 768px) {
   .gallery-image-item {
     width: 150px;
@@ -665,11 +689,11 @@
   .btn-action span {
     display: none;
   }
-  
+
   .btn-action {
     padding: 8px;
   }
-  
+
   .action-buttons {
     gap: 5px;
   }
@@ -753,21 +777,12 @@
   border-radius: 8px;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
   overflow: hidden;
-  animation: modalSlideIn 0.3s ease;
-}
-
-@keyframes modalSlideIn {
-  from { transform: translateY(-20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
 }
 
 .status-change-modal .modal-header {
   background-color: #f8f9fa;
   padding: 15px 20px;
   border-bottom: 1px solid #eee;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
 }
 
 .status-change-modal .modal-header h3 {
@@ -868,18 +883,7 @@
 }
 
 .status-change-modal .form-control {
-  border-radius: 4px;
-  border: 1px solid #ddd;
-  padding: 10px;
-  transition: border-color 0.2s, box-shadow 0.2s;
-  width: 100%;
   resize: vertical;
-}
-
-.status-change-modal .form-control:focus {
-  border-color: #80bdff;
-  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-  outline: none;
 }
 
 .modal-footer {
@@ -891,7 +895,8 @@
   background-color: #f8f9fa;
 }
 
-.update-btn, .cancel-btn {
+.update-btn,
+.cancel-btn {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -926,7 +931,7 @@
   background-color: #5a6268;
 }
 
-/* Restaurant Form Styles from AdminRestaurants.css */
+/* Restaurant Form Styles */
 .restaurant-form-container {
   background-color: #fff;
   border-radius: 8px;
@@ -967,32 +972,6 @@
   padding: 20px;
 }
 
-.restaurant-form .form-row {
-  margin-left: -10px;
-  margin-right: -10px;
-  display: flex;
-  flex-wrap: wrap;
-}
-
-.restaurant-form .form-group {
-  margin-bottom: 20px;
-}
-
-.restaurant-form .form-row .form-group {
-  padding-left: 10px;
-  padding-right: 10px;
-}
-
-.restaurant-form .form-row .col-md-6 {
-  flex: 0 0 50%;
-  max-width: 50%;
-}
-
-.restaurant-form .form-row .col-md-12 {
-  flex: 0 0 100%;
-  max-width: 100%;
-}
-
 .restaurant-form label {
   display: block;
   margin-bottom: 8px;
@@ -1000,55 +979,18 @@
   color: #495057;
 }
 
-.restaurant-form .form-control {
-  display: block;
-  width: 100%;
-  padding: 0.375rem 0.75rem;
-  font-size: 1rem;
-  line-height: 1.5;
-  color: #495057;
-  background-color: #fff;
-  background-clip: padding-box;
-  border: 1px solid #ced4da;
-  border-radius: 0.25rem;
-  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+.restaurant-form .form-row .form-group {
+  padding-left: 10px;
+  padding-right: 10px;
 }
 
-.restaurant-form .form-control:focus {
-  color: #495057;
-  background-color: #fff;
-  border-color: #80bdff;
-  outline: 0;
-  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+.restaurant-form .form-row .col-md-12 {
+  flex: 0 0 100%;
+  max-width: 100%;
 }
 
-/* Category Select Styles */
-.category-select-container {
-  position: relative;
-}
-
-.restaurant-form .category-select {
-  height: auto;
-  min-height: 120px;
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.restaurant-form .category-select option {
-  padding: 8px 12px;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.restaurant-form .category-select option:checked {
-  background-color: #007bff;
-  color: white;
-}
-
-.restaurant-form .category-select option:hover {
-  background-color: #f8f9fa;
-}
-
-.restaurant-form .selected-categories {
+.restaurant-form .selected-categories,
+.restaurant-form .selected-amenities {
   margin-top: 8px;
   padding: 8px 12px;
   background-color: #f8f9fa;
@@ -1056,7 +998,8 @@
   border: 1px solid #e9ecef;
 }
 
-.restaurant-form .selected-categories-label {
+.restaurant-form .selected-categories-label,
+.restaurant-form .selected-amenities-label {
   font-weight: 500;
   margin-right: 5px;
   color: #495057;
@@ -1095,45 +1038,6 @@
   color: #6c757d;
 }
 
-.restaurant-form .form-buttons {
-  margin-top: 30px;
-  display: flex;
-  gap: 10px;
-}
-
-.restaurant-form .btn {
-  display: inline-block;
-  font-weight: 400;
-  text-align: center;
-  white-space: nowrap;
-  vertical-align: middle;
-  user-select: none;
-  border: 1px solid transparent;
-  padding: 0.375rem 0.75rem;
-  font-size: 1rem;
-  line-height: 1.5;
-  border-radius: 0.25rem;
-  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-  cursor: pointer;
-}
-
-.restaurant-form .btn-success {
-  color: #fff;
-  background-color: #28a745;
-  border-color: #28a745;
-}
-
-.restaurant-form .btn-secondary {
-  color: #fff;
-  background-color: #6c757d;
-  border-color: #6c757d;
-}
-
-.restaurant-form .btn:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-}
-
 .restaurant-form .spinner-border {
   display: inline-block;
   width: 1rem;
@@ -1142,11 +1046,13 @@
   border: 0.2em solid currentColor;
   border-right-color: transparent;
   border-radius: 50%;
-  animation: spinner-border .75s linear infinite;
+  animation: spinner-border 0.75s linear infinite;
 }
 
 @keyframes spinner-border {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .restaurant-form .ms-2 {
@@ -1159,6 +1065,37 @@
 
 .restaurant-form .mt-2 {
   margin-top: 0.5rem;
+}
+
+/* Category and Amenity Select Styles */
+.category-select-container,
+.amenity-select-container {
+  position: relative;
+}
+
+.restaurant-form .category-select,
+.restaurant-form .amenity-select {
+  height: auto;
+  min-height: 120px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.restaurant-form .category-select option,
+.restaurant-form .amenity-select option {
+  padding: 8px 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.restaurant-form .category-select option:checked,
+.restaurant-form .amenity-select option:checked {
+  background-color: #007bff;
+  color: white;
+}
+
+.restaurant-form .category-select option:hover,
+.restaurant-form .amenity-select option:hover {
+  background-color: #f8f9fa;
 }
 
 /* Restaurant categories */
@@ -1186,7 +1123,6 @@
 .section-title {
   margin-bottom: 12px;
   padding-bottom: 6px;
-  border-bottom: 1px solid #dee2e6;
   font-size: 15px;
   font-weight: 600;
   color: #495057;
@@ -1199,7 +1135,7 @@
   right: 20px;
   padding: 15px 20px;
   border-radius: 4px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   z-index: 9999;
   display: flex;
   align-items: flex-start;
@@ -1210,8 +1146,14 @@
 }
 
 @keyframes slideInUp {
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 /* Detail View Styles */
@@ -1372,15 +1314,6 @@
   padding: 0 25px;
 }
 
-.detail-section {
-  margin-bottom: 25px;
-  background-color: #f8f9fa;
-  padding: 20px;
-  border-radius: 8px;
-  border: 1px solid #e9ecef;
-  transition: all 0.3s ease;
-}
-
 .detail-section:hover {
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
   border-color: #ced4da;
@@ -1413,24 +1346,11 @@
   flex-direction: column;
 }
 
-.detail-label {
-  font-size: 14px;
-  color: #6c757d;
-  margin-bottom: 6px;
-  font-weight: 500;
-}
-
 .detail-label i {
   margin-right: 8px;
   width: 16px;
   text-align: center;
   color: #007bff;
-}
-
-.detail-value {
-  font-size: 16px;
-  color: #212529;
-  font-weight: 400;
 }
 
 .category-tags {
@@ -1513,45 +1433,175 @@
     width: 95%;
     max-height: 95vh;
   }
-  
+
   .restaurant-detail-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 10px;
     padding: 15px 20px;
   }
-  
+
   .restaurant-name {
     font-size: 24px;
   }
-  
+
   .detail-grid {
     grid-template-columns: 1fr;
     gap: 15px;
   }
-  
+
   .gallery-image-moderate {
     width: 200px;
   }
-  
+
   .restaurant-images-section-moderate,
   .closure-reason-note,
   .detail-form-content {
     margin-left: 15px;
     margin-right: 15px;
   }
-  
+
   .detail-section {
     padding: 15px;
   }
-  
+
   .detail-form-actions {
     padding: 15px;
     flex-direction: column;
   }
-  
+
   .detail-form-actions .btn {
     width: 100%;
     justify-content: center;
+  }
+}
+
+/* Pagination Styles */
+.pagination-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+  padding: 15px 0;
+  border-top: 1px solid #e9ecef;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.pagination-btn {
+  background: #fff;
+  border: 1px solid #dee2e6;
+  color: #495057;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: all 0.2s;
+  min-width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.pagination-btn:hover:not(.disabled) {
+  background: #e9ecef;
+  border-color: #adb5bd;
+}
+
+.pagination-btn.active {
+  background: #007bff;
+  border-color: #007bff;
+  color: white;
+}
+
+.pagination-btn.disabled {
+  background: #f8f9fa;
+  border-color: #e9ecef;
+  color: #6c757d;
+  cursor: not-allowed;
+}
+
+.pagination-summary {
+  font-size: 14px;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+/* Table Controls */
+.table-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding: 10px 0;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.items-per-page-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #495057;
+}
+
+.items-per-page-control label {
+  margin: 0;
+  font-weight: 500;
+}
+
+.items-per-page-select {
+  padding: 4px 8px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 14px;
+  background: white;
+  cursor: pointer;
+}
+
+.items-per-page-select:focus {
+  outline: none;
+  border-color: #80bdff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.pagination-info {
+  font-size: 14px;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+/* Responsive Pagination */
+@media (max-width: 768px) {
+  .pagination-wrapper {
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
+  }
+
+  .pagination {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .pagination-btn {
+    padding: 6px 10px;
+    font-size: 13px;
+    min-width: 35px;
+  }
+
+  .table-controls {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .items-per-page-control {
+    flex-wrap: wrap;
   }
 }

@@ -34,12 +34,32 @@ router.get('/:id/restaurants', async (req, res) => {
       include: {
         model: Restaurant,
         as: 'restaurants',
+        include: [
+          {
+            model: require('../models').RestaurantImage,
+            as: 'images'
+          }
+        ],
         through: { attributes: [] } // Don't include junction table attributes
       }
     });
     
     if (!category) {
       return res.status(404).json({ message: 'Category not found' });
+    }
+    
+    // Process image paths for proper URL formatting
+    if (category.restaurants && category.restaurants.length > 0) {
+      category.restaurants.forEach(restaurant => {
+        if (restaurant.images && restaurant.images.length > 0) {
+          restaurant.images.forEach(image => {
+            if (image.image_path) {
+              // Normalize path for web URLs
+              image.image_path = normalizeFilePath(image.image_path);
+            }
+          });
+        }
+      });
     }
     
     res.json(category.restaurants);
@@ -57,6 +77,12 @@ router.get('/name/:name/restaurants', async (req, res) => {
       include: {
         model: Restaurant,
         as: 'restaurants',
+        include: [
+          {
+            model: require('../models').RestaurantImage,
+            as: 'images'
+          }
+        ],
         through: { attributes: [] } // Don't include junction table attributes
       }
     });
@@ -65,11 +91,46 @@ router.get('/name/:name/restaurants', async (req, res) => {
       return res.status(404).json({ message: 'Category not found' });
     }
     
+    // Process image paths for proper URL formatting
+    if (category.restaurants && category.restaurants.length > 0) {
+      category.restaurants.forEach(restaurant => {
+        if (restaurant.images && restaurant.images.length > 0) {
+          restaurant.images.forEach(image => {
+            if (image.image_path) {
+              // Normalize path for web URLs
+              image.image_path = normalizeFilePath(image.image_path);
+            }
+          });
+        }
+      });
+    }
+    
     res.json(category.restaurants);
   } catch (error) {
     console.error('Error fetching restaurants by category name:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
+
+// Helper function to normalize file paths for web URLs
+const normalizeFilePath = (path) => {
+  if (!path) return '';
+  
+  // If it's already a URL, return as is
+  if (path.startsWith('http')) {
+    return path;
+  }
+  
+  // Replace backslashes with forward slashes
+  path = path.replace(/\\/g, '/');
+  
+  // If path includes 'uploads/', extract the filename
+  if (path.includes('uploads/')) {
+    const filename = path.split('uploads/').pop();
+    return `/uploads/${filename}`;
+  }
+  
+  return path;
+};
 
 module.exports = router;

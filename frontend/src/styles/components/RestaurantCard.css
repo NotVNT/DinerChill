@@ -1,264 +1,268 @@
-/* Đảm bảo restaurant-card không phá vỡ bố cục ngang */
+/* Basic card styling */
 .restaurant-card {
+  background: #ffffff;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  cursor: pointer;
+  position: relative;
   display: flex;
   flex-direction: column;
-  background: #fff;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s, box-shadow 0.2s;
-  cursor: pointer;
+  height: 100%;
+  border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
-/* Hiệu ứng hover */
 .restaurant-card:hover {
-  transform: scale(1.02) translateY(-5px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-8px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.12);
+  border-color: rgba(231, 26, 15, 0.3);
 }
 
-/* Hình ảnh */
+.restaurant-card:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(231, 26, 15, 0.3), 0 15px 30px rgba(0, 0, 0, 0.12);
+}
+
+/* Image container and effects */
 .card-image {
   position: relative;
-  width: 100%;
-  padding-top: 66.67%; /* Tỷ lệ 3:2 */
+  overflow: hidden;
+  aspect-ratio: 16/10;
 }
 
 .card-image img {
-  position: absolute;
-  top: 0;
-  left: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover; /* Giữ tỷ lệ hình ảnh, không bóp méo */
-  border-top-left-radius: 8px;
-  border-top-right-radius: 8px;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+  filter: brightness(0.95);
 }
 
-/* Logo "DinerChill" trên hình ảnh */
+.restaurant-card:hover .card-image img {
+  transform: scale(1.08);
+  filter: brightness(1.05);
+}
+
+/* Logo overlay */
 .logo-overlay {
   position: absolute;
-  top: 10px;
-  left: 10px;
-  background-color: rgba(255, 255, 255, 0.8);
-  padding: 5px 10px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: bold;
-  color: #e31837;
+  top: 15px;
+  left: 15px;
+  background: rgba(231, 26, 15, 0.9);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(231, 26, 15, 0.4);
+  z-index: 2;
+  backdrop-filter: blur(2px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  text-transform: uppercase;
 }
 
-/* Badge "Được đề xuất" hoặc "Bán chạy" */
+/* Discount badge */
 .discount-badge {
   position: absolute;
-  top: 10px;
-  right: 10px;
-  background: #e31837;
-  color: #fff;
-  padding: 5px 10px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: bold;
+  top: 15px;
+  right: 15px;
+  background: linear-gradient(135deg, #ff4e50, #e71a0f);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  z-index: 2;
+  box-shadow: 0 3px 10px rgba(231, 26, 15, 0.3);
+  animation: pulse 2s infinite;
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
-.recommended-badge {
-  position: absolute;
-  bottom: 10px;
-  left: 10px;
-  background: #e31837;
-  color: #fff;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: bold;
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
-/* Nội dung card */
+/* Card content */
 .card-content {
-  padding: 15px;
-  flex: 1;
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  flex: 1;
+  position: relative;
 }
 
 .card-content h3 {
-  font-size: 18px;
-  font-weight: 600;
+  margin: 0 0 12px 0;
+  font-size: 1.2rem;
+  font-weight: 700;
   color: #333;
-  margin: 0;
   line-height: 1.3;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
+  overflow: hidden;
+  transition: color 0.3s;
+}
+
+.restaurant-card:hover .card-content h3 {
+  color: #e71a0f;
+}
+
+/* Add these CSS rules to handle text overflow in restaurant cards */
+.restaurant-card h3 {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 600;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* Container cho rating và giá */
+/* Rating and price styling */
 .rating-price {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .stars {
-  color: #f4c542;
+  color: #ffca28;
+  font-size: 1rem;
+  letter-spacing: 2px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .rating-value {
-  margin-left: 5px;
-  font-size: 14px;
-  color: #666;
+  font-weight: 700;
+  color: #333;
+  margin-left: 6px;
+  font-size: 0.9rem;
+  background-color: rgba(255, 202, 40, 0.2);
+  padding: 2px 6px;
+  border-radius: 4px;
 }
 
 .price {
-  font-size: 14px;
-  color: #e31837;
-  font-weight: bold;
+  font-weight: 600;
+  color: #333;
+  display: flex;
+  gap: 8px;
+  align-items: center;
 }
 
 .original-price {
   text-decoration: line-through;
   color: #999;
-  margin-right: 5px;
+  font-size: 0.9rem;
 }
 
 .discounted-price {
-  color: #e31837;
+  color: #e71a0f;
+  font-size: 1.1rem;
+  font-weight: 700;
 }
 
-/* Đánh giá với sao vàng */
-.rating {
+/* Additional info */
+.additional-info {
+  margin-top: 10px;
+  color: #666;
+  font-size: 0.9rem;
+  overflow: hidden;
+}
+
+.additional-info p {
+  margin: 4px 0;
   font-size: 14px;
-  color: #f4c430;
-  margin: 0;
-}
-
-/* Giảm giá */
-.discount {
-  font-size: 14px;
-  font-weight: bold;
-  color: #e31837;
-  margin: 0 0 5px;
-}
-
-/* Danh mục */
-.cuisine {
-  font-size: 14px;
-  color: #777;
-  margin: 5px 0;
-}
-
-/* Địa điểm */
-.location {
-  font-size: 13px;
-  color: #999;
-  margin: 5px 0;
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  line-clamp: 1;
-  -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-/* Mô tả */
-.description {
-  font-size: 14px;
-  color: #555;
-  margin: 5px 0;
+  white-space: nowrap;
   display: -webkit-box;
   -webkit-line-clamp: 2;
-  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* Add specific styling for description to override conflicting properties */
+.description {
+  white-space: normal !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   text-overflow: ellipsis;
+  overflow: hidden;
+  max-height: 40px; /* Limit height to approximately 2 lines */
 }
 
-/* Các thông tin khác */
-.offer,
-.valid-until,
-.date {
-  font-size: 14px;
-  color: #666;
-  margin: 5px 0;
+/* Reservation text */
+.reservation-text {
+  margin-top: 15px;
+  padding-top: 12px;
+  color: #e71a0f !important; /* Added !important to ensure red color is always applied */
+  font-weight: 600;
+  font-size: 0.95rem;
+  border-top: 1px dashed #eee;
+  position: relative;
+  text-align: center;
+  margin-bottom: 5px;
 }
 
-/* Nút đặt bàn */
-.card-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: auto;
+/* More specific selector to ensure the red color is applied */
+.card-content .reservation-text {
+  color: #e71a0f !important;
 }
 
-.btn {
-  background: #e31837;
-  border: none;
-  padding: 10px;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.2s;
-  color: white;
-  flex: 1;
+/* Card hover accent line */
+.restaurant-card::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 3px;
+  background: linear-gradient(to right, #e71a0f, #ff7563);
+  transition: width 0.3s ease;
 }
 
-.btn:hover {
-  background: #c31530;
-}
-
-.book-now-btn {
-  background: #e31837;
-  border: none;
-  padding: 10px;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.2s;
-  color: white;
+.restaurant-card:hover::after {
   width: 100%;
 }
 
-.book-now-btn:hover {
-  background: #c31530;
-}
-
-/* Responsive cho mobile (từ nhánh develop) */
+/* Responsive styling */
 @media (max-width: 768px) {
-  .restaurant-card {
-    border-radius: 6px;
-  }
-
   .card-content {
-    padding: 10px;
-    gap: 6px;
+    padding: 15px;
   }
 
   .card-content h3 {
-    font-size: 16px;
+    font-size: 1.1rem;
   }
 
-  .rating,
-  .rating-value,
-  .discount,
-  .cuisine,
-  .location,
-  .description {
-    font-size: 12px;
+  .discount-badge,
+  .logo-overlay {
+    font-size: 0.7rem;
+    padding: 5px 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .restaurant-card:hover {
+    transform: translateY(-4px);
   }
 
-  .price {
-    font-size: 12px;
-  }
-
-  .btn,
-  .book-now-btn {
-    padding: 8px;
-    font-size: 13px;
+  .restaurant-card:hover .card-image img {
+    transform: scale(1.05);
   }
 }

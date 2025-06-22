@@ -8,10 +8,11 @@ import {
 import "./App.css";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
+import Chatbox from "./components/Chatbox";
 import HomePage from "./pages/HomePage";
 import RestaurantDetailPage from "./pages/RestaurantDetailPage";
-import SearchResultsPage from "./pages/SearchResultsPage";
-import FilterResultsPage from "./pages/FilterResultsPage";
+import SearchResultsPage from "./filter/SearchResultsPage";
+import FilterResultsPage from "./filter/FilterResultsPage";
 import { AppProvider } from "./context/AppContext";
 import ReservationPage from "./pages/application/ReservationPage";
 import ReservationSuccessPage from "./pages/application/ReservationSuccessPage";
@@ -54,22 +55,26 @@ import SupportCenterPage from "./pages/SupportCenterPage";
 import TaskPricingPage from "./pages/TaskPricingPage";
 import TutorialColab from "./blog/TutorialColab";
 import Contact from "./blog/Contact";
+import AdminAmenities from "./pages/admin/AdminAmenities";
+import ScrollToTopButton from "./components/ScrollToTopButton";
 
 // Lazy load category components
-const Lau = React.lazy(() => import("./categories/Lau"));
-const Buffet = React.lazy(() => import("./categories/Buffet"));
-const HaiSan = React.lazy(() => import("./categories/Hai_San"));
-const LauNuong = React.lazy(() => import("./categories/Lau_Nuong"));
-const QuanNhau = React.lazy(() => import("./categories/Quan_Nhau"));
-const MonChay = React.lazy(() => import("./categories/Mon_Chay"));
-const DoTiec = React.lazy(() => import("./categories/Do_tiec"));
-const HanQuoc = React.lazy(() => import("./categories/Han_Quoc"));
-const NhatBan = React.lazy(() => import("./categories/Nhat_Ban"));
-const MonViet = React.lazy(() => import("./categories/Mon_Viet"));
-const MonThai = React.lazy(() => import("./categories/Mon_Thai"));
-const MonTrungHoa = React.lazy(() => import("./categories/Mon_TrungHoa"));
-const TiecCuoi = React.lazy(() => import("./categories/Tiec_Cuoi"));
-const DoUong = React.lazy(() => import("./categories/Do_Uong"));
+const Lau = React.lazy(() => import("./filter/categories/Lau"));
+const Buffet = React.lazy(() => import("./filter/categories/Buffet"));
+const HaiSan = React.lazy(() => import("./filter/categories/Hai_San"));
+const LauNuong = React.lazy(() => import("./filter/categories/Lau_Nuong"));
+const QuanNhau = React.lazy(() => import("./filter/categories/Quan_Nhau"));
+const MonChay = React.lazy(() => import("./filter/categories/Mon_Chay"));
+const DoTiec = React.lazy(() => import("./filter/categories/Do_tiec"));
+const HanQuoc = React.lazy(() => import("./filter/categories/Han_Quoc"));
+const NhatBan = React.lazy(() => import("./filter/categories/Nhat_Ban"));
+const MonViet = React.lazy(() => import("./filter/categories/Mon_Viet"));
+const MonThai = React.lazy(() => import("./filter/categories/Mon_Thai"));
+const MonTrungHoa = React.lazy(() =>
+  import("./filter/categories/Mon_TrungHoa")
+);
+const TiecCuoi = React.lazy(() => import("./filter/categories/Tiec_Cuoi"));
+const DoUong = React.lazy(() => import("./filter/categories/Do_Uong"));
 
 // Loading component for suspense
 const Loading = () => (
@@ -88,6 +93,8 @@ function AppLayout() {
         <Outlet />
       </main>
       <Footer />
+      <Chatbox />
+      <ScrollToTopButton />
     </div>
   );
 }
@@ -110,6 +117,8 @@ function App() {
                   <HomePage />
                 </main>
                 <Footer />
+                <Chatbox />
+                <ScrollToTopButton />
               </div>
             }
           />
@@ -126,6 +135,7 @@ function App() {
             <Route index element={<AdminDashboard />} />
             <Route path="restaurants" element={<AdminRestaurants />} />
             <Route path="categories" element={<AdminCategories />} />
+            <Route path="amenities" element={<AdminAmenities />} />
             <Route path="promotions" element={<AdminPromotions />} />
             <Route path="reservations" element={<AdminReservations />} />
             <Route path="payments" element={<AdminPayments />} />
@@ -166,7 +176,10 @@ function App() {
 
             {/* Blog Routes */}
             <Route path="blog/tin-tuc-moi-nhat" element={<LatestNewsPage />} />
-            <Route path="blog/dinerchill-ra-mat" element={<ArticleDetailPage />} />
+            <Route
+              path="blog/dinerchill-ra-mat"
+              element={<ArticleDetailPage />}
+            />
             <Route path="blog/article/:id" element={<ArticleDetailPage />} />
             <Route path="blog/dia-diem-an-uong" element={<DiningPlacesPage />} />
             <Route path="blog/dia-diem-an-uong/:id" element={<ArticleDetailPage />} />
