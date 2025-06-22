@@ -21,7 +21,7 @@ const OverviewPage = () => (
         <li><b>Tiếp cận tệp khách hàng rộng lớn:</b> Dinner Chill giúp nhà hàng tiếp cận đến một lượng lớn khách hàng tiềm năng đang tìm kiếm những trải nghiệm ẩm thực mới, đặc biệt qua các chương trình khuyến mãi và giảm giá độc quyền.</li>
         <li><b>Tiết kiệm chi phí marketing:</b> Nhà hàng có thể tập trung vào việc nâng cao chất lượng dịch vụ và ẩm thực mà không phải đầu tư quá nhiều vào quảng cáo, nhờ sự hỗ trợ từ nền tảng Dinner Chill trong việc kết nối với khách hàng.</li>
       </ul>
-      <p>Các giá trị trên được hình thành bởi bộ 8 giải pháp của Dinner Chill dành cho nhà hàng, bạn có thể ấn vào đây để <a href="#" style={{ color: '#e31837', textDecoration: 'underline' }}>Xem thêm!</a></p>
+      <p>Các giá trị trên được hình thành bởi bộ 8 giải pháp của Dinner Chill dành cho nhà hàng, bạn có thể <span style={{ color: '#e31837', textDecoration: 'underline', cursor: 'pointer' }}>Xem thêm!</span></p>
       <h3>Tổng kết</h3>
       <p>Hy vọng Dinner Chill sẽ là lựa chọn lý tưởng để tạo ra một hệ sinh thái ẩm thực hiện đại, nơi mà cả thực khách lẫn nhà hàng đều được hưởng lợi từ sự kết nối thông minh và hiệu quả.</p>
       <h3>Thông tin liên hệ:</h3>

@@ -1,6 +1,4 @@
 import React from "react";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
 import RestaurantCard from "../components/RestaurantCard";
 import { useApp } from "../context/AppContext";
 import "../styles/collectionsPage.css";
@@ -33,48 +31,44 @@ const CollectionsPage = ({ restaurantList, collectionList }) => {
   const realRestaurants = restaurantList || restaurants || [];
 
   return (
-    <>
-      <Header />
-      <div className="collections-root">
-        <div className="collections-container">
-          <h1 className="collections-title">
-            Khám phá các Bộ sưu tập trên Dinner Chill
-          </h1>
-          <div className="collections-list">
-            {collections.map((col) => (
-              <div key={col.id} className="collection-card">
-                <img src={col.image} alt={col.title} className="collection-image" />
-                <div className="collection-info">
-                  <h3 className="collection-name">{col.title}</h3>
-                  <p className="collection-desc">{col.description}</p>
-                </div>
+    <div className="collections-root">
+      <div className="collections-container">
+        <h1 className="collections-title">
+          Khám phá các Bộ sưu tập trên Dinner Chill
+        </h1>
+        <div className="collections-list">
+          {collections.map((col) => (
+            <div key={col.id} className="collection-card">
+              <img src={col.image} alt={col.title} className="collection-image" />
+              <div className="collection-info">
+                <h3 className="collection-name">{col.title}</h3>
+                <p className="collection-desc">{col.description}</p>
               </div>
-            ))}
-          </div>
-          <p className="collections-desc">
-            <a href="#" className="collections-link">
-              Mời bạn khám phá các Bộ sưu tập trên Dinner Chill giúp bạn dễ dàng tìm kiếm nhà hàng theo sở thích, từ ẩm thực truyền thống đến hiện đại. Các địa điểm được chọn lọc kỹ lưỡng, mang đến trải nghiệm ẩm thực đa dạng và hấp dẫn. Xem ngay!
-            </a>
-          </p>
-          <div className="collections-meta">
-            Bởi Dinner Chill Team - Cập nhật: 07/10/2024
-          </div>
-          <h2 className="collections-top-title">
-            Top Nhà Hàng Được Đề Xuất Trên Dinner Chill
-          </h2>
-          <div className="collections-restaurant-list">
-            {realRestaurants.length > 0 ? (
-              realRestaurants.slice(0, 6).map((r) => (
-                <RestaurantCard key={r.id} restaurant={r} />
-              ))
-            ) : (
-              <div className="collections-no-restaurant">Không có dữ liệu nhà hàng thực tế.</div>
-            )}
-          </div>
+            </div>
+          ))}
+        </div>
+        <p className="collections-desc">
+          <span className="collections-link">
+            Mời bạn khám phá các Bộ sưu tập trên Dinner Chill giúp bạn dễ dàng tìm kiếm nhà hàng theo sở thích, từ ẩm thực truyền thống đến hiện đại. Các địa điểm được chọn lọc kỹ lưỡng, mang đến trải nghiệm ẩm thực đa dạng và hấp dẫn. Xem ngay!
+          </span>
+        </p>
+        <div className="collections-meta">
+          Bởi Dinner Chill Team - Cập nhật: 07/10/2024
+        </div>
+        <h2 className="collections-top-title">
+          Top Nhà Hàng Được Đề Xuất Trên Dinner Chill
+        </h2>
+        <div className="collections-restaurant-list">
+          {realRestaurants.length > 0 ? (
+            realRestaurants.slice(0, 6).map((r) => (
+              <RestaurantCard key={r.id} restaurant={r} />
+            ))
+          ) : (
+            <div className="collections-no-restaurant">Không có dữ liệu nhà hàng thực tế.</div>
+          )}
         </div>
       </div>
-      <Footer />
-    </>
+    </div>
   );
 };
 

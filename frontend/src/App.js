@@ -57,6 +57,15 @@ import TutorialColab from "./blog/TutorialColab";
 import Contact from "./blog/Contact";
 import AdminAmenities from "./pages/admin/AdminAmenities";
 import ScrollToTopButton from "./components/ScrollToTopButton";
+// Import additional blog pages
+import TermsOfService from "./blog/TermsOfService";
+import OperatingRegulations from "./blog/OperatingRegulations";
+import PrivacyPolicy from "./blog/PrivacyPolicy";
+import PartnerTerms from "./blog/PartnerTerms";
+import BookingGuidePage from "./blog/BookingGuidePage";
+import FAQBookingPage from "./blog/FAQBookingPage";
+import OverviewPage from "./blog/OverviewPage";
+import CollectionsPage from "./blog/CollectionsPage";
 
 // Lazy load category components
 const Lau = React.lazy(() => import("./filter/categories/Lau"));
@@ -195,6 +204,20 @@ function App() {
             <Route path="blog/danh-gia-review/:id" element={<ArticleDetailPage />} />
             <Route path="blog/TutorialColab" element={<TutorialColab />} />
             <Route path="lien-he" element={<Contact />} />
+
+            {/* Footer Link Routes */}
+            <Route path="gioi-thieu" element={<OverviewPage />} />
+            <Route path="huong-dan-dat-cho" element={<BookingGuidePage />} />
+            <Route path="hoi-dap" element={<FAQBookingPage />} />
+            <Route path="dia-diem-gan-ban" element={<LocationPage />} />
+            <Route path="tim-kiem" element={<SearchResultsPage />} />
+            <Route path="uu-dai" element={<PromoPage />} />
+            <Route path="kham-pha" element={<CollectionsPage />} />
+            <Route path="dieu-khoan-su-dung" element={<TermsOfService />} />
+            <Route path="quy-che" element={<OperatingRegulations />} />
+            <Route path="chinh-sach-bao-mat" element={<PrivacyPolicy />} />
+            <Route path="dieu-khoan-doi-tac" element={<PartnerTerms />} />
+            <Route path="trung-tam-ho-tro" element={<SupportCenterPage />} />
 
             {/* Category Routes */}
             <Route
@@ -367,7 +390,6 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            <Route path="trung-tam-ho-tro" element={<SupportCenterPage />} />
 
             {/* Route 404 */}
             <Route

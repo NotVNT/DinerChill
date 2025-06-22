@@ -7,10 +7,10 @@ const FAQBookingPage = () => (
       <p>Trong quá trình sử dụng nền tảng Dinner Chill đặt chỗ nhà hàng, nhiều thực khách có những câu hỏi thắc mắc, vì vậy chúng tôi liệt kê sẵn câu hỏi khá phổ biến và kèm câu trả lời để bạn có thể tìm hiểu nhanh:</p>
       <h3>1. Đăng ký sử dụng Dinner Chill như thế nào?</h3>
       <p><b>Trả lời:</b> Để đăng ký tài khoản để sử dụng Dinner Chill, Anh/Chị vui lòng truy cập đường link website sau: https://dinnerchill.vn/dang-ky , hoặc tải App và truy cập mục Đăng ký/Đăng nhập và nhập thông tin theo yêu cầu để đăng ký.</p>
-      <p>Mời bạn xem thêm hướng dẫn sử dụng Dinner Chill <a href="#" style={{ color: '#1976d2', textDecoration: 'underline' }}>tại đây!</a></p>
+      <p>Mời bạn xem thêm hướng dẫn sử dụng Dinner Chill <span style={{ color: '#1976d2', textDecoration: 'underline', cursor: 'pointer' }}>tại đây!</span></p>
       <h3>2. Làm thế nào để đặt bàn?</h3>
       <p><b>Trả lời:</b> Bạn có thể Đặt chỗ trực tuyến mọi lúc, mọi nơi 24/7 đến các nhà hàng thông qua nền tảng Dinner Chill gồm website: dinnerchill.vn và ứng dụng di động trên iOS và Android.</p>
-      <p>Hướng dẫn chi tiết <a href="#" style={{ color: '#1976d2', textDecoration: 'underline' }}>tại đây!</a></p>
+      <p>Hướng dẫn chi tiết <span style={{ color: '#1976d2', textDecoration: 'underline', cursor: 'pointer' }}>tại đây!</span></p>
       <div style={{ display: 'flex', justifyContent: 'center', margin: '32px 0' }}>
         <img src={process.env.PUBLIC_URL + '/uploads/huong-dan-dat-ban-truc-tuyen.png'} alt="Hướng dẫn đặt bàn Dinner Chill" style={{ maxWidth: 700, width: '100%', height: 'auto', borderRadius: 12, boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }} />
       </div>
