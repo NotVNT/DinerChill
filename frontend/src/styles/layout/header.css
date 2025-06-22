@@ -1,6 +1,6 @@
-/* Header Styles */
+/* Kiểu dáng cho Header - Thanh điều hướng chính */
 .site-header {
-  background-color: #1e0f30; /* Dark purple with a mysterious tone */
+  background-color: #1e0f30; /* Màu tím đậm với tông bí ẩn */
   background-image: linear-gradient(to right, #1e0f30, #2d1b45, #1e0f30);
   color: #fff;
   padding: 8px 0;
@@ -11,6 +11,7 @@
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
 }
 
+/* Container chung - Giới hạn chiều rộng nội dung */
 .container {
   padding-left: 4px;
   padding-right: 4px;
@@ -19,7 +20,7 @@
   margin: 0 auto;
 }
 
-/* New header layout */
+/* Bố cục header mới */
 .header-layout {
   display: flex;
   align-items: center;
@@ -27,12 +28,13 @@
   width: 100%;
 }
 
-/* Logo section */
+/* Phần logo */
 .logo-section {
   flex: 0 0 auto;
   margin-right: 20px;
 }
 
+/* Liên kết logo */
 .logo-link {
   text-decoration: none;
   color: white;
@@ -46,6 +48,7 @@
   transform: scale(1.05);
 }
 
+/* Hiệu ứng chuyển động cho logo */
 @keyframes logoShine {
   0% {
     background-position: -100% 0;
@@ -55,6 +58,7 @@
   }
 }
 
+/* Kiểu chữ logo */
 .logo {
   font-family: "Poppins", sans-serif;
   font-weight: 700;
@@ -79,7 +83,7 @@
   text-shadow: 0px 3px 5px rgba(0, 0, 0, 0.4);
 }
 
-/* Navigation section - centered */
+/* Phần điều hướng chính - căn giữa */
 .main-nav {
   display: flex;
   align-items: center;
@@ -87,6 +91,7 @@
   justify-content: center;
 }
 
+/* Danh sách điều hướng */
 .main-nav ul {
   display: flex;
   align-items: center;
@@ -98,6 +103,7 @@
   gap: 10px;
 }
 
+/* Mục điều hướng */
 .nav-item {
   height: 100%;
   display: flex;
@@ -105,6 +111,7 @@
   margin: 0;
 }
 
+/* Liên kết trong điều hướng */
 .nav-item a,
 .nav-link,
 .location-btn,
@@ -130,13 +137,13 @@
   text-shadow: 0 0 5px rgba(180, 144, 255, 0.5);
 }
 
-/* Auth section */
+/* Phần xác thực */
 .auth-nav {
   flex: 0 0 auto;
   margin-left: 20px;
 }
 
-/* User Menu */
+/* Menu người dùng */
 .user-menu {
   position: relative;
   height: 100%;
@@ -144,6 +151,7 @@
   align-items: center;
 }
 
+/* Nút tài khoản */
 .account-btn {
   height: 100%;
   display: flex;
@@ -156,7 +164,7 @@
   white-space: nowrap;
 }
 
-/* Dropdown Menu */
+/* Menu thả xuống */
 .dropdown-menu {
   top: 40px;
   position: absolute;
@@ -167,7 +175,7 @@
   z-index: 1000;
 }
 
-/* Media queries cho header responsive */
+/* Truy vấn phương tiện cho header đáp ứng */
 @media (max-width: 1400px) {
   .nav-item a,
   .nav-item-dropdown {
@@ -209,6 +217,7 @@
   }
 }
 
+/* Thiết lập đáp ứng cho thiết bị trung bình */
 @media (max-width: 992px) {
   .header-layout {
     flex-wrap: wrap;
@@ -250,6 +259,7 @@
   }
 }
 
+/* Thiết lập đáp ứng cho thiết bị di động */
 @media (max-width: 768px) {
   .logo {
     font-size: 1.3rem;
@@ -302,6 +312,7 @@
   }
 }
 
+/* Menu hamburger cho thiết bị di động */
 .hamburger-menu {
   display: none;
   cursor: pointer;
@@ -311,6 +322,7 @@
   margin-left: 15px;
 }
 
+/* Biểu tượng menu hamburger */
 .hamburger-icon {
   width: 100%;
   height: 3px;
@@ -338,12 +350,12 @@
   bottom: -8px;
 }
 
-/* Ensure the mobile menu is functional */
+/* Đảm bảo menu di động hoạt động */
 .mobile-active {
   display: block !important;
 }
 
-/* Header auth styles */
+/* Kiểu xác thực header */
 .auth-nav {
   display: flex;
   align-items: center;
@@ -438,7 +450,7 @@
   color: #ff6b6b;
 }
 
-/* Simple animation for dropdown appearance */
+/* Hiệu ứng xuất hiện cho dropdown */
 @keyframes fadeInDown {
   from {
     opacity: 0;
@@ -450,7 +462,7 @@
   }
 }
 
-/* Styles cho Food Dropdown Menu */
+/* Styles cho Menu thả xuống Món ăn */
 .food-menu-container {
   position: relative;
 }
@@ -467,6 +479,7 @@
   color: #ff6b6b;
 }
 
+/* Menu thả xuống cho phần món ăn */
 .food-dropdown-menu {
   position: absolute;
   top: 100%;
@@ -480,6 +493,7 @@
   margin-top: -1px;
 }
 
+/* Lưới hiển thị danh mục món ăn */
 .food-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -501,6 +515,7 @@
   color: #ff6b6b;
 }
 
+/* Điều chỉnh menu thả xuống trên thiết bị di động */
 @media (max-width: 768px) {
   .food-dropdown-menu {
     min-width: 300px;
@@ -512,7 +527,7 @@
   }
 }
 
-/* Style cho dropdown arrow */
+/* Style cho mũi tên thả xuống */
 .dropdown-arrow {
   display: inline-block;
   margin-left: 5px;
@@ -525,29 +540,29 @@
   transform: rotate(180deg);
 }
 
-/* Logo link style */
+/* Style cho liên kết logo */
 .logo-link {
   text-decoration: none;
 }
 
-/* Blog dropdown menu specific styling */
+/* Style riêng cho menu thả xuống blog */
 .blog-dropdown-menu {
-  min-width: 700px; /* Wider than the food dropdown */
+  min-width: 700px; /* Rộng hơn menu thả xuống món ăn */
 }
 
 .blog-grid {
-  grid-template-columns: repeat(3, 1fr); /* 3 columns instead of 4 */
-  gap: 12px; /* Slightly more gap */
+  grid-template-columns: repeat(3, 1fr); /* 3 cột thay vì 4 */
+  gap: 12px; /* Khoảng cách lớn hơn */
 }
 
 .blog-grid a {
-  white-space: nowrap; /* Prevent text wrapping */
+  white-space: nowrap; /* Ngăn văn bản ngắt dòng */
   overflow: hidden;
   text-overflow: ellipsis;
-  padding: 10px 15px; /* More padding */
+  padding: 10px 15px; /* Padding lớn hơn */
 }
 
-/* Responsive adjustments */
+/* Điều chỉnh đáp ứng cho blog */
 @media (max-width: 768px) {
   .blog-dropdown-menu {
     min-width: 300px;
@@ -555,11 +570,11 @@
   }
 
   .blog-grid {
-    grid-template-columns: repeat(1, 1fr); /* Single column on mobile */
+    grid-template-columns: repeat(1, 1fr); /* Một cột trên mobile */
   }
 }
 
-/* Style for location button */
+/* Style cho nút vị trí */
 .location-btn {
   display: inline-flex;
   align-items: center;
@@ -698,6 +713,7 @@
   transition: all 0.3s ease;
 }
 
+/* Style cho các mục trong menu thả xuống */
 .dropdown-menu a,
 .dropdown-menu button {
   font-family: "Poppins", sans-serif;
@@ -770,7 +786,7 @@
   margin-left: 4px;
 }
 
-/* Responsive adjustments */
+/* Điều chỉnh đáp ứng */
 @media (max-width: 992px) {
   .nav-list {
     flex-direction: column;
@@ -911,7 +927,7 @@
 /* Thêm font Poppins cho nav-link */
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap");
 
-/* User Dropdown Menu - Completely different styling */
+/* Menu thả xuống của người dùng - Kiểu dáng hoàn toàn khác */
 .user-dropdown-menu {
   position: absolute;
   top: 30px;
@@ -924,6 +940,7 @@
   animation: slideDown 0.3s ease forwards;
 }
 
+/* Tạo mũi tên nhỏ phía trên menu */
 .user-dropdown-menu::before {
   content: '';
   position: absolute;
@@ -937,9 +954,9 @@
   box-shadow: -2px -2px 5px rgba(0, 0, 0, 0.05);
 }
 
-/* Remove any hover selectors for user dropdown menu */
+/* Loại bỏ các bộ chọn hover cho menu thả xuống của người dùng */
 
-/* User dropdown menu icon styling */
+/* Kiểu dáng biểu tượng trong menu người dùng */
 .menu-icon {
   margin-right: 10px;
   font-size: 16px;
@@ -954,7 +971,7 @@
   color: #e71a0f;
 }
 
-/* User dropdown menu styles */
+/* Kiểu dáng menu thả xuống người dùng */
 .user-dropdown-menu a,
 .user-dropdown-menu button {
   display: flex;
@@ -980,6 +997,7 @@
   border-left: 3px solid #e71a0f;
 }
 
+/* Hiệu ứng trượt xuống */
 @keyframes slideDown {
   0% {
     opacity: 0;
@@ -991,6 +1009,7 @@
   }
 }
 
+/* Biểu tượng logo */
 .logo-icon {
   font-size: 1.2rem;
   margin-right: 6px;
@@ -999,6 +1018,7 @@
   animation: pulse-icon 2s infinite;
 }
 
+/* Hiệu ứng nhịp đập cho biểu tượng */
 @keyframes pulse-icon {
   0% {
     transform: scale(1);

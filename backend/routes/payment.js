@@ -3,7 +3,7 @@ const router = express.Router();
 const PayOS = require("@payos/node"); // This will need to be installed via npm
 const { PaymentInformation, User, Reservation } = require("../models");
 const { sendPaymentConfirmationEmail } = require("../utils/emailService");
-const config = require("../config/appConfig");
+const config = require("../config/payosAPI");
 
 // Initialize PayOS SDK with credentials from config
 let payos;

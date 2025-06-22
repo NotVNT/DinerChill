@@ -1,7 +1,6 @@
 const jwt = require('jsonwebtoken');
 const { User } = require('../models');
-
-const JWT_SECRET = process.env.JWT_SECRET || 'dinerchillsecretkey';
+const { JWT_SECRET } = require('../config/payosAPI');
 
 // Middleware to authenticate all users (normal and admin)
 const authenticate = async (req, res, next) => {
