@@ -360,12 +360,23 @@ Trả lời bằng tiếng Việt, thân thiện nhưng chuyên nghiệp. Ưu ti
   }
 }
 
+// Store conversation sessions
+const conversationSessions = new Map();
+
 // API endpoint để chat với bot
 router.post('/chat', async (req, res) => {
   try {
-    const { message, userId, sessionId } = req.body;
+    const { message, userId, sessionId, conversationHistory } = req.body;
     if (!message) {
       return res.status(400).json({ error: 'Tin nhắn không được để trống' });
+    }
+    
+    // Get or initialize conversation history
+    if (!conversationSessions.has(sessionId)) {
+      conversationSessions.set(sessionId, conversationHistory || []);
+    } else if (conversationHistory) {
+      // Update with latest conversation
+      conversationSessions.set(sessionId, conversationHistory);
     }
 
     // Quick responses for greetings
@@ -405,9 +416,29 @@ router.post('/chat', async (req, res) => {
       });
     }
 
+    // Lấy lịch sử cuộc trò chuyện
+    const history = conversationSessions.get(sessionId) || [];
+    
     // Tạo prompt với dữ liệu thực tế từ database
     const enhancedPrompt = await createEnhancedPrompt(message);
-    const prompt = `${enhancedPrompt}\n\nKhách hàng: ${message}\nTrợ lý:`;
+    
+    // Build conversation prompt that includes history
+    let conversationPrompt = `${enhancedPrompt}\n\n`;
+    
+    // Add previous 5 exchanges for context (to avoid token limits)
+    const contextLimit = 5;
+    const contextHistory = history.slice(-contextLimit*2);
+    
+    for (const exchange of contextHistory) {
+      if (exchange.role === 'user') {
+        conversationPrompt += `Khách hàng: ${exchange.content}\n`;
+      } else {
+        conversationPrompt += `Trợ lý: ${exchange.content}\n`;
+      }
+    }
+    
+    // Add the current message
+    conversationPrompt += `Khách hàng: ${message}\nTrợ lý:`;
 
     // Gọi Gemini API với Gemini 2.0 model
     const model = genAI.getGenerativeModel({ 
@@ -420,7 +451,7 @@ router.post('/chat', async (req, res) => {
       }
     });
     
-    const result = await model.generateContent(prompt);
+    const result = await model.generateContent(conversationPrompt);
     const response = result.response;
     let botReply = response.text();
     

@@ -18,9 +18,6 @@ function Header() {
   const [isHoveringBlogDropdown, setIsHoveringBlogDropdown] = useState(false);
   const blogMenuRef = useRef(null);
   const blogTimeoutRef = useRef(null);
-  const [isHoveringUser, setIsHoveringUser] = useState(false);
-  const [isHoveringUserDropdown, setIsHoveringUserDropdown] = useState(false);
-  const userTimeoutRef = useRef(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
@@ -90,27 +87,6 @@ function Header() {
     };
   }, [isHoveringBlog, isHoveringBlogDropdown]);
 
-  // Thêm effect để kiểm soát hiển thị user menu khi hover
-  useEffect(() => {
-    if (isHoveringUser || isHoveringUserDropdown) {
-      if (userTimeoutRef.current) {
-        clearTimeout(userTimeoutRef.current);
-        userTimeoutRef.current = null;
-      }
-      setShowMenu(true);
-    } else {
-      userTimeoutRef.current = setTimeout(() => {
-        setShowMenu(false);
-      }, 100);
-    }
-
-    return () => {
-      if (userTimeoutRef.current) {
-        clearTimeout(userTimeoutRef.current);
-      }
-    };
-  }, [isHoveringUser, isHoveringUserDropdown]);
-
   const handleLogout = () => {
     setShowMenu(false);
     setShowLogoutConfirm(true);
@@ -151,10 +127,14 @@ function Header() {
   return (
     <header className="site-header">
       <div className="container">
-        <div className="logo-container">
-          <a href="/" className="logo-link" onClick={goToHomePage}>
-            <h1 className="logo">DinerChill</h1>
-          </a>
+        <div className="header-layout">
+          <div className="logo-section">
+            <a href="/" className="logo-link" onClick={goToHomePage}>
+              <h1 className="logo">
+                <i className="fas fa-utensils logo-icon"></i> DinerChill
+              </h1>
+            </a>
+          </div>
 
           <nav className={`main-nav ${mobileMenuOpen ? "mobile-active" : ""}`}>
             <ul>
@@ -165,9 +145,8 @@ function Header() {
                 onMouseLeave={() => setIsHoveringFood(false)}
               >
                 <span className="nav-link" onClick={toggleFoodMenu}>
-                  <i className="nav-icon">🍽️</i> Ăn uống{" "}
-                  <i className={`dropdown-arrow ${showFoodMenu ? "open" : ""}`}>
-                    ▼
+                  <i className="nav-icon fas fa-utensils"></i> Ăn uống{" "}
+                  <i className={`dropdown-arrow fas fa-angle-down ${showFoodMenu ? "open" : ""}`}>
                   </i>
                 </span>
                 {showFoodMenu && (
@@ -202,9 +181,8 @@ function Header() {
                 onMouseLeave={() => setIsHoveringBlog(false)}
               >
                 <span className="nav-link" onClick={toggleBlogMenu}>
-                  <i className="nav-icon">📰</i> Tin tức & Blog{" "}
-                  <i className={`dropdown-arrow ${showBlogMenu ? "open" : ""}`}>
-                    ▼
+                  <i className="nav-icon fas fa-newspaper"></i> Tin tức & Blog{" "}
+                  <i className={`dropdown-arrow fas fa-angle-down ${showBlogMenu ? "open" : ""}`}>
                   </i>
                 </span>
                 {showBlogMenu && (
@@ -227,17 +205,17 @@ function Header() {
               </li>
               <li className="nav-item">
                 <Link to="/vi-tri">
-                  <i className="nav-icon">📍</i> Vị Trí Gần Bạn
+                  <i className="nav-icon fas fa-map-marker-alt"></i> Vị Trí Gần Bạn
                 </Link>
               </li>
               <li className="nav-item">
                 <Link to="/khuyen-mai">
-                  <i className="nav-icon">🎁</i> Ưu Đãi Hot
+                  <i className="nav-icon fas fa-gift"></i> Ưu Đãi Hot
                 </Link>
               </li>
               <li className="nav-item">
                 <Link to="/huong-dan-dat-ban">
-                  <i className="nav-icon">🌟</i> Gợi ý
+                  <i className="nav-icon fas fa-star"></i> Gợi ý
                 </Link>
               </li>
             </ul>
@@ -250,52 +228,49 @@ function Header() {
                   className="user-greeting account-btn"
                   onClick={toggleMenu}
                 >
-                  <i className="account-icon">👤</i> {user.name}
+                  <i className="account-icon fas fa-user-circle"></i> {user.name}
                 </span>
                 {showMenu && (
-                  <div className="dropdown-menu">
+                  <div className="user-dropdown-menu">
                     <Link to="/profile" onClick={() => setShowMenu(false)}>
-                      <i className="menu-icon">👤</i> Thông tin tài khoản
+                      <i className="menu-icon fas fa-user"></i> Thông tin tài khoản
                     </Link>
                     {user.roleId === 1 ? (
                       <Link to="/admin" onClick={() => setShowMenu(false)}>
-                        <i className="menu-icon">⚙️</i> Quản trị viên
+                        <i className="menu-icon fas fa-cogs"></i> Quản trị viên
                       </Link>
                     ) : (
                       <Link
                         to="/my-reservations"
                         onClick={() => setShowMenu(false)}
                       >
-                        <i className="menu-icon">📅</i> Đặt bàn của tôi
+                        <i className="menu-icon fas fa-calendar-alt"></i> Đặt bàn của tôi
                       </Link>
                     )}
                     <button onClick={handleLogout}>
-                      <i className="menu-icon">🚪</i> Đăng xuất
+                      <i className="menu-icon fas fa-sign-out-alt"></i> Đăng xuất
                     </button>
                   </div>
                 )}
               </div>
             ) : (
-              <div
-                className="user-menu"
-                onMouseEnter={() => setIsHoveringUser(true)}
-                onMouseLeave={() => setIsHoveringUser(false)}
-              >
-                <span className="account-btn">
-                  <i className="account-icon">👤</i> Tài khoản
-                </span>
-                <div
-                  className="dropdown-menu"
-                  onMouseEnter={() => setIsHoveringUserDropdown(true)}
-                  onMouseLeave={() => setIsHoveringUserDropdown(false)}
+              <div className="user-menu">
+                <span 
+                  className="account-btn"
+                  onClick={toggleMenu}
                 >
-                  <Link to="/login">
-                    <i className="menu-icon">🔑</i> Đăng nhập
-                  </Link>
-                  <Link to="/register">
-                    <i className="menu-icon">📝</i> Đăng ký
-                  </Link>
-                </div>
+                  <i className="account-icon fas fa-user-circle"></i> Tài khoản
+                </span>
+                {showMenu && (
+                  <div className="user-dropdown-menu">
+                    <Link to="/login" onClick={() => setShowMenu(false)}>
+                      <i className="menu-icon fas fa-sign-in-alt"></i> Đăng nhập
+                    </Link>
+                    <Link to="/register" onClick={() => setShowMenu(false)}>
+                      <i className="menu-icon fas fa-user-plus"></i> Đăng ký
+                    </Link>
+                  </div>
+                )}
               </div>
             )}
           </div>

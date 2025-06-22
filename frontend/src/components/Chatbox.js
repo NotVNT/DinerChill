@@ -17,6 +17,7 @@ const Chatbox = () => {
   const [inputMessage, setInputMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [showQuickReplies, setShowQuickReplies] = useState(true);
+  const [sessionId, setSessionId] = useState(null);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -27,12 +28,33 @@ const Chatbox = () => {
     scrollToBottom();
   }, [messages]);
 
+  // Create a persistent sessionId when component mounts
+  useEffect(() => {
+    // Get existing sessionId or create a new one
+    const existingSessionId = localStorage.getItem('chatSessionId');
+    if (existingSessionId) {
+      setSessionId(existingSessionId);
+    } else {
+      const newSessionId = `session_${Date.now()}`;
+      localStorage.setItem('chatSessionId', newSessionId);
+      setSessionId(newSessionId);
+    }
+  }, []);
+
   const toggleChatbox = () => {
     setIsOpen(!isOpen);
   };
 
   const getBotResponse = async (message) => {
+    if (!sessionId) return { message: "Đang khởi tạo phiên chat, vui lòng thử lại." };
+    
     try {
+      // Extract conversation history to provide context
+      const conversationHistory = messages.map(msg => ({
+        role: msg.sender === 'user' ? 'user' : 'bot',
+        content: msg.text
+      }));
+      
       const response = await fetch('/api/chatbox/chat', {
         method: 'POST',
         headers: {
@@ -41,7 +63,8 @@ const Chatbox = () => {
         body: JSON.stringify({
           message: message,
           userId: localStorage.getItem('userId') || 'anonymous',
-          sessionId: `session_${Date.now()}`
+          sessionId: sessionId,
+          conversationHistory: conversationHistory
         }),
       });
 
@@ -147,9 +170,31 @@ const Chatbox = () => {
               <span>Trợ lý tư vấn nhà hàng</span>
             </div>
           </div>
-          <button className="close-chat" onClick={toggleChatbox}>
-            ✕
-          </button>
+          <div className="chat-controls">
+            <button 
+              className="reset-chat" 
+              title="Đặt lại cuộc trò chuyện"
+              onClick={() => {
+                const newSessionId = `session_${Date.now()}`;
+                localStorage.setItem('chatSessionId', newSessionId);
+                setSessionId(newSessionId);
+                setMessages([{
+                  id: 1,
+                  text: "Xin chào! Tôi là DinerChill AI, trợ lý đặt bàn thông minh. Bạn cần tìm nhà hàng hay đặt bàn? 😊",
+                  sender: "bot",
+                  timestamp: new Date().toLocaleTimeString("vi-VN", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  }),
+                }]);
+              }}
+            >
+              🔄
+            </button>
+            <button className="close-chat" onClick={toggleChatbox}>
+              ✕
+            </button>
+          </div>
         </div>
 
         <div className="chatbox-messages">

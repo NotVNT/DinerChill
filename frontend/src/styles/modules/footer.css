@@ -140,12 +140,11 @@
 }
 
 .footer-links a::after {
-  content: '';
+  content: none;
   position: absolute;
   bottom: -2px;
   left: 5px;
   width: 0;
- 
   transition: width 0.3s ease;
 }
 
@@ -153,10 +152,12 @@
   color: #D02028;
   transform: translateX(5px);
   text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+  text-decoration: none;
 }
 
+/* Remove the underline effect on hover */
 .footer-links a:hover::after {
-  width: calc(100% - 5px);
+  width: 0;
 }
 
 /* Add some decorative elements */
