@@ -29,12 +29,17 @@ const canCancelReservation = (reservation) => {
 const fetchReservations = async (setReservations, setLoading, setError) => {
   try {
     setLoading(true);
+    
+    // Get list of hidden reservation IDs
+    const hiddenReservationIds = JSON.parse(localStorage.getItem("hiddenReservations") || "[]");
+    
     let apiData = [];
     try {
       const response = await reservationAPI.getByUser();
       console.log("Reservation API response:", response);
       if (Array.isArray(response)) {
-        apiData = response;
+        // Filter out hidden reservations
+        apiData = response.filter(res => !hiddenReservationIds.includes(res.id));
       } else {
         console.warn("API response is not an array:", response);
       }
@@ -101,7 +106,9 @@ const fetchReservations = async (setReservations, setLoading, setError) => {
       localStorage.getItem("successfulReservations") || "[]"
     );
     const formattedLocalReservations = Array.isArray(localReservations)
-      ? localReservations.map((res) => ({
+      ? localReservations
+          .filter(res => !hiddenReservationIds.includes(res.id))
+          .map((res) => ({
           id: res.id,
           restaurantId: res.restaurantId,
           restaurantName: res.restaurantName || "Nhà hàng không xác định",
@@ -173,11 +180,17 @@ const fetchReservations = async (setReservations, setLoading, setError) => {
     setError(null);
   } catch (err) {
     console.error("Error fetching reservations:", err);
+    
+    // Get list of hidden reservation IDs
+    const hiddenReservationIds = JSON.parse(localStorage.getItem("hiddenReservations") || "[]");
+    
     const localReservations = JSON.parse(
       localStorage.getItem("successfulReservations") || "[]"
     );
     const formattedLocalReservations = Array.isArray(localReservations)
-      ? localReservations.map((res) => ({
+      ? localReservations
+          .filter(res => !hiddenReservationIds.includes(res.id))
+          .map((res) => ({
           id: res.id,
           restaurantId: res.restaurantId,
           restaurantName: res.restaurantName || "Nhà hàng không xác định",
@@ -482,24 +495,50 @@ function MyReservationsPage() {
     }
   };
 
-  const deleteReservation = (reservationId) => {
-    const updatedReservations = reservations.filter(
-      (res) => res.id !== reservationId
-    );
-    setReservations(updatedReservations);
-    const syncedReservations = updatedReservations.filter(
-      (res) => res.status === "confirmed" || res.status === "completed"
-    );
-    localStorage.setItem(
-      "successfulReservations",
-      JSON.stringify(syncedReservations)
-    );
-    setToast({
-      show: true,
-      message: "Đã xóa đặt bàn khỏi lịch sử.",
-      type: "success",
-    });
-    setTimeout(() => setToast({ show: false, message: "", type: "" }), 3000);
+  const deleteReservation = async (reservationId) => {
+    try {
+      // Call API to mark the reservation as cancelled, API doesn't truly delete it
+      await reservationAPI.update(reservationId, {
+        status: "cancelled", 
+        reason: "Xóa khỏi lịch sử",
+        visibleToUser: false  // Flag indicating it shouldn't be shown to user anymore
+      });
+      
+      // Update local state
+      const updatedReservations = reservations.filter(
+        (res) => res.id !== reservationId
+      );
+      setReservations(updatedReservations);
+      
+      // Get all current hidden IDs from localStorage or initialize empty array
+      const hiddenReservations = JSON.parse(localStorage.getItem("hiddenReservations") || "[]");
+      
+      // Add this reservation ID to the hidden list
+      hiddenReservations.push(reservationId);
+      
+      // Save back to localStorage
+      localStorage.setItem("hiddenReservations", JSON.stringify(hiddenReservations));
+      
+      // Update the successfulReservations to remove this reservation
+      const successfulReservations = JSON.parse(localStorage.getItem("successfulReservations") || "[]");
+      const updatedSuccessful = successfulReservations.filter(res => res.id !== reservationId);
+      localStorage.setItem("successfulReservations", JSON.stringify(updatedSuccessful));
+      
+      setToast({
+        show: true,
+        message: "Đã xóa đặt bàn khỏi lịch sử.",
+        type: "success",
+      });
+      setTimeout(() => setToast({ show: false, message: "", type: "" }), 3000);
+    } catch (error) {
+      console.error("Error deleting reservation:", error);
+      setToast({
+        show: true,
+        message: "Không thể xóa đặt bàn. Vui lòng thử lại sau.",
+        type: "error",
+      });
+      setTimeout(() => setToast({ show: false, message: "", type: "" }), 3000);
+    }
   };
 
   const formatDate = (dateString) => {

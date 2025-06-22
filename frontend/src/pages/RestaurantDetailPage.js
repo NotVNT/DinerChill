@@ -85,22 +85,64 @@ function RestaurantDetailPage() {
       const [openHour, openMinute] = openTime.split(":").map(Number);
       const [closeHour, closeMinute] = closeTime.split(":").map(Number);
 
+      // Check if restaurant operates overnight (closing time is earlier than opening time)
+      const isOvernightOperation = 
+        (closeHour < openHour) || 
+        (closeHour === openHour && closeMinute < openMinute);
+
       let currentHour = openHour;
       let currentMinute = openMinute;
 
-      while (
-        currentHour < closeHour ||
-        (currentHour === closeHour && currentMinute <= closeMinute)
-      ) {
-        const timeString = `${currentHour
-          .toString()
-          .padStart(2, "0")}:${currentMinute.toString().padStart(2, "0")}`;
-        times.push(timeString);
+      // For regular hours (not overnight)
+      if (!isOvernightOperation) {
+        while (
+          currentHour < closeHour ||
+          (currentHour === closeHour && currentMinute <= closeMinute)
+        ) {
+          const timeString = `${currentHour
+            .toString()
+            .padStart(2, "0")}:${currentMinute.toString().padStart(2, "0")}`;
+          times.push(timeString);
 
-        currentMinute += 30;
-        if (currentMinute >= 60) {
-          currentMinute = 0;
-          currentHour += 1;
+          currentMinute += 30;
+          if (currentMinute >= 60) {
+            currentMinute = 0;
+            currentHour += 1;
+          }
+        }
+      } else {
+        // For overnight operations (e.g. 18:00 to 02:00)
+        // First: Add slots from opening time to midnight
+        while (currentHour < 24) {
+          const timeString = `${currentHour
+            .toString()
+            .padStart(2, "0")}:${currentMinute.toString().padStart(2, "0")}`;
+          times.push(timeString);
+
+          currentMinute += 30;
+          if (currentMinute >= 60) {
+            currentMinute = 0;
+            currentHour += 1;
+          }
+        }
+
+        // Second: Add slots from midnight to closing time
+        currentHour = 0;
+        currentMinute = 0;
+        while (
+          currentHour < closeHour ||
+          (currentHour === closeHour && currentMinute <= closeMinute)
+        ) {
+          const timeString = `${currentHour
+            .toString()
+            .padStart(2, "0")}:${currentMinute.toString().padStart(2, "0")}`;
+          times.push(timeString);
+
+          currentMinute += 30;
+          if (currentMinute >= 60) {
+            currentMinute = 0;
+            currentHour += 1;
+          }
         }
       }
 
