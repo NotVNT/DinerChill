@@ -768,7 +768,7 @@ function RestaurantDetailPage() {
           <h1>{restaurant.name}</h1>
           <p>{restaurant.address || "Địa chỉ không có"}</p>
           <div className="banner-actions">
-            <button className="btn btn-outline" onClick={handleFavorite}>
+            <button className="btn btn-outline" style={{color: 'white'}} onClick={handleFavorite}>
               <i
                 className={`fas fa-heart ${
                   isFavorite ? "favorite-active" : ""
@@ -776,11 +776,12 @@ function RestaurantDetailPage() {
               ></i>
               {isFavorite ? "Bỏ yêu thích" : "Yêu thích"}
             </button>
-            <button className="btn btn-outline" onClick={handleShare}>
+            <button className="btn btn-outline" style={{color: 'white'}} onClick={handleShare}>
               <i className="fas fa-share"></i> Chia sẻ
             </button>
             <button
               className="btn btn-outline"
+              style={{color: 'white'}}
               onClick={handleToggleReservationForm}
             >
               <i className="fas fa-calendar-alt"></i> Đặt bàn

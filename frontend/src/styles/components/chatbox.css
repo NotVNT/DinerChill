@@ -575,4 +575,25 @@
   .chatbox-input {
     padding: 15px;
   }
+}
+
+/* Add styles for chat controls */
+.chat-controls {
+  display: flex;
+  align-items: center;
+}
+
+.reset-chat {
+  background: none;
+  border: none;
+  color: #777;
+  font-size: 18px;
+  cursor: pointer;
+  margin-right: 10px;
+  transition: all 0.2s ease;
+}
+
+.reset-chat:hover {
+  color: #2a79ff;
+  transform: rotate(180deg);
 } 
