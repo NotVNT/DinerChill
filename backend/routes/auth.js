@@ -3,8 +3,7 @@ const router = express.Router();
 const passport = require('../config/passport');
 const zaloPassport = require('../middleware/zaloPassport');
 const { User, UserRole } = require('../models');
-const jwt = require('jsonwebtoken');
-const JWT_SECRET = process.env.JWT_SECRET || 'dinerchillsecretkey';
+const { JWT_SECRET } = require('../config/payosAPI');
 
 // Google OAuth login route
 router.get('/google', passport.authenticate('google', { 

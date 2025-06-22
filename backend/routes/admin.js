@@ -11,8 +11,7 @@ const {
   PaymentInformation,
   Amenity,
 } = require("../models");
-const authenticateAdmin =
-  require("../middleware/authenticate").authenticateAdmin;
+const { authenticateAdmin } = require("../middleware/auth");
 const multer = require("multer");
 const fs = require("fs");
 const path = require("path");

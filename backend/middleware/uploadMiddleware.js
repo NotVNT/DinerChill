@@ -1,10 +1,18 @@
 const multer = require('multer');
 const path = require('path');
+const dotenv = require('dotenv');
+dotenv.config();
+
+// Upload configuration
+const uploadConfig = {
+  imagePath: process.env.IMAGE_UPLOAD_PATH || 'uploads/images',
+  maxSize: 5 * 1024 * 1024 // 5MB
+};
 
 // Cấu hình lưu trữ tạm thời trước khi gửi lên cloud
 const storage = multer.diskStorage({
   destination: function(req, file, cb) {
-    cb(null, './uploads/');
+    cb(null, `./${uploadConfig.imagePath}/`);
   },
   filename: function(req, file, cb) {
     cb(null, Date.now() + path.extname(file.originalname));
@@ -23,9 +31,9 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({
   storage: storage,
   limits: {
-    fileSize: 5 * 1024 * 1024 // Giới hạn kích thước 5MB
+    fileSize: uploadConfig.maxSize
   },
   fileFilter: fileFilter
 });
 
-module.exports = upload;
+module.exports = { upload, uploadConfig };

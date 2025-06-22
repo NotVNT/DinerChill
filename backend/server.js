@@ -26,6 +26,7 @@ const categoryRoutes = require("./routes/categories");
 const amenitiesRoutes = require("./routes/amenities");
 const chatboxRoutes = require("./routes/chatbox");
 const { sequelize } = require("./models");
+const { JWT_SECRET } = require("./config/payosAPI");
 
 // Đọc biến môi trường từ file .env
 dotenv.config();
@@ -49,8 +50,6 @@ app.use(
   },
   express.static(uploadsDir)
 );
-
-const JWT_SECRET = process.env.JWT_SECRET || "dinerchillsecretkey";
 
 // Middleware
 app.use(

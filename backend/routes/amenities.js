@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
+const { authenticateAdmin } = require("../middleware/auth");
 const { Amenity } = require("../models");
-const { authenticateAdmin } = require("../middleware/authenticate");
 
 // Public route to get all amenities - this should be accessible without authentication
 router.get("/", async (req, res) => {

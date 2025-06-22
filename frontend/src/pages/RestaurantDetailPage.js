@@ -51,6 +51,8 @@ function RestaurantDetailPage() {
   const [activeTab, setActiveTab] = useState("summary");
   const [savedReviews, setSavedReviews] = useState([]);
   const [previewImage, setPreviewImage] = useState(null);
+  const [showBookingInfoModal, setShowBookingInfoModal] = useState(false);
+  const [selectedPromo, setSelectedPromo] = useState(null);
 
   const tabs = [
     { id: "summary", label: "Thông tin tóm tắt" },
@@ -109,16 +111,9 @@ function RestaurantDetailPage() {
 
       // If it's after 22:00, don't filter - we're already using tomorrow's date
       if (formData.date === today && currentHourOfDay < 22) {
-        const filteredTimes = times.filter((time) => {
-          const [hour, minute] = time.split(":").map(Number);
-          const timeDate = new Date(currentTime);
-          timeDate.setHours(hour, minute, 0, 0);
-          const diffHours = (timeDate - currentTime) / (1000 * 60 * 60);
-          return diffHours >= 2;
-        });
-
-        // Return filtered times if there are any, otherwise return all times
-        return filteredTimes.length > 0 ? filteredTimes : times;
+        // Remove the filtering of times that are less than 2 hours from now
+        // Return all available time slots
+        return times;
       }
 
       return times;
@@ -310,20 +305,6 @@ function RestaurantDetailPage() {
 
   const handleBookNow = () => {
     try {
-      // Check if reservation time is at least 2 hours in the future
-      const currentTime = new Date();
-      const reservationTime = new Date(`${formData.date}T${formData.time}:00`);
-      const timeDifferenceInHours =
-        (reservationTime - currentTime) / (1000 * 60 * 60);
-
-      if (timeDifferenceInHours < 2) {
-        setNotification(
-          "Thời gian đặt bàn phải ít nhất 2 giờ sau thời gian hiện tại"
-        );
-        setTimeout(() => setNotification(null), 3000);
-        return;
-      }
-
       // Pass both guests and children params - partySize will be calculated as guests + children in ReservationPage
       const query = new URLSearchParams({
         date: formData.date,
@@ -375,8 +356,10 @@ function RestaurantDetailPage() {
 
   const handlePromotionClick = (e, promo) => {
     e.stopPropagation();
-    // Instead of showing modal, go directly to booking with promotion
-    applyPromotionAndBook(promo);
+    // Always show booking info modal when applying a voucher
+    setSelectedPromo(promo);
+    setShowBookingInfoModal(true);
+    return;
   };
 
   const applyPromotionAndBook = (promo) => {
@@ -385,21 +368,20 @@ function RestaurantDetailPage() {
       return;
     }
 
+    // Validate booking information again
+    if (!formData.date || !formData.time || (!formData.guests && !formData.children)) {
+      setNotification("Vui lòng chọn số lượng khách và thời gian đặt bàn trước khi áp dụng ưu đãi");
+      setShowReservationForm(true);
+      setTimeout(() => {
+        setNotification(null);
+        document
+          .getElementById("booking-section")
+          ?.scrollIntoView({ behavior: "smooth" });
+      }, 2000);
+      return;
+    }
+
     try {
-      // Check if reservation time is at least 2 hours in the future
-      const currentTime = new Date();
-      const reservationTime = new Date(`${formData.date}T${formData.time}:00`);
-      const timeDifferenceInHours =
-        (reservationTime - currentTime) / (1000 * 60 * 60);
-
-      if (timeDifferenceInHours < 2) {
-        setNotification(
-          "Thời gian đặt bàn phải ít nhất 2 giờ sau thời gian hiện tại"
-        );
-        setTimeout(() => setNotification(null), 3000);
-        return;
-      }
-
       // Pass both guests and children params - partySize will be calculated as guests + children in ReservationPage
       const query = new URLSearchParams({
         date: formData.date,
@@ -641,6 +623,29 @@ function RestaurantDetailPage() {
       console.error("Error parsing opening hours:", err);
       return true;
     }
+  };
+
+  // Add a function to handle modal booking
+  const handleBookingFromModal = (e) => {
+    e.preventDefault();
+    
+    // Validate booking information
+    if (!formData.date || !formData.time || (!formData.guests && !formData.children)) {
+      setNotification("Vui lòng chọn số lượng khách và thời gian đặt bàn");
+      return;
+    }
+    
+    setShowBookingInfoModal(false);
+    
+    // Continue with booking process using the saved promo
+    if (selectedPromo) {
+      applyPromotionAndBook(selectedPromo);
+    }
+  };
+  
+  const closeBookingInfoModal = () => {
+    setShowBookingInfoModal(false);
+    setSelectedPromo(null);
   };
 
   if (loading) {
@@ -1351,6 +1356,93 @@ function RestaurantDetailPage() {
             </button>
           </div>
         </>
+      )}
+
+      {/* Booking Info Modal */}
+      {showBookingInfoModal && selectedPromo && (
+        <div className="modal-overlay">
+          <div className="booking-info-modal">
+            <div className="modal-header">
+              <h3>Đặt bàn giữ chỗ (Để có chỗ trước khi đến)</h3>
+              <button className="close-btn" onClick={closeBookingInfoModal}>
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+            <div className="modal-body">
+              <div className="promo-info">
+                <p>Ưu đãi: <strong>{selectedPromo.description || selectedPromo.code}</strong></p>
+                {selectedPromo.discountType === "percent" && (
+                  <p>Giảm {selectedPromo.discountValue}%</p>
+                )}
+              </div>
+              <form className="booking-form" onSubmit={handleBookingFromModal}>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Người lớn:</label>
+                    <select
+                      name="guests"
+                      value={formData.guests}
+                      onChange={handleFormChange}
+                      required
+                    >
+                      {Array.from({ length: 10 }, (_, i) => (
+                        <option key={i} value={i + 1}>
+                          {i + 1}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Trẻ em:</label>
+                    <select
+                      name="children"
+                      value={formData.children}
+                      onChange={handleFormChange}
+                    >
+                      {Array.from({ length: 11 }, (_, i) => (
+                        <option key={i} value={i}>
+                          {i}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Ngày đến:</label>
+                    <input
+                      type="date"
+                      name="date"
+                      value={formData.date}
+                      onChange={handleFormChange}
+                      min={getCurrentOrNextDay()}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Thời gian:</label>
+                    <select
+                      name="time"
+                      value={formData.time}
+                      onChange={handleFormChange}
+                      required
+                    >
+                      <option value="">Chọn giờ</option>
+                      {availableTimes.map((time) => (
+                        <option key={time} value={time}>
+                          {time}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <button type="submit" className="btn btn-primary">
+                  Đặt chỗ ngay
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
