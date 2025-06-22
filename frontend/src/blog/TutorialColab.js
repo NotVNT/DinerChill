@@ -9,7 +9,7 @@ const TutorialColab = () => {
       <h2 style={{ fontSize: 20, fontWeight: 400, margin: 0, marginBottom: 32, textAlign: 'center', color: '#444' }}>
         Hướng dẫn hợp tác kinh doanh dịch vụ đặt chỗ trên nền tảng Dinner Chill
       </h2>
-      <div style={{ display: 'flex', alignItems: 'center', background: '#d81f26', borderRadius: 16, padding: 28, marginBottom: 32, boxShadow: '0 2px 12px #f3f3f3' }}>
+      <div style={{ display: 'flex', alignItems: 'center', background: '#d81f26', borderRadius: 16, padding: 28, marginBottom: 32, boxShadow: '0 2px 12px #f3f3f3', textAlign: 'left' }}>
         <img
           src="/uploads/DinnerChill.png"
           alt="Dinner Chill"
@@ -23,7 +23,7 @@ const TutorialColab = () => {
             border: '2px solid #fff'
           }}
         />
-        <div style={{ color: '#fff', flex: 1 }}>
+        <div style={{ color: '#fff', flex: 1, textAlign: 'left' }}>
           <div style={{ fontWeight: 700, fontSize: 26, marginBottom: 6 }}>Dinner Chill</div>
           <div style={{ fontWeight: 600, fontSize: 20, marginBottom: 6 }}>Dành cho nhà hàng</div>
           <div style={{ fontSize: 16, marginBottom: 6 }}>
@@ -39,59 +39,59 @@ const TutorialColab = () => {
           </div>
         </div>
       </div>
-      <div style={{ marginBottom: 24, color: '#444', fontSize: 18 }}>
+      <div style={{ marginBottom: 24, color: '#444', fontSize: 18, textAlign: 'left' }}>
         Dưới đây là bản hướng dẫn tóm tắt quy trình để một Nhà cung cấp dịch vụ đặt chỗ trực tuyến có thể hiểu, tiến hành hợp tác với Dinner Chill.
       </div>
-      <ol style={{ paddingLeft: 32, marginBottom: 24, color: '#222', fontSize: 18 }}>
+      <ol style={{ paddingLeft: 32, marginBottom: 24, color: '#222', fontSize: 18, textAlign: 'left' }}>
         <li style={{ marginBottom: 18 }}>
           <b>Bước 1: Tìm hiểu ngành kinh doanh</b>
-          <div style={{ marginLeft: 14, color: '#444', fontSize: 18 }}>
+          <div style={{ marginLeft: 14, color: '#444', fontSize: 18, textAlign: 'left' }}>
             Bạn cần đảm bảo ngành kinh doanh của mình là nhà hàng(*) và bạn có nhu cầu cung cấp dịch vụ đặt chỗ trực tuyến dành cho thực khách.
           </div>
         </li>
         <li style={{ marginBottom: 18 }}>
           <b>Bước 2: Tìm hiểu các Giải pháp và Gói dịch vụ</b>
-          <div style={{ marginLeft: 14, color: '#444', fontSize: 18 }}>
+          <div style={{ marginLeft: 14, color: '#444', fontSize: 18, textAlign: 'left' }}>
             Nếu bạn thấy phù hợp, hãy chuyển qua Bước 3.
           </div>
         </li>
         <li style={{ marginBottom: 18 }}>
           <b>Bước 3: Tìm hiểu báo giá, bảng tác vụ, các điều khoản và chính sách</b>
-          <ul style={{ marginLeft: 28, marginTop: 8, marginBottom: 8 }}>
+          <ul style={{ marginLeft: 28, marginTop: 8, marginBottom: 8, textAlign: 'left' }}>
             <li><a href="https://" target="_blank" rel="noopener noreferrer" style={{ color: '#d81f26', fontWeight: 500, fontSize: 18 }}>Quy chế Hoạt động</a></li>
             <li><a href="https://" target="_blank" rel="noopener noreferrer" style={{ color: '#d81f26', fontWeight: 500, fontSize: 18 }}>Điều khoản với Đối tác</a></li>
             <li><a href="https://" target="_blank" rel="noopener noreferrer" style={{ color: '#d81f26', fontWeight: 500, fontSize: 18 }}>Chính sách bảo mật thông tin</a></li>
           </ul>
-          <div style={{ marginLeft: 14, color: '#444', fontSize: 18 }}>
+          <div style={{ marginLeft: 14, color: '#444', fontSize: 18, textAlign: 'left' }}>
             Nếu thấy hợp lý và đồng ý, bạn chuyển qua Bước 4.
           </div>
         </li>
         <li style={{ marginBottom: 18 }}>
           <b>Bước 4: Đăng ký hợp tác</b>
-          <ul style={{ marginLeft: 28, marginTop: 8, marginBottom: 8 }}>
+          <ul style={{ marginLeft: 28, marginTop: 8, marginBottom: 8, textAlign: 'left' }}>
             <li><a href="https://" target="_blank" rel="noopener noreferrer" style={{ color: '#d81f26', fontWeight: 500, fontSize: 18 }}>Chọn Gói dịch vụ</a></li>
             <li style={{ fontSize: 18 }}>Cung cấp thông tin mở Gian hàng</li>
             <li><a href="https://docs.google.com/forms/d/e/1FAIpQLSeDfyV1SX2TaDbK0sJiy43FVp4I6MdgmcArhuAjs2JVr0ToHw/viewform?vc=0&c=0&w=1" target="_blank" rel="noopener noreferrer" style={{ color: '#d81f26', fontWeight: 500, fontSize: 18 }}>Điền thông tin mở tài khoản</a></li>
           </ul>
-          <div style={{ marginLeft: 14, color: '#444', fontSize: 18 }}>
+          <div style={{ marginLeft: 14, color: '#444', fontSize: 18, textAlign: 'left' }}>
             Nộp thông tin và chờ phản hồi từ Bộ phận Kinh doanh & Phát triển thị trường Dinner Chill. Thông thường, nhân sự địa phương sẽ liên hệ trong vòng 2 ngày làm việc.
           </div>
         </li>
         <li style={{ marginBottom: 18 }}>
           <b>Bước 5: Thảo luận và hoàn tất thủ tục</b>
-          <ul style={{ marginLeft: 28, marginTop: 8, marginBottom: 8 }}>
+          <ul style={{ marginLeft: 28, marginTop: 8, marginBottom: 8, textAlign: 'left' }}>
             <li style={{ fontSize: 18 }}>Giải đáp thắc mắc</li>
             <li style={{ fontSize: 18 }}>Làm rõ hơn các tác vụ và giá trị Đối tác nhận được</li>
             <li style={{ fontSize: 18 }}>Thỏa thuận chi tiết về các loại phí và mức phí</li>
             <li style={{ fontSize: 18 }}>Ký Hợp đồng Hợp tác</li>
           </ul>
-          <div style={{ marginLeft: 14, color: '#444', fontSize: 18 }}>
+          <div style={{ marginLeft: 14, color: '#444', fontSize: 18, textAlign: 'left' }}>
             Thời gian trung bình từ 7 – 10 ngày làm việc.
           </div>
         </li>
         <li style={{ marginBottom: 18 }}>
           <b>Bước 6: Vận hành hợp tác</b>
-          <ul style={{ marginLeft: 28, marginTop: 8, marginBottom: 8 }}>
+          <ul style={{ marginLeft: 28, marginTop: 8, marginBottom: 8, textAlign: 'left' }}>
             <li style={{ fontSize: 18 }}>Hướng dẫn sử dụng và khai thác các công cụ của Dinner Chill</li>
             <li style={{ fontSize: 18 }}>Cung cấp đầu mối để phối hợp vận hành</li>
             <li style={{ fontSize: 18 }}>Phối hợp để hợp tác hiệu quả</li>
@@ -99,14 +99,14 @@ const TutorialColab = () => {
           </ul>
         </li>
       </ol>
-      <div style={{ fontStyle: 'italic', marginBottom: 16, color: '#888', fontSize: 16 }}>
+      <div style={{ fontStyle: 'italic', marginBottom: 16, color: '#888', fontSize: 16, textAlign: 'left' }}>
         (*) Chúng tôi có thể bổ sung thêm ngành mới, vui lòng cập nhật tại đây!
       </div>
-      <div style={{ marginBottom: 16, color: '#444', fontSize: 18 }}>
+      <div style={{ marginBottom: 16, color: '#444', fontSize: 18, textAlign: 'left' }}>
         Mọi quy trình trên đều có thể được trực tiếp trao đổi và hỗ trợ bởi đội ngũ Cộng tác viên, Tư vấn viên hoặc nhân sự tại Bộ phận Kinh doanh & Phát triển thị trường của Dinner Chill.
       </div>
-      <div style={{ fontWeight: 700, marginBottom: 6, color: '#d81f26', fontSize: 20 }}>Thông tin liên hệ:</div>
-      <div style={{ marginBottom: 6, color: '#444', fontSize: 18 }}>
+      <div style={{ fontWeight: 700, marginBottom: 6, color: '#d81f26', fontSize: 20, textAlign: 'left' }}>Thông tin liên hệ:</div>
+      <div style={{ marginBottom: 6, color: '#444', fontSize: 18, textAlign: 'left' }}>
         <div><b>Bộ phận Kinh doanh & Phát triển thị trường Dinner Chill</b></div>
         <div>Hotline (Zalo/Skype): <a href="tel:+84934626005" style={{ color: '#d81f26', fontWeight: 700 }}>0934.626.005</a></div>
         <div>Email: <a href="mailto:kinhdoanh@dinnerchill.vn" style={{ color: '#d81f26', fontWeight: 700 }}>kinhdoanh@dinnerchill.vn</a></div>
