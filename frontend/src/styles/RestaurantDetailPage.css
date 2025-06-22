@@ -1654,20 +1654,21 @@
 
 .form-group input,
 .form-group select {
-  flex: 1;
   padding: 10px;
   border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 16px;
-  outline: none;
-  transition: border-color 0.3s ease;
-  pointer-events: auto;
-  z-index: 920;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+  max-width: 100%;
+  width: 100%;
 }
 
 .form-group input:focus,
 .form-group select:focus {
-  border-color: #e71a0f;
+  border-color: #80bdff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+  outline: none;
 }
 
 .form-group select {
@@ -2216,5 +2217,125 @@
 
   .banner-dots {
     bottom: 10px;
+  }
+}
+
+/* Booking Info Modal */
+.booking-info-modal {
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 500px;
+  position: relative;
+  animation: modalFadeIn 0.3s ease;
+}
+
+.booking-info-modal .modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  border-bottom: 1px solid #eee;
+  background-color: #f8f9fa;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+}
+
+.booking-info-modal .modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.booking-info-modal .close-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #555;
+  cursor: pointer;
+}
+
+.booking-info-modal .modal-body {
+  padding: 20px;
+}
+
+.booking-info-modal .promo-info {
+  margin-bottom: 20px;
+  padding: 10px 15px;
+  background-color: #fff8e1;
+  border-left: 4px solid #ffc107;
+  border-radius: 4px;
+}
+
+.booking-info-modal .promo-info p {
+  margin: 5px 0;
+  font-size: 14px;
+}
+
+.booking-info-modal .booking-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.booking-info-modal .form-row {
+  display: flex;
+  gap: 15px;
+}
+
+.booking-info-modal .form-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.booking-info-modal label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #555;
+}
+
+.booking-info-modal select,
+.booking-info-modal input {
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+  max-width: 100%;
+  width: 100%;
+}
+
+.booking-info-modal select:focus,
+.booking-info-modal input:focus {
+  border-color: #80bdff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+  outline: none;
+}
+
+.booking-info-modal .btn-primary {
+  margin-top: 10px;
+  padding: 12px 20px;
+  background-color: #e61e25;
+  border: none;
+  border-radius: 5px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.booking-info-modal .btn-primary:hover {
+  background-color: #d01820;
+  transform: translateY(-2px);
+}
+
+@media (max-width: 576px) {
+  .booking-info-modal .form-row {
+    flex-direction: column;
+    gap: 10px;
   }
 }
